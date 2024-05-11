@@ -19,3 +19,12 @@ array[ITEMS] of int: item_sizes;
 set of int: NODES = 1..num_items + 1;
 array[NODES, NODES] of int: distances;
 
+% Lettura delle variabili da un file .dzn
+% include "input_data.dzn";
+
+% Stampa delle variabili
+output ["num_couriers: ", show(num_couriers), "\n"];
+output ["num_items: ", show(num_items), "\n"];
+output ["courier_sizes: ", show(courier_sizes), "\n"];
+output ["item_sizes: ", show(item_sizes), "\n"];
+output ["distances: ", show(distances), "\n"];
