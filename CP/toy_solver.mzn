@@ -1,4 +1,4 @@
-include "alldifferent.mzn";
+% include "alldifferent.mzn";
 
 % input of the problem
 
@@ -27,4 +27,4 @@ output ["num_couriers: ", show(num_couriers), "\n"];
 output ["num_items: ", show(num_items), "\n"];
 output ["courier_sizes: ", show(courier_sizes), "\n"];
 output ["item_sizes: ", show(item_sizes), "\n"];
-output ["distances: ", show(distances), "\n"];
+output ["distances: ", show(distances[3,4]), "\n"];
