@@ -1,8 +1,8 @@
-import pymzn
+from minizinc import Instance, Model, Solver
+from datetime import timedelta
 import os
 
 def solve_mzn(mzn_file, dzn_file):
-    from minizinc import Instance, Model, Solver
 
     # Load n-Queens model from file
     model = Model(mzn_file)
@@ -13,12 +13,11 @@ def solve_mzn(mzn_file, dzn_file):
     # Create an Instance of the n-Queens model for Gecode
     instance = Instance(gecode, model)
     # Assign 4 to n
-    result = instance.solve()
+    result = instance.solve(timeout=timedelta(seconds=15))
     # Output the array q
     return result
 
 if __name__=='__main__':
-
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     os.chdir(script_dir)
