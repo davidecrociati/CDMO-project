@@ -2,35 +2,20 @@ import pymzn
 import os
 
 def solve_mzn(mzn_file, dzn_file):
-    # Load the MiniZinc model
-    types={
-        "num_couriers": {"type" : "int"},
-        "num_items": {"type" : "int"},
-        # "COURIERS": {"type" : "int", "set" : true},
-        "courier_sizes": {"type" : "int", "dim" : 1, "dims" : ["int"]},
-        # "ITEMS": {"type" : "int", "set" : true},
-        "item_sizes": {"type" : "int", "dim" : 1, "dims" : ["int"]},
-        # "NODES": {"type" : "int", "set" : true},
-        "distances": {"type" : "int", "dim" : 2, "dims" : ["int","int"]}
-   }
-    
-    # types = {
-    #     "num_couriers": 'int',
-    #     "num_items": 'int',
-    #     "courier_sizes": 'array[int] of int',
-    #     "item_sizes": 'array[int] of int',
-    #     "distances": 'array[int, int] of int'
-    # }
-    
-    data = pymzn.dzn2dict(dzn_file,types=types)
-    # print(data)
-    # model = pymzn.minizinc(mzn_file)
+    from minizinc import Instance, Model, Solver
 
-    # Load the MiniZinc data file
+    # Load n-Queens model from file
+    model = Model(mzn_file)
 
-    # Solve the MiniZinc model with the provided data
-    result = pymzn.minizinc(mzn_file, data=data, output_mode='json')
-
+    model.add_file(dzn_file)
+    # Find the MiniZinc solver configuration for Gecode
+    gecode = Solver.lookup("gecode")
+    # Create an Instance of the n-Queens model for Gecode
+    instance = Instance(gecode, model)
+    # Assign 4 to n
+    # instance["n"] = 4
+    result = instance.solve()
+    # Output the array q
     return result
 
 if __name__=='__main__':
