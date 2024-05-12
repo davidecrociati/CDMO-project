@@ -7,18 +7,18 @@ int: num_items;
 
 % couriers load size 
 set of int: COURIERS = 1..num_couriers;
-array[COURIERS] of int: courier_sizes;
+set of int: ITEMS = 1..num_items;
+set of int: NODES = 1..num_items + 1;
+int: default_val=num_items + 1;
 
 % items size 
-set of int: ITEMS = 1..num_items;
+array[COURIERS] of int: courier_sizes;
 array[ITEMS] of int: item_sizes;
-
-% distances
-set of int: NODES = 1..num_items + 1;
 array[NODES, NODES] of int: distances;
 
+
 % items delivered by each courier
-array[COURIERS,ITEMS] of var 0..num_items: delivers;
+array[COURIERS, ITEMS] of var NODES: delivers;
 
 % constraints for the decision variable delivers
 
@@ -26,17 +26,17 @@ array[COURIERS,ITEMS] of var 0..num_items: delivers;
 constraint forall(c in COURIERS)(
     % prendo gli indici degli elementi diversi da zero per ogni corriere,
     % poi itero su quegli indici e controllo che la somma sia minore di itemsize
-    sum(j in ITEMS where delivers[c, j] != 0)(item_sizes[j]) <= courier_sizes[c]
+    sum(j in ITEMS where delivers[c, j] != default_val)(item_sizes[j]) <= courier_sizes[c]
 );
 
 % constraint un corriere consegni solo una volta un certo item
 constraint forall(i in COURIERS)(
-  all_different_except_0(delivers[i,ITEMS])::domain
+  all_different_except(delivers[i,ITEMS],{default_val})::domain
 );
 
 % constraint un item può essere consegnato solo da un corriere
 constraint forall(j in ITEMS) (
-    count([delivers[i, j]|i in COURIERS],0,num_couriers-1)
+    count([delivers[i, j]|i in COURIERS],default_val,num_couriers-1)
 );
 
 % constraint che tutti i pacchi sono presi in carico
@@ -48,7 +48,7 @@ constraint forall(j in ITEMS) (
 array[COURIERS] of var int:distances_traveled;
 
 % minimize the optimization variable
-var int:longest_trip = max(distances_traveled)
+var int:longest_trip = max(distances_traveled);
 solve minimize longest_trip;
 
 output ["Delivers:\n"] ++
