@@ -38,7 +38,7 @@ def solve_mzn(mzn_file, dzn_file, solver="gecode", stop_time=300):
     
     # Real output
     return {solver:{
-        "time" : exec_time, 
+        "time" : int(exec_time/1000), 
         "optimal" : optimal,
         "obj" : obj,
         "sol" : solution
