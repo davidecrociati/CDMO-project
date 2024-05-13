@@ -9,7 +9,7 @@ def solve_mzn(mzn_file, dzn_file):
 
     model.add_file(dzn_file)
     # Find the MiniZinc solver configuration for Gecode
-    gecode = Solver.lookup("gecode")
+    gecode = Solver.lookup("chuffed")
     # Create an Instance of the n-Queens model for Gecode
     instance = Instance(gecode, model)
     # Assign 4 to n
@@ -24,5 +24,6 @@ if __name__=='__main__':
     # Example usage
     mzn_file = 'solver.mzn'
     dzn_file = '../instances_dzn/inst01.dzn'
+    dzn_file = 'test/inst_test.dzn'
     solution = solve_mzn(mzn_file, dzn_file)
     print(solution)
