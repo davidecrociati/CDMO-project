@@ -16,6 +16,9 @@ array[COURIERS] of int: courier_sizes;
 array[ITEMS] of int: item_sizes;
 array[NODES, NODES] of int: distances;
 
+int:low_bound;
+int:upper_bound;
+set of int: DISTANCE=low_bound..upper_bound;
 
 % items delivered by each courier
 array[COURIERS, 1..num_items+2] of var NODES: stops;
@@ -49,16 +52,20 @@ constraint forall(i in COURIERS)(
     sum(j in ITEMS where stops[i, j+1] != default_val)(item_sizes[stops[i,j+1]]) <= courier_sizes[i]
 );
 
-array[COURIERS] of var int:distances_traveled;
+array[COURIERS] of var DISTANCE:distances_traveled;
 
 % Compute total distance
 constraint forall(c in COURIERS)(
   distances_traveled[c] = sum(j in NODES)(distances[stops[c,j], stops[c,j+1]])
 );
 % minimize the optimization variable
-var 286..5531:longest_trip;
+var DISTANCE:longest_trip;
 constraint longest_trip= max(distances_traveled);
-solve :: int_search(stops,first_fail, indomain_min) minimize(longest_trip);
+solve :: seq_search([
+  int_search(stops,first_fail, indomain_min),
+  int_search(distances_traveled,first_fail, indomain_min)
+  ])
+  minimize(longest_trip);
 
 
 output ["Stops:\n"] ++
