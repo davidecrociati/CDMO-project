@@ -38,7 +38,7 @@ def solve_mzn(mzn_file, dzn_file, solver="gecode", stop_time=300):
     
     # Real output
     return {solver:{
-        "time" : exec_time, 
+        "time" : int(exec_time/1000), 
         "optimal" : optimal,
         "obj" : obj,
         "sol" : solution
@@ -49,7 +49,7 @@ if __name__=='__main__':
 
     os.chdir(script_dir)
     # Example usage
-    mzn_file = '../solver.mzn'
+    mzn_file = 'solver.mzn'
     dzn_file = '../../instances_dzn/inst01.dzn'
     solution = solve_mzn(mzn_file, dzn_file)
     print(solution)
