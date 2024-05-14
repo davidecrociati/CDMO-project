@@ -16,9 +16,9 @@ array[COURIERS] of int: courier_sizes;
 array[ITEMS] of int: item_sizes;
 array[NODES, NODES] of int: distances;
 
-int:low_bound;
+int:lower_bound;
 int:upper_bound;
-set of int: DISTANCE=low_bound..upper_bound;
+set of int: DISTANCE=lower_bound..upper_bound;
 
 % items delivered by each courier
 array[COURIERS, 1..num_items+2] of var NODES: stops;

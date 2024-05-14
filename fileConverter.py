@@ -33,13 +33,13 @@ def write_new_content(data):
     content += 'num_items='+data[1]+';\n'
     content += 'courier_sizes=['+insert_commas(data[2])+'];\n'
     content += 'item_sizes=['+insert_commas(data[3])+'];\n'
-    content += 'lower_bound='+str(find_lower_bound(bounds))+';\n'
-    content += 'upper_bound='+str(find_upper_bound(bounds))+';\n'
-    content += 'distance=['
+    content += 'distances=['
     for table_row in data[4:]:
         content+='|'+insert_commas(table_row)+'\n'
     content=content[:-1]
     content+='|];\n'
+    content += 'lower_bound='+str(find_lower_bound(bounds))+';\n'
+    content += 'upper_bound='+str(find_upper_bound(bounds))+';\n'
     return content
 
 def read_file(path):
