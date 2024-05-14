@@ -49,7 +49,7 @@ if __name__=='__main__':
 
     os.chdir(script_dir)
     # Example usage
-    mzn_file = '../solver.mzn'
+    mzn_file = 'solver.mzn'
     dzn_file = '../../instances_dzn/inst01.dzn'
     solution = solve_mzn(mzn_file, dzn_file)
     print(solution)
