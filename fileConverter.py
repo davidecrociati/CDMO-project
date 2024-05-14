@@ -20,6 +20,7 @@ def write_new_content(data, variables):
         content+='|'+insert_commas(table_row)+'\n'
     content=content[:-1]
     content+='|];\n'
+    
     return content
 
 def read_file(path):
