@@ -74,8 +74,14 @@ solve :: seq_search([
 output ["Stops:\n"] ++
        [ show(stops[i,j])++ ", " ++ 
          if j == num_items+2 then "\n" else "" endif |
-         i in COURIERS, j in 1..num_items+2 ];
+         i in COURIERS, j in 1..num_items+2 ]++["\n"];
 
-output["\nDistances travelled:\n"]++
-      [ " Courier "++show(i)++": "++show(distances_traveled[i])++"\n"
-      | i in COURIERS];
+output ["Itinerary:\n"] ++
+       [ 
+        if j==1 then "Start, " else "" endif ++
+        if fix(stops[i,j])==default_val then "" else show(stops[i,j])++", " endif ++ 
+        if j == num_items+2 then 
+          "End --> Distance="++show(distances_traveled[i])++"\n" 
+        else "" endif
+        |i in COURIERS, j in 1..num_items+2
+       ];

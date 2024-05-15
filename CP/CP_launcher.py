@@ -2,7 +2,7 @@ from minizinc import Instance, Model, Solver
 from datetime import timedelta
 import os
 
-def solve_mzn(mzn_file, dzn_file,solver,params):
+def solve_mzn(mzn_file, dzn_file,solver,params:dict={}):
     model = Model(mzn_file)
 
     model.add_file(dzn_file)
