@@ -10,7 +10,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params:dict={}):
     solver = Solver.lookup(solver)
 
     instance = Instance(solver, model)
-    # TODO fargli passare i parametri
+    # TODO fargli passare i parametri (quali ?)
     result = instance.solve(timeout=timedelta(seconds=15))
 
     return result
@@ -29,11 +29,25 @@ def launch_CP(instances:list,model:str='model.mzn',solver:str='chuffed',params:d
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
 
-    results={} # bho tocca in qualche modo ritornare/salvare i risultati
+    results={}
     for instance in instances[:]:
+        print(f"Solving {instance} ...")
+        
         solution = solve_mzn(model, instance,solver,params)
-        results[instance]=solution
-        # TODO il json
+        stats = getattr(solution,'statistics')
+        
+        # TODO : scegliere tra 'flatTime' , 'time' , 'initTime' , 'solveTime' , 'optTime'
+        execTime = stats['time'] 
+        
+        results[instance]= {
+            "time" : execTime,
+            "optimal" : (execTime==300), # TODO : parametrizzabile ?
+            "obj" : stats['objective'],
+            "sol" : str(solution)
+        }
+        
+        print(results[instance])
+        
     return results
 
 if __name__=='__main__':
@@ -43,11 +57,15 @@ if __name__=='__main__':
     instances_folder='../instances_dzn'
     # instances_folder='.'
     instances=[instances_folder+'/'+instance for instance in os.listdir(instances_folder) if instance.endswith('.dzn')]
+    instances.sort()
     mzn_file = 'model.mzn'
     mzn_file = 'model_drunky.mzn'
     # mzn_file = 'working_solver.mzn'
+    
+    print(launch_CP(instances))
 
-    for instance in instances[:1]:
-        print(f'Solving {instance[len(instances_folder)+1:]}...')
-        solution = solve_mzn(mzn_file, instance,'chuffed')
-        print(getattr(solution,'solution'))
+    # for instance in instances:
+    #     print(f'Solving {instance[len(instances_folder)+1:]}...')
+    #     solution = solve_mzn(mzn_file, instance,'chuffed')
+    #     print()
+    #     # print(getattr(solution,'statistics'))
