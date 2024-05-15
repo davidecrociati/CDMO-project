@@ -35,15 +35,13 @@ def launch_CP(instances:list,model:str='model.mzn',solver:str='chuffed',params:d
         
         solution = solve_mzn(model, instance,solver,params)
         stats = getattr(solution,'statistics')
-        
-        # TODO : scegliere tra 'flatTime' , 'time' , 'initTime' , 'solveTime' , 'optTime'
-        execTime = stats['time'] 
+        execTime = stats['time'] # TODO : scegliere tra 'flatTime' , 'time' , 'initTime' , 'solveTime' , 'optTime'
         
         results[instance]= {
             "time" : execTime,
             "optimal" : (execTime==300), # TODO : parametrizzabile ?
             "obj" : stats['objective'],
-            "sol" : str(solution)
+            "sol" : str(solution) # output del modello (da fare su una riga sola)
         }
         
         print(results[instance])
