@@ -58,6 +58,9 @@ array[COURIERS] of var DISTANCE:distances_traveled;
 constraint forall(c in COURIERS)(
   distances_traveled[c] = sum(j in NODES)(distances[stops[c,j], stops[c,j+1]])
 );
+
+
+
 % minimize the optimization variable
 var DISTANCE:longest_trip;
 constraint longest_trip= max(distances_traveled);
