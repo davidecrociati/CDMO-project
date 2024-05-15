@@ -1,0 +1,10 @@
+num_couriers=2;
+num_items=3;
+courier_sizes=[100,100];
+item_sizes=[1,1,1];
+distances=[|0, 2, 20, 20,
+|20, 0, 3, 2, 
+|20, 20, 0, 2, 
+|2, 20, 10, 0|];
+lower_bound=0;
+upper_bound=100;

@@ -23,7 +23,12 @@ def find_upper_bound(data):
     return sum([max(r) for r in data])
 
 def find_lower_bound(data):
-    return 0
+    max=data[-1][0]+data[0][-1]
+    for i in range(1,len(data)):
+        aux=data[-1][i]+data[i][-1]
+        if aux>max:
+            max=aux
+    return max
 
 def write_new_content(data):
     content = ''

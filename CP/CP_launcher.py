@@ -41,10 +41,13 @@ if __name__=='__main__':
     os.chdir(script_dir)
 
     instances_folder='../instances_dzn'
+    # instances_folder='.'
     instances=[instances_folder+'/'+instance for instance in os.listdir(instances_folder) if instance.endswith('.dzn')]
     mzn_file = 'model.mzn'
+    mzn_file = 'model_drunky.mzn'
+    # mzn_file = 'working_solver.mzn'
 
     for instance in instances[:1]:
         print(f'Solving {instance[len(instances_folder)+1:]}...')
         solution = solve_mzn(mzn_file, instance,'chuffed')
-        print(solution)
+        print(getattr(solution,'solution'))
