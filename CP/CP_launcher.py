@@ -35,18 +35,11 @@ def launch_CP(instances:list,model:str='model.mzn',solver:str='chuffed',params:d
         
         solution = solve_mzn(model, instance,solver,params)
         stats = getattr(solution,'statistics')
-        # TODO : SCEGLIERE TRA 
-        execTime = stats['time'].total_seconds() 
-        # • 'flatTime' --> dall'inizio alla fine dell'esecuzione del solutore, senza tener conto del tempo di inizializzazione 
-        # • 'time' --> tempo totale trascorso per l'intero processo
-        # • 'initTime' --> tempo impiegato per inizializzare il problema
-        # • 'solveTime' --> tempo impiegato specificamente per risolvere il problema, escludendo il tempo di inizializzazione e di eventuale ottimizzazione
-        # • 'optTime' --> tempo impiegato per l'ottimizzazione
-        # ==> time = initTime + (flatTime) = initTime + (solveTime + optTime)
+        execTime = stats['solveTime'].total_seconds() 
         
         results[instance]= {
             "time" : execTime,
-            "optimal" : (execTime==300), # TODO : parametrizzabile ?
+            "optimal" : (execTime==300),
             "obj" : stats['objective'],
             "sol" : str(solution) # output del modello (da fare su una riga sola)
         }
@@ -68,9 +61,3 @@ if __name__=='__main__':
     # mzn_file = 'working_solver.mzn'
     
     print(launch_CP(instances))
-
-    # for instance in instances:
-    #     print(f'Solving {instance[len(instances_folder)+1:]}...')
-    #     solution = solve_mzn(mzn_file, instance,'chuffed')
-    #     print()
-    #     # print(getattr(solution,'statistics'))
