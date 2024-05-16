@@ -56,6 +56,7 @@ constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 constraint forall(i in COURIERS)(
     count(item_responsability, i) > 0
 );
+
 % channeling stops and item_responsability
 constraint forall(j in ITEMS)(
     forall(i in COURIERS)(
@@ -80,8 +81,7 @@ constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
   int_search(stops,first_fail, indomain_min),
   int_search(item_responsability,first_fail, indomain_min)
-])
-  minimize(longest_trip);
+])minimize(longest_trip);
 
 
 output ["Stops:\n"] ++
@@ -99,5 +99,7 @@ output ["Itinerary:\n"] ++
         else "" endif
         |i in COURIERS, j in 1..num_items+2
        ];
+       
+output["Obj: "++show(longest_trip)++"\n"];
 
-output["Picks:\n"]++[show(item_responsability)]
+output["Picks:\n"]++[show(item_responsability)];

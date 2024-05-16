@@ -1,4 +1,5 @@
 import os
+import time
 
 def insert_commas(string:str):
     '''
@@ -81,7 +82,9 @@ if __name__=='__main__':
             file_path = os.path.join(instances_folder, file_name)
 
             data=read_file(file_path)
+            start=time.time()
             formatted_data=write_new_content(data)
+            print(time.time()-start)
 
             dzn_file_name=DZN_instances_folder+'/'+file_name[:-4]
             save_dzn_file(dzn_file_name,formatted_data)
