@@ -15,7 +15,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params:dict={}):
 
     return result
 
-def launch_CP(instances:list,model:str='model.mzn',solver:str='chuffed',params:dict={}):
+def launch_CP(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict={}):
     '''
     Parameters:
     instances (list): A list of file paths to the instance files to be solved.

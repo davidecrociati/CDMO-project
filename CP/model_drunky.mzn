@@ -53,6 +53,9 @@ array[ITEMS] of var COURIERS:item_responsability; % wich courier delivers item k
 % capacity constraint. It also ensures uniqueness of the items delivers
 constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 
+constraint forall(i in COURIERS)(
+    count(item_responsability, i) > 0
+);
 % channeling stops and item_responsability
 constraint forall(j in ITEMS)(
     forall(i in COURIERS)(
