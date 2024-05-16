@@ -1,21 +1,22 @@
 from minizinc import Instance, Model, Solver
 from datetime import timedelta
 import os
+import math
 
-def solve_mzn(mzn_file, dzn_file,solver,params:dict={}):
+
+def solve_mzn(mzn_file, dzn_file,solver,params):
     model = Model(mzn_file)
-
     model.add_file(dzn_file)
 
     solver = Solver.lookup(solver)
-
     instance = Instance(solver, model)
     # TODO fargli passare i parametri (quali ?)
-    result = instance.solve(timeout=timedelta(seconds=15))
+
+    result = instance.solve(**params)
 
     return result
 
-def launch_CP(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict={}):
+def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict=None,verbose=False):
     '''
     Parameters:
     instances (list): A list of file paths to the instance files to be solved.
@@ -26,31 +27,39 @@ def launch_CP(instances:list, model:str='model.mzn', solver:str='chuffed', param
     Returns:
     dict: A dictionary where keys are instance file paths and values are the solutions.
     '''
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(this_dir)
 
-    results={}
+    if params==None:
+        params={'timeout':timedelta(seconds=15)}
+
+    results=[]
     for instance in instances[:]:
-        print(f"Solving {instance} ...")
+        if verbose:print(f"Solving {instance} ...")
         
-        solution = solve_mzn(model, instance,solver,params)
+        solution = solve_mzn(model, '../'+instance,solver,params)
         stats = getattr(solution,'statistics')
-        execTime = stats['solveTime'].total_seconds() 
+        execTime = math.floor(stats['solveTime'].total_seconds())
         
-        results[instance]= {
+        results.append({
             "time" : execTime,
-            "optimal" : (execTime==300),
+            "optimal" : (execTime<params['timeout'].total_seconds()),
             "obj" : stats['objective'],
-            "sol" : str(solution) # output del modello (da fare su una riga sola)
-        }
+            "sol" : str(solution) 
+            # output del modello (da fare su una riga sola)
+            # ^ DIPENDE DA COME LEGGE I FILE IL CHECKER
+            # ^ SE CI STA UN QUALCOSA CHE LEGGE I JSON BENE 
+            # ^ NON PENSO SIA NECESSARIO
+        })
         
-        print(results[instance])
+        if verbose:print(results[-1])
         
     return results
 
 if __name__=='__main__':
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
+    # used for testing purposes
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(this_dir)
 
     instances_folder='../instances_dzn'
     # instances_folder='.'
@@ -60,4 +69,4 @@ if __name__=='__main__':
     mzn_file = 'model_drunky.mzn'
     # mzn_file = 'working_solver.mzn'
     
-    print(launch_CP(instances))
+    print(launch(instances[:1]))

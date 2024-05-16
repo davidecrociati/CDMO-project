@@ -1,0 +1,8 @@
+{
+    "symmetry_chuffed": {
+        "time": 0,
+        "optimal": true,
+        "obj": 14,
+        "sol": "Stops:\n7, 1, 1, 3, 4, 4, 4, 7, \n7, 7, 2, 2, 2, 5, 6, 7, \n\nItinerary:\n1, 1, 3, 4, 4, 4,  --> Distance=13\n2, 2, 2, 5, 6,  --> Distance=14\nObj: 14\nPicks:\n[1, 2, 1, 1, 2, 2]"
+    }
+}

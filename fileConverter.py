@@ -2,9 +2,6 @@ import os
 import time
 
 def insert_commas(string:str):
-    '''
-	From a string in the form '2 3 4 3 4 4 0' returns a single string '2, 3, 4, 3, 4, 4, 0'
-    '''
     elements = string.split()
     formatted_string = ", ".join(elements)
     return formatted_string
