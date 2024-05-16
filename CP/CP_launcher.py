@@ -35,7 +35,14 @@ def launch_CP(instances:list,model:str='model.mzn',solver:str='chuffed',params:d
         
         solution = solve_mzn(model, instance,solver,params)
         stats = getattr(solution,'statistics')
-        execTime = stats['time'] # TODO : scegliere tra 'flatTime' , 'time' , 'initTime' , 'solveTime' , 'optTime'
+        # TODO : SCEGLIERE TRA 
+        execTime = stats['time'].total_seconds() 
+        # • 'flatTime' --> dall'inizio alla fine dell'esecuzione del solutore, senza tener conto del tempo di inizializzazione 
+        # • 'time' --> tempo totale trascorso per l'intero processo
+        # • 'initTime' --> tempo impiegato per inizializzare il problema
+        # • 'solveTime' --> tempo impiegato specificamente per risolvere il problema, escludendo il tempo di inizializzazione e di eventuale ottimizzazione
+        # • 'optTime' --> tempo impiegato per l'ottimizzazione
+        # ==> time = initTime + (flatTime) = initTime + (solveTime + optTime)
         
         results[instance]= {
             "time" : execTime,
