@@ -14,4 +14,5 @@ Magari poi lo chiamiamo _README.md_
 
 ## MIP
 
-BISOGNA CONTARE IL TEMPO DI COMPUTAZIONE DI LOWER E UPPER BOUND
+- BISOGNA CONTARE IL TEMPO DI COMPUTAZIONE DI LOWER E UPPER BOUND
+- Bisogna rendere interattiva l'interfaccia docker
