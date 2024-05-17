@@ -21,3 +21,13 @@ def saveJSON(JSONList,folder,format=False):
         with open(filename, 'w') as file:
             indent= None if not format else 4
             json.dump(results, file, indent=indent)
+
+def tolist(solution):
+    import ast
+    '''
+	solution is a string [[i1,i2],[i3,i4,i5],...[]]
+
+    output must be that string parsed to a list
+    '''
+    return []
+    return ast.literal_eval(solution)

@@ -2,13 +2,15 @@ from minizinc import Instance, Model, Solver
 from datetime import timedelta
 import os
 import math
-
+from utils import *
 
 def solve_mzn(mzn_file, dzn_file,solver,params):
     model = Model(mzn_file)
     model.add_file(dzn_file)
-
+    # solver=Solver(stdFlags=['-f'])
     solver = Solver.lookup(solver)
+    print(solver)
+    # solver['stdFlags']=
     instance = Instance(solver, model)
     # TODO fargli passare i parametri (quali ?)
 
@@ -31,7 +33,7 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
     os.chdir(this_dir)
 
     if params==None:
-        params={'timeout':timedelta(seconds=15)}
+        params={'timeout':timedelta(seconds=300)}
 
     results=[]
     for instance in instances[:]:
@@ -39,20 +41,26 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
         
         solution = solve_mzn(model, '../'+instance,solver,params)
         stats = getattr(solution,'statistics')
-        execTime = math.floor(stats['solveTime'].total_seconds())
-        
+        try:
+            execTime = math.floor(stats['time'].total_seconds())
+            obj=stats['objective']
+        except KeyError:
+            print(solution)
+            # execTime=params['timeout'].total_seconds()
+        if obj==-1:
+            obj='n/a'
         results.append({
             "time" : execTime,
             "optimal" : (execTime<params['timeout'].total_seconds()),
-            "obj" : stats['objective'],
-            "sol" : str(solution) 
+            "obj" : obj,
+            "sol" : tolist(solution)
             # output del modello (da fare su una riga sola)
             # ^ DIPENDE DA COME LEGGE I FILE IL CHECKER
             # ^ SE CI STA UN QUALCOSA CHE LEGGE I JSON BENE 
             # ^ NON PENSO SIA NECESSARIO
         })
         
-        if verbose:print(results[-1])
+        if verbose:print(stats)
         
     return results
 

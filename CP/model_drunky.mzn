@@ -84,22 +84,22 @@ solve :: seq_search([
 ])minimize(longest_trip);
 
 
-output ["Stops:\n"] ++
-       [ show(stops[i,j])++ ", " ++ 
-         if j == num_items+2 then "\n" else "" endif |
-         i in COURIERS, j in 1..num_items+2 ]++["\n"];
+% output ["Stops:\n"] ++
+%        [ show(stops[i,j])++ ", " ++ 
+%          if j == num_items+2 then "\n" else "" endif |
+%          i in COURIERS, j in 1..num_items+2 ]++["\n"];
 
-output ["Itinerary:\n"] ++
-       [ 
-        % if j==1 then "Start, " else "" endif ++
-        if fix(stops[i,j])==default_val then "" else show(stops[i,j])++", " endif ++ 
-        if j == num_items+2 then 
-          % "End"++
-          " --> Distance="++show(distances_traveled[i])++"\n" 
-        else "" endif
-        |i in COURIERS, j in 1..num_items+2
-       ];
+% output ["Itinerary:\n"] ++
+%        [ 
+%         % if j==1 then "Start, " else "" endif ++
+%         if fix(stops[i,j])==default_val then "" else show(stops[i,j])++", " endif ++ 
+%         if j == num_items+2 then 
+%           % "End"++
+%           " --> Distance="++show(distances_traveled[i])++"\n" 
+%         else "" endif
+%         |i in COURIERS, j in 1..num_items+2
+%        ];
        
-output["Obj: "++show(longest_trip)++"\n"];
+% output["Obj: "++show(longest_trip)++"\n"];
 
-output["Picks:\n"]++[show(item_responsability)];
+% output["Picks:\n"]++[show(item_responsability)];
