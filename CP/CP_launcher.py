@@ -43,21 +43,24 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
         try:
             obj=stats['objective']
         except KeyError:
-            print(solution)
+            obj=-1
+            # print(solution,type(solution),str(solution))
         if obj==-1:
             obj='n/a'
+        if str(solution)!='None':
+            solution=tolist(solution)
         results.append({
             "time" : math.floor(execTime),
             "optimal" : (execTime<params['timeout'].total_seconds()),
             "obj" : obj,
-            "sol" : tolist(solution)
+            "sol" : solution
             # output del modello (da fare su una riga sola)
             # ^ DIPENDE DA COME LEGGE I FILE IL CHECKER
             # ^ SE CI STA UN QUALCOSA CHE LEGGE I JSON BENE 
             # ^ NON PENSO SIA NECESSARIO
         })
         
-        if verbose:print(stats)
+        # if verbose:print(stats)
         
     return results
 
