@@ -1,8 +1,1 @@
-{
-    "symmetry_chuffed": {
-        "time": 0,
-        "optimal": true,
-        "obj": 244,
-        "sol": []
-    }
-}
+{"symmetry_chuffed": {"time": 0, "optimal": true, "obj": 244, "sol": [[1], [2, 12], [3, 11], [4], [5], [6], [7], [8], [10, 13], [9]]}}

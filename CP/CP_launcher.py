@@ -12,7 +12,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params):
     instance = Instance(solver, model)
     # TODO fargli passare i parametri (quali ?)
 
-    result = instance.solve(**params)
+    result = instance.solve(**params,free_search=True)
 
     return result
 

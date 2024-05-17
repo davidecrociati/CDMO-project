@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 import CP.CP_launcher as CP
-import CP.CP_launcher_bash as CP_bash
+# import CP.CP_launcher_bash as CP_bash
 import SAT.SAT_launcher as SAT
 import MIP.MIP_launcher as MIP
 import SMT.SMT_launcher as MST
@@ -39,11 +39,11 @@ if __name__=='__main__':
     for model,name in CP_models.items():
         for solver in CP_solvers:
             print(f'Solving CP:{name}-{solver}...')
-            CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params,verbose=True)
+            CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params,verbose=False)
             CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
     # print(CP_JSON)
-    saveJSON(CP_JSON,RESULTS_FOLDER+'/CP/',format=True)
+    saveJSON(CP_JSON,RESULTS_FOLDER+'/CP/',format=False)
 
     # ============
     # |    SAT   |

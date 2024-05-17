@@ -23,11 +23,15 @@ def saveJSON(JSONList,folder,format=False):
             json.dump(results, file, indent=indent)
 
 def tolist(solution):
-    import ast
     '''
 	solution is a string [[i1,i2],[i3,i4,i5],...[]]
 
     output must be that string parsed to a list
     '''
-    return []
-    return ast.literal_eval(solution)
+    rows=str(solution).split('\n')
+    rows=[r.split(',')[:-1] for r in rows]
+    rows=[[int(e) for e in r]for r in rows]
+    default=rows[0][0]
+    rows=[list(dict.fromkeys(r)) for r in rows]
+    rows=[[e for e in r if e!=default] for r in rows]
+    return rows
