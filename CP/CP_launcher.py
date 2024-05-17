@@ -3,14 +3,12 @@ from datetime import timedelta
 import os
 import math
 from utils import *
+import time
 
 def solve_mzn(mzn_file, dzn_file,solver,params):
     model = Model(mzn_file)
     model.add_file(dzn_file)
-    # solver=Solver(stdFlags=['-f'])
     solver = Solver.lookup(solver)
-    print(solver)
-    # solver['stdFlags']=
     instance = Instance(solver, model)
     # TODO fargli passare i parametri (quali ?)
 
@@ -38,19 +36,18 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
     results=[]
     for instance in instances[:]:
         if verbose:print(f"Solving {instance} ...")
-        
+        execTime=time.time()
         solution = solve_mzn(model, '../'+instance,solver,params)
+        execTime=time.time()-execTime
         stats = getattr(solution,'statistics')
         try:
-            execTime = math.floor(stats['time'].total_seconds())
             obj=stats['objective']
         except KeyError:
             print(solution)
-            # execTime=params['timeout'].total_seconds()
         if obj==-1:
             obj='n/a'
         results.append({
-            "time" : execTime,
+            "time" : math.floor(execTime),
             "optimal" : (execTime<params['timeout'].total_seconds()),
             "obj" : obj,
             "sol" : tolist(solution)
