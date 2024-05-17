@@ -16,7 +16,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params):
 
     return result
 
-def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict=None,verbose=False):
+def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict=None,verbose=True):
     '''
     Parameters:
     instances (list): A list of file paths to the instance files to be solved.
@@ -38,7 +38,9 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
         if verbose:print(f"Solving {instance} ...")
         execTime=time.time()
         solution = solve_mzn(model, '../'+instance,solver,params)
-        execTime=time.time()-execTime
+        execTime=math.floor(time.time()-execTime)
+        if execTime>params['timeout'].total_seconds():
+            execTime=params['timeout'].total_seconds()
         stats = getattr(solution,'statistics')
         try:
             obj=stats['objective']
@@ -50,14 +52,10 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
         if str(solution)!='None':
             solution=tolist(solution)
         results.append({
-            "time" : math.floor(execTime),
+            "time" : execTime,
             "optimal" : (execTime<params['timeout'].total_seconds()),
             "obj" : obj,
             "sol" : solution
-            # output del modello (da fare su una riga sola)
-            # ^ DIPENDE DA COME LEGGE I FILE IL CHECKER
-            # ^ SE CI STA UN QUALCOSA CHE LEGGE I JSON BENE 
-            # ^ NON PENSO SIA NECESSARIO
         })
         
         # if verbose:print(stats)

@@ -24,11 +24,6 @@ array[COURIERS, 1..num_items+2] of var NODES: stops;
 
 % constraints for the decision variable 
 
-% all items get delivered once 
-% constraint forall(i in ITEMS)(
-%   count(stops,i,1)
-% );
-
 % couriers have to start and end in default_val
 constraint forall(i in COURIERS)(
     stops[i,1]=default_val
@@ -37,36 +32,42 @@ constraint forall(i in COURIERS)(
     stops[i,num_items+2]=default_val
 );
 
-% SIMMETRIES
-% to avoid permutations we must ensure that there are no adjacent 'default_val' except 
-% if they go until the end of the row
-% constraint forall(i in COURIERS)(
-%   forall(j in NODES)(
-%     if stops[i,j]==stops[i,j+1]then
-%       count(slice_1d(row(stops,i),[j+2..num_items+2],1..num_items+1-j),stops[i,j],num_items+1-j)
-%     else true
-%     endif
-%   )
-% );
 
 array[ITEMS] of var COURIERS:item_responsability; % wich courier delivers item k
 % capacity constraint. It also ensures uniqueness of the items delivers
 constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 
+% each courier delivers something
 constraint forall(i in COURIERS)(
     count(item_responsability, i) > 0
 );
 
-% channeling stops and item_responsability
-constraint forall(j in ITEMS)(
-    forall(i in COURIERS)(
-        if i==item_responsability[j] then
-            stops[i,j+1]=j
-        else stops[i,j+1]=stops[i,j] endif
-    )
+% link stops and item_responsability
+constraint forall(i in ITEMS)(
+  forall(c in COURIERS)(
+    if c==item_responsability[i] then
+    member(row(stops,c),i) 
+    else stops[c,i+1]=stops[c,i] endif
+  )
 );
 
+% calculate the load for each courier
+array[COURIERS] of var 0..max(courier_sizes):courier_loads;
 
+constraint forall(c in COURIERS)(
+  courier_loads[c]=sum(i in ITEMS where item_responsability[i]==c)(item_sizes[i])
+);
+
+% link courier_loads and stops to carry the same weight
+constraint forall(c in COURIERS)(
+  courier_loads[c]=sum(i in ITEMS where member(row(stops,c),i))(item_sizes[i])
+);
+
+% if a courier has bigger capacity, it will deliver more weight
+constraint forall(c in 1..num_couriers-1)(
+  if courier_sizes[c]>courier_sizes[c+1] then
+  courier_loads[c]>courier_loads[c+1] endif
+);
 
 array[COURIERS] of var 0..upper_bound:distances_traveled;
 
@@ -79,8 +80,8 @@ constraint forall(c in COURIERS)(
 var lower_bound..upper_bound:longest_trip;
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
-  int_search(stops,first_fail, indomain_min),
-  int_search(item_responsability,first_fail, indomain_min)
+  int_search(stops,indomain_random, indomain_min),
+  int_search(item_responsability,indomain_random, indomain_min)
 ])minimize(longest_trip);
 
 
@@ -100,7 +101,7 @@ solve :: seq_search([
 %         |i in COURIERS, j in 1..num_items+2
 %        ];
        
-% output["Obj: "++show(longest_trip)++"\n"];
+  output["Obj: "++show(longest_trip)++"\n"];
 
 % output["Picks:\n"]++[show(item_responsability)];
 

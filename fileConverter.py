@@ -28,6 +28,10 @@ def find_lower_bound(data):
             max=aux
     return max
 
+def find_min_load(data:str):
+    loads=[int(e) for e in data.split()]
+    return min(loads)
+
 def write_new_content(data):
     content = ''
     bounds = matrix_parser(data[4:]) 
@@ -43,6 +47,8 @@ def write_new_content(data):
     content+='|];\n'
     content += 'lower_bound='+str(find_lower_bound(bounds))+';\n'
     content += 'upper_bound='+str(find_upper_bound(bounds))+';\n'
+    content+= 'min_load='+find_min_load(data[3])
+    content+= 'max_load='+find_max_load(data[3])
     return content
 
 def read_file(path):
@@ -70,7 +76,7 @@ if __name__=='__main__':
     os.chdir(script_dir)
 
     instances_folder = "instances"
-    DZN_instances_folder = "instances_dzn"
+    DZN_instances_folder = "instances_dzn_loads"
     os.makedirs(DZN_instances_folder, exist_ok=True)
     file_names = os.listdir(instances_folder)
         

@@ -39,7 +39,7 @@ if __name__=='__main__':
     for model,name in CP_models.items():
         for solver in CP_solvers:
             print(f'Solving CP:{name}-{solver}...')
-            CP_results=CP.launch(INSTANCES,model,solver,CP_params,verbose=True)
+            CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params)
             CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
     # print(CP_JSON)
