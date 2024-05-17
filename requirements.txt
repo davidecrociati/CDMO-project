@@ -1,1 +1,1 @@
-pyzmn
+minizinc==0.9.0

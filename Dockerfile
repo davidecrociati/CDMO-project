@@ -1,9 +1,17 @@
 FROM minizinc/minizinc:latest
 
-# WORKDIR ./path_directory (./project)
+WORKDIR ./project
 
 COPY . .
 
-# RUN (inizializzazione, installazione dipendenze e librerie)
+RUN apt-get update 
+RUN apt-get install -y python3 
+RUN apt-get install -y python3-pip 
+RUN apt-get install -y minizinc 
 
-# CMD (comandi da eseguire per lanciare le varie parti del progetto)
+# FIXME : Non riesce a scaricare i moduli tramite equirements
+RUN python3-pip install -r requirements.txt 
+# CMD pip install -r requirements.txt --break-system-packages  <------ alternativa (bruttina)
+
+# Per automatizzare la procedura magari fare uno script launcher.sh
+CMD python3 CP/CP_launcher.py
