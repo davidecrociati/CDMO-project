@@ -1,16 +1,15 @@
 from minizinc import Instance, Model, Solver
 from datetime import timedelta
-import os
-import math
 from utils import *
+import math
 import time
+import os
 
 def solve_mzn(mzn_file, dzn_file,solver,params):
     model = Model(mzn_file)
     model.add_file(dzn_file)
     solver = Solver.lookup(solver)
     instance = Instance(solver, model)
-    # TODO fargli passare i parametri (quali ?)
 
     result = instance.solve(**params)
 
