@@ -28,10 +28,13 @@ def tolist(solution):
 
     output must be that string parsed to a list
     '''
-    rows=str(solution).split('\n')
-    rows=[r.split(',')[:-1] for r in rows]
-    rows=[[int(e) for e in r]for r in rows]
-    default=rows[0][0]
-    rows=[list(dict.fromkeys(r)) for r in rows]
-    rows=[[e for e in r if e!=default] for r in rows]
-    return rows
+    # rows=str(solution).split('\n')
+    # rows=[r.split(',')[:-1] for r in rows]
+    # rows=[[int(e) for e in r]for r in rows]
+    # default=rows[0][0]
+    # rows=[list(dict.fromkeys(r)) for r in rows]
+    # rows=[[e for e in r if e!=default] for r in rows]
+    # return rows
+    default=solution[0][0]
+    solution=[list(dict.fromkeys(r))[1:] for r in solution]
+    return solution

@@ -16,7 +16,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params):
 
     return result
 
-def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict=None,verbose=True):
+def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:dict=None,verbose=False):
     '''
     Parameters:
     instances (list): A list of file paths to the instance files to be solved.
@@ -35,30 +35,28 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
 
     results=[]
     for instance in instances[:]:
-        if verbose:print(f"Solving {instance} ...")
+        print(f"Solving {instance} ...")
         execTime=time.time()
         solution = solve_mzn(model, '../'+instance,solver,params)
         execTime=math.floor(time.time()-execTime)
+        if verbose:print(solution,getattr(solution,'statistics'))
         if execTime>params['timeout'].total_seconds():
             execTime=params['timeout'].total_seconds()
-        stats = getattr(solution,'statistics')
         try:
-            obj=stats['objective']
+            obj=solution['objective']
         except KeyError:
             obj=-1
             # print(solution,type(solution),str(solution))
         if obj==-1:
             obj='n/a'
         if str(solution)!='None':
-            solution=tolist(solution)
+            solution=tolist(solution['stops'])
         results.append({
             "time" : execTime,
             "optimal" : (execTime<params['timeout'].total_seconds()),
             "obj" : obj,
             "sol" : solution
         })
-        
-        # if verbose:print(stats)
         
     return results
 

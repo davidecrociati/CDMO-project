@@ -1,1 +1,58 @@
-{"symmetry_chuffed": {"time": 0, "optimal": true, "obj": 226, "sol": [[1, 4], [2, 7], [3, 9], [5], [6], [8]]}}
+{
+ "symmetry_chuffed": {
+  "time": 0,
+  "optimal": true,
+  "obj": 226,
+  "sol": [
+   [
+    1,
+    4
+   ],
+   [
+    2,
+    7
+   ],
+   [
+    3,
+    9
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ],
+   [
+    8
+   ]
+  ]
+ },
+ "symmetry_gecode": {
+  "time": 0,
+  "optimal": true,
+  "obj": 226,
+  "sol": [
+   [
+    1
+   ],
+   [
+    2,
+    7
+   ],
+   [
+    3,
+    9
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6,
+    8
+   ]
+  ]
+ }
+}
