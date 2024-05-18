@@ -47,8 +47,8 @@ def write_new_content(data):
     content+='|];\n'
     content += 'lower_bound='+str(find_lower_bound(bounds))+';\n'
     content += 'upper_bound='+str(find_upper_bound(bounds))+';\n'
-    content+= 'min_load='+find_min_load(data[3])
-    content+= 'max_load='+find_max_load(data[3])
+    # content+= 'min_load='+find_min_load(data[3])
+    # content+= 'max_load='+find_max_load(data[3])
     return content
 
 def read_file(path):
