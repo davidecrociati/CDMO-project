@@ -12,7 +12,7 @@ def solve_mzn(mzn_file, dzn_file,solver,params):
     instance = Instance(solver, model)
     # TODO fargli passare i parametri (quali ?)
 
-    result = instance.solve(**params,free_search=True)
+    result = instance.solve(**params)
 
     return result
 
@@ -31,7 +31,8 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
     os.chdir(this_dir)
 
     if params==None:
-        params={'timeout':timedelta(seconds=300)}
+        params={'timeout':timedelta(seconds=300),
+                'free_search':False}
 
     results=[]
     for instance in instances[:]:

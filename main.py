@@ -33,7 +33,8 @@ if __name__=='__main__':
         'chuffed',
         'gecode'
         ]
-    CP_params={'timeout':timedelta(seconds=300)}
+    CP_params={'timeout':timedelta(seconds=300),
+                'free_search':False} # those are default
 
     CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
     for model,name in CP_models.items():
