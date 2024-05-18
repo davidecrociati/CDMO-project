@@ -25,7 +25,7 @@ if __name__=='__main__':
     # |    CP    |
     # ============
     CP_models={
-        'model_drunky.mzn': 'symmetry',
+        'model_drunky_ricominciamo.mzn': 'symmetry',
         
         # 'model.mzn': 'old'
         }
@@ -33,13 +33,13 @@ if __name__=='__main__':
         'chuffed',
 
         ]
-    CP_params={'timeout':timedelta(seconds=10)}
+    CP_params={'timeout':timedelta(seconds=300)}
 
     CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
     for model,name in CP_models.items():
         for solver in CP_solvers:
             print(f'Solving CP:{name}-{solver}...')
-            CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params)
+            CP_results=CP.launch(INSTANCES,model,solver,CP_params)
             CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
     # print(CP_JSON)
