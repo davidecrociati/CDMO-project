@@ -18,6 +18,9 @@ is_in() {
 valid_solvers=("chuffed" "gecode")
 valid_approaches=("CP" "MIP" "SAT" "SMT")
 
+solvers_names=$(echo $(IFS=,; echo "${valid_solvers[*]}"))
+approaches_names=$(echo $(IFS=,; echo "${valid_approaches[*]}"))
+
 # Print options 
 echo "In order to execute the models, choose at least one element for category:"
 echo "1) Instances: inst1, ..., inst21"
@@ -27,38 +30,41 @@ echo "3) Approaches: [CP, MIP, SAT, SMT]"
 while true; do
 
     # Ask for instances + checks
-    echo "insert instance/s number/s among 1 and 21: "
+    echo "Insert instance/s number/s among 1 and 21: "
     read -a instances
     for i in "${instances[@]}"; do 
         if ! [[ "$i" -ge 1 && "$i" -le 21 ]]; then
             echo "Invalid instance: $i."
+            echo "Insert instance/s number/s among 1 and 21: "
             read -a instances
             continue 2
         fi
     done
 
-    echo "insert solver/s name (choose among chuffed, gecode): " # TODO : tenere aggiornato
+    echo "Insert solver/s name (choose among [$solvers_names]): "
     read -a solvers
     for s in "${solvers[@]}"; do 
         if ! is_in "$s" "${valid_solvers[@]}"; then
             echo "Invalid solver: $s."
+            echo "Insert solver/s name (choose among [$solvers_names]): "
             read -a solvers
             continue 2
         fi
     done
     
-    echo "insert approach/es name/s (choose among CP, MIP, SAT, SMT): " # TODO : tenere aggiornato
-    read -a approachs
+    echo "Insert approach/es name/s (choose among [$approaches_names]): "
+    read -a approaches
     for a in "${approaches[@]}"; do
         if ! is_in "$a" "${valid_approaches[@]}"; then
             echo "Invalid approach: $a."
-            read -a approachs
+            echo "Insert approach/es name/s (choose among [$approaches_names]): "
+            read -a approaches
             continue 2
         fi
     done
 
     # Execute instances
-    for method in "${approachs[@]}"; do
+    for method in "${approaches[@]}"; do
         for solver in "${solvers[@]}"; do
             for instance in "${instances[@]}"; do
                 echo "Executing inst$instance by $solver with $method..."
