@@ -28,7 +28,7 @@ array[COURIERS] of var 0..upper_bound:distances_traveled;
 
 % constraints for the decision variable 
 
-% capacity constraint. It also ensures uniqueness of the items delivers
+% capacity constraint. It also ensures uniqueness of the items delivered
 constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 
 % couriers have to start and end in default_val

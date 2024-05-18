@@ -35,6 +35,8 @@ def tolist(solution):
     # rows=[list(dict.fromkeys(r)) for r in rows]
     # rows=[[e for e in r if e!=default] for r in rows]
     # return rows
-    default=solution[0][0]
+    # default=solution[0][0]
+
+    # first value is the default_value, I hope that this holds always
     solution=[list(dict.fromkeys(r))[1:] for r in solution]
     return solution

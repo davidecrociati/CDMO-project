@@ -31,13 +31,15 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
     os.chdir(this_dir)
 
     if params==None:
-        params={'timeout':timedelta(seconds=300),
-                'free_search':False}
+        params={
+            'timeout':timedelta(seconds=300),
+            'free_search':False
+            }
 
     results=[]
-    for instance in instances[:]:
-        print(f"Solving {instance} ...")
+    for instance in instances:
         execTime=time.time()
+        print(f"Solving {instance} ...")
         solution = solve_mzn(model, '../'+instance,solver,params)
         execTime=math.floor(time.time()-execTime)
         if verbose:print(solution,getattr(solution,'statistics'))
