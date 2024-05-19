@@ -12,15 +12,17 @@ INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in os.listdir(INSTANCES_FOLDER) if instance.endswith('.dzn')]
 
 RESULTS_FOLDER='res'
-firstInstance=5
-lastInstance=10
+firstInstance=1
+lastInstance=1
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
 
-
+RUN_CP=False
+RUN_SAT=True
+CHECKER=False
 
 
 def main():
@@ -41,7 +43,6 @@ def main():
         'free_search':False
         } # those are default
 
-    RUN_CP=True
     if RUN_CP:
         CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
         for model,name in CP_models.items():
@@ -63,13 +64,12 @@ def main():
         }
     SAT_solvers=[
         'blank',
-        'gecode'
+        # 'gecode'
         ]
     SAT_params={
         'timeout':timedelta(seconds=300),
         } # those are default
 
-    RUN_SAT=True
 
     if RUN_SAT:
         SAT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
@@ -84,4 +84,4 @@ def main():
 
 if __name__=='__main__':
     main()
-    run_checker(firstInstance,lastInstance)
+    if CHECKER:run_checker(firstInstance,lastInstance)

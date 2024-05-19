@@ -21,7 +21,7 @@ def read_json_file(file_path):
 
 def main(args):
   '''
-  check_solution.py <input folder> <results folder>
+  check_solution.py <input folder> <results folder> [<first inst> <last inst>]
   '''
   #FIXME: Input folder contains the input files (in the format instXY.dat). 
   #       The results folder contains the .json file of each approach. 
@@ -29,8 +29,12 @@ def main(args):
   errors = []
   warnings = []  
   results_folder = args[2]
-  first = args[3]
-  last = args[4]
+  try:
+    first = args[3]
+    last = args[4]
+  except:
+    first=1
+    last=21
   for subfolder in os.listdir(results_folder):
     if subfolder.startswith('.'):
       # Skip hidden folders.

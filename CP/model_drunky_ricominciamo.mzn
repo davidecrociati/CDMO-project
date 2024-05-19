@@ -96,9 +96,9 @@ constraint forall(c in COURIERS)(
 % minimize the optimization variable
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
-  int_search([longest_trip],first_fail, indomain_min),
   int_search(stops,first_fail, indomain_min),
-  int_search(item_responsability,first_fail, indomain_min)
+  int_search(item_responsability,first_fail, indomain_min),
+  int_search([longest_trip],first_fail, indomain_min)
 ])minimize(longest_trip);
 
 

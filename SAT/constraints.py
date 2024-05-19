@@ -1,6 +1,19 @@
 from itertools import combinations
 from z3 import *
 
+# PROBLEM CONSTRAINTS
+def bin_packing(courier_sizes,item_resp,item_sizes):
+    constraints=[]
+    for i in range(len(item_sizes)):
+        constraints.append(exactly_one_seq(item_resp[i],f'item_{i+1}'))
+
+    print(constraints)
+    return And(*constraints)
+
+
+
+
+# DEFAULT CONSTRAINTS
 # For NAIVE PAIRWISE
 def at_least_one_np(bool_vars):
     return Or(bool_vars)
