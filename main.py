@@ -12,6 +12,14 @@ INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in os.listdir(INSTANCES_FOLDER) if instance.endswith('.dzn')]
 
 RESULTS_FOLDER='res'
+firstInstance=5
+lastInstance=10
+
+if firstInstance<0:
+    firstInstance=1
+if lastInstance>21:
+    lastInstance=21
+
 
 
 
@@ -25,8 +33,8 @@ def main():
         # 'model.mzn': 'old'
         }
     CP_solvers=[
+        'gecode',
         'chuffed',
-        'gecode'
         ]
     CP_params={
         'timeout':timedelta(seconds=300),
@@ -39,11 +47,11 @@ def main():
         for model,name in CP_models.items():
             for solver in CP_solvers:
                 print(f'Solving CP: {name}-{solver}...')
-                CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params,verbose=False)
+                CP_results=CP.launch(INSTANCES[firstInstance-1:lastInstance],model,solver,CP_params,verbose=False)
                 CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
         # print(CP_JSON)
-        saveJSON(CP_JSON,RESULTS_FOLDER+'/CP/',format=True)
+        saveJSON(CP_JSON,RESULTS_FOLDER+'/CP/',format=True,firstInstanceNumber=firstInstance)
 
     # ============
     # |    SAT   |
@@ -68,11 +76,12 @@ def main():
         for model,name in SAT_models.items():
             for solver in SAT_solvers:
                 print(f'Solving SAT: {name}-{solver}...')
-                SAT_results=SAT.launch(INSTANCES[:10],SAT_params,verbose=False)
+                SAT_results=SAT.launch(INSTANCES[firstInstance-1:lastInstance],SAT_params,verbose=False)
                 SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
 
         # print(SAT_JSON)
-        saveJSON(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True)
+        saveJSON(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
 
 if __name__=='__main__':
     main()
+    run_checker(firstInstance,lastInstance)

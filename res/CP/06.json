@@ -1,13 +1,11 @@
 {
-    "symmetry_chuffed": {
+    "symmetry_gecode": {
         "time": 0,
         "optimal": true,
         "obj": 322,
         "sol": [
             [
-                1,
-                8,
-                7
+                1
             ],
             [
                 2
@@ -16,17 +14,19 @@
                 3
             ],
             [
-                4
+                4,
+                7,
+                6
             ],
             [
                 5
             ],
             [
-                6
+                8
             ]
         ]
     },
-    "symmetry_gecode": {
+    "symmetry_chuffed": {
         "time": 0,
         "optimal": true,
         "obj": 322,

@@ -29,13 +29,15 @@ def main(args):
   errors = []
   warnings = []  
   results_folder = args[2]
+  first = args[3]
+  last = args[4]
   for subfolder in os.listdir(results_folder):
     if subfolder.startswith('.'):
       # Skip hidden folders.
       continue
     folder = results_folder + subfolder
     print(f'\nChecking results in {folder} folder')
-    for results_file in sorted(os.listdir(folder)):
+    for results_file in sorted(os.listdir(folder))[first-1:last]:
       if results_file.startswith('.'):
         # Skip hidden folders.
         continue

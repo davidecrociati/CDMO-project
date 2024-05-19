@@ -1,8 +1,10 @@
 from SAT.constraints import *
+from z3 import *
+
 
 def solve(instance_data):
     '''
-    instande data is the dict containing the variables of the 
+    instance data is the dict containing the variables of the 
     dzn file, with the same keys
 
         returns tuple objective:int,solution:list
@@ -16,4 +18,33 @@ def solve(instance_data):
     upper_bound = instance_data['upper_bound']
 
     solution = []
-    return -1, solution
+    obj = -1
+
+    s = Solver()
+
+    # setting up the variables
+    stops = [[[Bool(f'stops_{c}_{s}_{i}') for i in range(num_items+1)]
+            for s in range(num_items+2)] for c in range(num_couriers)]
+    item_resp = [[Bool(f"delivers_{i}_{c}") for c in range(num_couriers)] for i in range(num_items)]
+    distances_traveled=[] # distance traveled by each courier
+    # longest_trip=lower_bound # init it to lower bound
+    # assert longest_trip<=upper_bound # and bound it 
+
+
+    # adding the constraints
+    
+
+
+    # look for solutions
+    for objective in range(lower_bound,upper_bound+1):
+        # impose to solve for objective
+        if s.check==sat:
+            obj=objective
+            m=s.model()
+            solution=[] # assign the solution somehow, maybe with `m`
+            break
+
+    # if s.check()!=sat:
+    #     obj='unsat'
+
+    return obj, solution

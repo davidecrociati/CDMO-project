@@ -1,5 +1,5 @@
 {
-    "symmetry_chuffed": {
+    "symmetry_gecode": {
         "time": 0,
         "optimal": true,
         "obj": 206,
@@ -13,7 +13,7 @@
             ]
         ]
     },
-    "symmetry_gecode": {
+    "symmetry_chuffed": {
         "time": 0,
         "optimal": true,
         "obj": 206,
