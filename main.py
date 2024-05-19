@@ -4,11 +4,7 @@ import CP.CP_launcher as CP
 import SAT.SAT_launcher as SAT
 import MIP.MIP_launcher as MIP
 import SMT.SMT_launcher as MST
-
 from utils import *
-# deve eseguire cp_launcher.launch_CP con gli adeguati parametri
-# e poi potenzialmente prendere tutti i risultati e salvarli su re/CP/ ????
-# etc
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)

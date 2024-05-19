@@ -62,18 +62,18 @@ def launch(instances: list, model: str = 'model.mzn', solver: str = 'chuffed', p
     return results
 
 
-if __name__ == '__main__':
-    # used for testing purposes
-    # this_dir = os.path.dirname(os.path.abspath(__file__))
-    # os.chdir(this_dir)
+# if __name__ == '__main__':
+#     # used for testing purposes
+#     # this_dir = os.path.dirname(os.path.abspath(__file__))
+#     # os.chdir(this_dir)
 
-    instances_folder = '../instances_dzn'
-    # instances_folder='.'
-    instances = [instances_folder+'/'+instance for instance in os.listdir(
-        instances_folder) if instance.endswith('.dzn')]
-    instances.sort()
-    mzn_file = 'model.mzn'
-    mzn_file = 'model_drunky.mzn'
-    # mzn_file = 'working_solver.mzn'
+#     instances_folder = '../instances_dzn'
+#     # instances_folder='.'
+#     instances = [instances_folder+'/'+instance for instance in os.listdir(
+#         instances_folder) if instance.endswith('.dzn')]
+#     instances.sort()
+#     mzn_file = 'model.mzn'
+#     mzn_file = 'model_drunky.mzn'
+#     # mzn_file = 'working_solver.mzn'
 
-    print(launch(instances[:1]))
+#     print(launch(instances[:1]))

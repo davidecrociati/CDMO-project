@@ -17,8 +17,15 @@ def matrix_parser(string_matrix):
     
     return matrix
 
-def find_upper_bound(data):
-    return sum([max(r) for r in data])
+def find_upper_bound(distances,num_courier:int):
+    '''
+	the idea is to assign to every courier at least one item.
+    Then one couriers carries all the remaining items, in particular
+    the furthest.
+    '''
+    maximums=sorted(max(row) for row in distances)[num_courier-1:]
+
+    return sum(maximums)
 
 def find_lower_bound(data):
     max=data[-1][0]+data[0][-1]
@@ -46,7 +53,7 @@ def write_new_content(data):
     content=content[:-1]
     content+='|];\n'
     content += 'lower_bound='+str(find_lower_bound(bounds))+';\n'
-    content += 'upper_bound='+str(find_upper_bound(bounds))+';\n'
+    content += 'upper_bound='+str(find_upper_bound(bounds,int(data[0])))+';\n'
     # content+= 'min_load='+find_min_load(data[3])
     # content+= 'max_load='+find_max_load(data[3])
     return content
@@ -69,14 +76,12 @@ def save_dzn_file(filename, content):
     with open(filename+'.dzn', 'w') as file:
         file.write(content)
 
-if __name__=='__main__':
-
+def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-
     os.chdir(script_dir)
 
     instances_folder = "instances"
-    DZN_instances_folder = "instances_dzn_loads"
+    DZN_instances_folder = "instances_dzn"
     os.makedirs(DZN_instances_folder, exist_ok=True)
     file_names = os.listdir(instances_folder)
         
@@ -91,3 +96,7 @@ if __name__=='__main__':
 
             dzn_file_name=DZN_instances_folder+'/'+file_name[:-4]
             save_dzn_file(dzn_file_name,formatted_data)
+
+            
+if __name__=='__main__':
+    main()
