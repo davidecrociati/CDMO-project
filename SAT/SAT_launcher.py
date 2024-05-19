@@ -3,35 +3,32 @@ import SAT.SAT_utils as utils
 import SAT.solver as solver
 import time
 import math
-# import os
 
-def launch(instances: list, params:dict=None,verbose=False):
-    # this_dir = os.path.dirname(os.path.abspath(__file__))
-    # os.chdir(this_dir)
 
-    if params==None:
+def launch(instances: list, params: dict = None, verbose=False):
+
+    if params == None:
         params = {
             'timeout': timedelta(seconds=300),
         }  # those are default
 
-
-    results=[]
+    results = []
     for instance in instances:
         print(f'Solving {instance}...')
-        execTime=time.time()
-        instance_data=utils.parse_dzn(instance)
+        execTime = time.time()
+        instance_data = utils.parse_dzn(instance)
         solution = solver.solve(instance_data)
-        execTime=math.floor(time.time()-execTime)
-        if execTime>params['timeout'].total_seconds():
-            execTime=params['timeout'].total_seconds()
-        obj=solution[0]
-        if obj==-1:
-            obj='n/a'
+        execTime = math.floor(time.time()-execTime)
+        if execTime > params['timeout'].total_seconds():
+            execTime = params['timeout'].total_seconds()
+        obj = solution[0]
+        if obj == -1:
+            obj = 'n/a'
         results.append({
-            "time":execTime,
-            "optimal" : (execTime<params['timeout'].total_seconds()),
-            "obj" : obj,
-            "sol" : solution[1]
+            "time": execTime,
+            "optimal": (execTime < params['timeout'].total_seconds()),
+            "obj": obj,
+            "sol": solution[1]
         })
 
     return results

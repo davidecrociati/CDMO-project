@@ -4,5 +4,11 @@
         "optimal": true,
         "obj": "n/a",
         "sol": []
+    },
+    "sat_test_gecode": {
+        "time": 0,
+        "optimal": true,
+        "obj": "n/a",
+        "sol": []
     }
 }

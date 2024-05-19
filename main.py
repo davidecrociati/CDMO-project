@@ -37,12 +37,12 @@ def main():
         'free_search':False
         } # those are default
 
-    RUN_CP=False
+    RUN_CP=True
     if RUN_CP:
         CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
         for model,name in CP_models.items():
             for solver in CP_solvers:
-                print(f'Solving CP:{name}-{solver}...')
+                print(f'Solving CP: {name}-{solver}...')
                 CP_results=CP.launch(INSTANCES[:10],model,solver,CP_params,verbose=False)
                 CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
@@ -59,7 +59,7 @@ def main():
         }
     SAT_solvers=[
         'blank',
-        # 'gecode'
+        'gecode'
         ]
     SAT_params={
         'timeout':timedelta(seconds=300),
@@ -71,7 +71,7 @@ def main():
         SAT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
         for model,name in SAT_models.items():
             for solver in SAT_solvers:
-                print(f'Solving SAT:{name}-{solver}...')
+                print(f'Solving SAT: {name}-{solver}...')
                 SAT_results=SAT.launch(INSTANCES[:10],SAT_params,verbose=False)
                 SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
 
