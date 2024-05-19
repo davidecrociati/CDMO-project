@@ -24,12 +24,13 @@ def launch(instances: list, params:dict=None,verbose=False):
         execTime=math.floor(time.time()-execTime)
         if execTime>params['timeout'].total_seconds():
             execTime=params['timeout'].total_seconds()
+        obj=solution[0]
         if obj==-1:
             obj='n/a'
         results.append({
             "time":execTime,
             "optimal" : (execTime<params['timeout'].total_seconds()),
-            "obj" : solution[0],
+            "obj" : obj,
             "sol" : solution[1]
         })
 

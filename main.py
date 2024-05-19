@@ -59,7 +59,7 @@ def main():
         }
     SAT_solvers=[
         'blank',
-        'gecode'
+        # 'gecode'
         ]
     SAT_params={
         'timeout':timedelta(seconds=300),
