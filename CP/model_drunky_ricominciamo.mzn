@@ -77,6 +77,15 @@ constraint forall(c in COURIERS,i in ITEMS)(
   member(row(stops,c),i) endif
 );
 
+%Constraint to guarantee only one rotation sense(not improving anything)
+% constraint forall(i in COURIERS)(
+%     forall(k in 3..num_items+1)(
+%       if stops[i, k+1]==default_val /\ stops[i, k]!=default_val
+%       then stops[i,2] < stops[i,k]
+%       endif
+%     )
+% );
+
 
 % Compute total distance
 constraint forall(c in COURIERS)(
@@ -87,9 +96,11 @@ constraint forall(c in COURIERS)(
 % minimize the optimization variable
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
+  int_search([longest_trip],first_fail, indomain_min),
   int_search(stops,first_fail, indomain_min),
   int_search(item_responsability,first_fail, indomain_min)
 ])minimize(longest_trip);
+
 
 
 % output ["Stops:\n"] ++
