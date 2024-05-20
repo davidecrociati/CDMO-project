@@ -12,16 +12,16 @@ INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in os.listdir(INSTANCES_FOLDER) if instance.endswith('.dzn')]
 
 RESULTS_FOLDER='res'
-firstInstance=1
-lastInstance=1
+firstInstance=16
+lastInstance=16
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
 
-RUN_CP=False
-RUN_SAT=True
+RUN_CP=True
+RUN_SAT=False
 CHECKER=False
 
 
@@ -30,13 +30,13 @@ def main():
     # |    CP    |
     # ============
     CP_models={
-        'model_drunky_ricominciamo.mzn': 'symmetry',
+        'model.mzn': 'symmetry',
         
         # 'model.mzn': 'old'
         }
     CP_solvers=[
         'gecode',
-        'chuffed',
+        # 'chuffed',
         ]
     CP_params={
         'timeout':timedelta(seconds=300),
