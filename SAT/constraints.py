@@ -3,13 +3,20 @@ from z3 import *
 
 # PROBLEM CONSTRAINTS
 def bin_packing(courier_sizes,item_resp,item_sizes):
-    constraints=[]
-    for i in range(len(item_sizes)):
-        constraints.append(exactly_one_seq(item_resp[i],f'item_{i+1}'))
+    num_couriers = len(courier_sizes)
+    num_items = len(item_sizes)
+    
+    constraints = []
 
-    print(constraints)
-    return And(*constraints)
+    # Constraint: each item must be assigned to exactly one courier
+    for i in range(num_items):
+        constraints.append(exactly_one_seq(item_resp[i],'item_delivered_by'))
 
+    # Constraint: the capacity of each courier must not be exceeded
+    for c in range(num_couriers):
+        constraints.append(Sum([item_sizes[i] for i in range(num_items)]) <= courier_sizes[c])
+
+    return constraints
 
 
 
@@ -49,6 +56,7 @@ def at_least_k_seq(bool_vars, k, name):
 def at_most_k_seq(bool_vars, k, name):
     constraints = []
     n = len(bool_vars)
+    print(bool_vars, k, name)
     s = [[Bool(f"s_{name}_{i}_{j}") for j in range(k)] for i in range(n - 1)]
     constraints.append(Or(Not(bool_vars[0]), s[0][0]))
     constraints += [Not(s[0][j]) for j in range(1, k)]
