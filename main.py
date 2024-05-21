@@ -20,7 +20,7 @@ lastInstance=1 # inclusive
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
-    lastInstance=211
+    lastInstance=21
 
 RUN_CP=False
 RUN_SAT=False
