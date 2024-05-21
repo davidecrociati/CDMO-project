@@ -30,6 +30,36 @@ array[COURIERS] of var 0..upper_bound:distances_traveled;
 % capacity constraint. It also ensures uniqueness of the items delivered
 constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 
+
+% all the courier that only delivers one item delivers tha smaller item possible along the ones that are the only delivered item of some courier
+% constraint increasing(
+% [item_responsability[i] | i in ITEMS where count([item_responsability[j] | j in ITEMS], item_responsability[i]) == 1]
+% );
+% constraint forall(i in ITEMS, j in i+1..num_items)(
+%     if count(item_responsability,item_responsability[i],1)
+%     /\ count(item_responsability,item_responsability[j],1) then
+%       item_responsability[i]<item_responsability[j] endif
+% );
+
+% predicate fzn_bin_packing_capa_reif(array[int] of int: c,
+%                            array[int] of var int: bin,
+%                            array[int] of int: w,
+%                            var bool: b) =
+%    b <-> (
+%       forall( i in index_set(bin) ) (
+%             min(index_set(c)) <= bin[i] /\ bin[i] <= max(index_set(c))
+%       )
+%     /\
+%       forall( assigned_bin in index_set(c) ) (
+%             c[assigned_bin] >= sum ( i in index_set(bin) ) (
+%                 w[i] * ( bin[i] = assigned_bin )
+%             )
+%       ));
+
+% %-----------------------------------------------------------------------------%
+
+
+
 % couriers have to start and end in default_val
 constraint forall(i in COURIERS)(
     stops[i,1]=default_val
@@ -88,3 +118,29 @@ solve :: seq_search([
   int_search([longest_trip],first_fail, indomain_min)
 ])minimize(longest_trip);
 
+
+
+% output ["Stops:\n"] ++
+%        [ show(stops[i,j])++ ", " ++ 
+%          if j == num_items+2 then "\n" else "" endif |
+%          i in COURIERS, j in 1..num_items+2 ]++["\n"];
+
+% output ["Itinerary:\n"] ++
+%        [ 
+%         % if j==1 then "Start, " else "" endif ++
+%         if fix(stops[i,j])==default_val then "" else show(stops[i,j])++", " endif ++ 
+%         if j == num_items+2 then 
+%           % "End"++
+%           " --> Distance="++show(distances_traveled[i])++"\n" 
+%         else "" endif
+%         |i in COURIERS, j in 1..num_items+2
+%        ];
+       
+  % output["Obj: "++show(longest_trip)++"\n"];
+
+% output["Picks:\n"]++[show(item_responsability)++"\n"];
+
+% output for the json, to be parsed in python:
+% output [ show(stops[i,j])++ "," ++ 
+%          if j == num_items+2 /\i!=num_couriers then "\n" endif |
+%          i in COURIERS, j in 1..num_items+2 ];

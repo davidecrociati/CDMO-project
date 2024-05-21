@@ -67,7 +67,8 @@ def check_instances(path_instances_dir, properties):
         file_path = os.path.join(path_instances_dir, file)
         
         matrix = matrix_parser(read_file(file_path)[4:])
-        
+        not_zeros=min([e for e in r  if e!=0] for r in matrix)
+        print(min(not_zeros))
         results = {prop: check_property(matrix, prop) for prop in properties}
         
         results_dict["Instance"].append(file)

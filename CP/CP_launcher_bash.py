@@ -3,7 +3,7 @@ from datetime import timedelta
 import os
 import subprocess
 import math
-from utils import *
+from utils.utils import *
 
 def solve_mzn(mzn_file, dzn_file,solver,params):
     command = ['minizinc',
