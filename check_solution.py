@@ -23,7 +23,7 @@ def main(args):
   '''
   check_solution.py <input folder> <results folder> [<first inst> <last inst>]
   '''
-  #FIXME: Input folder contains the input files (in the format instXY.dat). 
+  #       Input folder contains the input files (in the format instXY.dat). 
   #       The results folder contains the .json file of each approach. 
   #       No other file should appear in these folders.
   errors = []

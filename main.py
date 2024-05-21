@@ -3,7 +3,7 @@ from datetime import timedelta
 import CP.CP_launcher as CP
 import SAT.SAT_launcher as SAT
 import MIP.MIP_launcher as MIP
-import SMT.SMT_launcher as MST
+import SMT.SMT_launcher as SMT
 from utils.utils import *
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,17 +11,22 @@ os.chdir(this_dir)
 INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare 
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in os.listdir(INSTANCES_FOLDER) if instance.endswith('.dzn')]
 
+SMT_MODELS_FOLDER='SMT/models'
+
 RESULTS_FOLDER='res'
-firstInstance=16
-lastInstance=16
+firstInstance=1 # inclusive
+lastInstance=1 # inclusive
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
-    lastInstance=21
+    lastInstance=211
 
-RUN_CP=True
+RUN_CP=False
 RUN_SAT=False
+RUN_SMT=True
+RUN_MIP=False
+
 CHECKER=False
 
 
@@ -81,6 +86,36 @@ def main():
 
         # print(SAT_JSON)
         saveJSON(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
+
+    # ============
+    # |    SMT   |
+    # ============
+    SMT_models={
+        'placeholder': 'smt_test',
+        
+        # 'model.mzn': 'old'
+        }
+    SMT_solvers=[
+        'blank',
+        # 'gecode'
+        ]
+    SMT_params = {
+            'timeout': 300_000, # microseconds
+        }  # those are default
+
+    if RUN_SMT:
+        models=SMT.generate_smt2_models(INSTANCES[firstInstance-1:lastInstance],SMT_MODELS_FOLDER)
+
+    if RUN_SMT:
+        SMT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
+        for model,name in SMT_models.items():
+            for solver in SMT_solvers:
+                print(f'Solving SMT: {name}-{solver}...')
+                SMT_results=SMT.launch(models,SMT_params,verbose=False)
+                SMT_JSON=add_solutions(SMT_results,name,solver,SMT_JSON)
+
+        # print(SMT_JSON)
+        saveJSON(SMT_JSON,RESULTS_FOLDER+'/SMT/',format=True,firstInstanceNumber=firstInstance)
 
 if __name__=='__main__':
     main()

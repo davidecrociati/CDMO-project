@@ -17,6 +17,7 @@ def launch(instances: list, params: dict = None, verbose=False):
         print(f'Solving {instance}...')
         execTime = time.time()
         instance_data = parse_dzn(instance)
+        # TODO il solver nn prende il parametro del tempo
         solution = solver.solve(instance_data)
         execTime = math.floor(time.time()-execTime)
         if execTime > params['timeout'].total_seconds():
