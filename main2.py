@@ -16,8 +16,8 @@ SMT_MODELS_FOLDER='SMT/models'
 RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
-firstInstance=19 # inclusive
-lastInstance=19 # inclusive
+firstInstance=1 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<0:
     firstInstance=1
