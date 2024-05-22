@@ -31,6 +31,33 @@ array[COURIERS] of var 0..upper_bound:distances_traveled;
 constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
 
 
+% all the courier that only delivers one item delivers tha smaller item possible along the ones that are the only delivered item of some courier
+% constraint increasing(
+% [item_responsability[i] | i in ITEMS where count([item_responsability[j] | j in ITEMS], item_responsability[i]) == 1]
+% );
+% constraint forall(i in ITEMS, j in i+1..num_items)(
+%     if count(item_responsability,item_responsability[i],1)
+%     /\ count(item_responsability,item_responsability[j],1) then
+%       item_responsability[i]<item_responsability[j] endif
+% );
+
+% predicate fzn_bin_packing_capa_reif(array[int] of int: c,
+%                            array[int] of var int: bin,
+%                            array[int] of int: w,
+%                            var bool: b) =
+%    b <-> (
+%       forall( i in index_set(bin) ) (
+%             min(index_set(c)) <= bin[i] /\ bin[i] <= max(index_set(c))
+%       )
+%     /\
+%       forall( assigned_bin in index_set(c) ) (
+%             c[assigned_bin] >= sum ( i in index_set(bin) ) (
+%                 w[i] * ( bin[i] = assigned_bin )
+%             )
+%       ));
+
+% %-----------------------------------------------------------------------------%
+
 
 
 % couriers have to start and end in default_val
@@ -75,34 +102,33 @@ constraint forall(c in COURIERS,i in ITEMS)(
   if item_responsability[i]==c then
   member(row(stops,c),i) endif
 );
-% 74317777
-array[COURIERS,NODES] of var NODES:circuit;
+
+
+% Compute total distance
+% constraint forall(c in COURIERS)(
+%   distances_traveled[c] = sum(j in NODES)(distances[stops[c,j], stops[c,j+1]])
+% );
+
+array[ITEMS] of var NODES:successors; 
 constraint forall(c in COURIERS)(
-  forall(i in NODES)(
-    if stops[c,i+1]!=default_val then
-    circuit[c,stops[c,i+1]]=stops[c,i+2] else
-    circuit[c,i]=i endif
+  forall(i in ITEMS)(
+    if stops[c,i] != default_val then
+     successors[stops[c,i]] = stops[c,i+1] endif
   )
 );
-
-% constraint forall(c in COURIERS)(
-%   subcircuit([circuit[c, i] |i in NODES])
-% );
-% Compute total distance
 constraint forall(c in COURIERS)(
-  distances_traveled[c] = sum([distances[i, circuit[c,i]]|i in NODES where circuit[c,i]!=i])
-);
+    distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[stops[c,1],stops[c,2]]
 
+);
 
 % minimize the optimization variable
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
   int_search(stops,first_fail, indomain_random),
   int_search(item_responsability,first_fail, indomain_random),
-  int_search([longest_trip],smallest, indomain_min)
-])
-% minimize(longest_trip);
-satisfy;
+  int_search([longest_trip],first_fail, indomain_min)
+])minimize(longest_trip);
+
 
 
 % output ["Stops:\n"] ++

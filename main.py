@@ -9,25 +9,25 @@ from utils.utils import *
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
 INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare 
-INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in os.listdir(INSTANCES_FOLDER) if instance.endswith('.dzn')]
+INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
 SMT_MODELS_FOLDER='SMT/models'
 
 RESULTS_FOLDER='res'
 firstInstance=1 # inclusive
-lastInstance=1 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
 
-RUN_CP=False
+RUN_CP=True
 RUN_SAT=False
-RUN_SMT=True
+RUN_SMT=False
 RUN_MIP=False
 
-CHECKER=False
+CHECKER=True
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
     # |    CP    |
     # ============
     CP_models={
-        'model.mzn': 'symmetry',
+        'model_dave.mzn': 'default',
         
         # 'model.mzn': 'old'
         }
