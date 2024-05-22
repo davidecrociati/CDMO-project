@@ -21,8 +21,17 @@ int:upper_bound;
 
 % items delivered by each courier
 array[COURIERS, 1..num_items+2] of var NODES: stops;
+array[ITEMS] of var COURIERS:item_responsability; % wich courier delivers item k
+var lower_bound..upper_bound:longest_trip;
+array[COURIERS] of var 0..upper_bound:distances_traveled;
 
 % constraints for the decision variable 
+
+% capacity constraint. It also ensures uniqueness of the items delivered
+constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
+
+
+
 
 % couriers have to start and end in default_val
 constraint forall(i in COURIERS)(
@@ -32,59 +41,68 @@ constraint forall(i in COURIERS)(
     stops[i,num_items+2]=default_val
 );
 
-
-array[ITEMS] of var COURIERS:item_responsability; % wich courier delivers item k
-% capacity constraint. It also ensures uniqueness of the items delivers
-constraint bin_packing_capa(courier_sizes,item_responsability,item_sizes);
-
 % each courier delivers something
-constraint forall(i in COURIERS)(
-    count(item_responsability, i) > 0
+constraint forall(c in COURIERS)(
+  member(item_responsability,c)
+);
+%  ^
+%  |    analogico
+%  v
+% first stop must be a deliver
+constraint forall(c in COURIERS)(
+  stops[c,2]!=default_val
 );
 
-% link stops and item_responsability
+% gli item devono apparire in stops
 constraint forall(i in ITEMS)(
-  forall(c in COURIERS)(
-    if c!=item_responsability[i] then
-    member(row(stops,c),i) 
-    else stops[c,i+1]=stops[c,i] endif
+  count(stops,i,1)
+);
+%  ^
+%  |    analogico
+%  v
+
+ 
+% padding of the stops
+% count(item_responsability,c) -->numero di item che devono stare sulla riga
+constraint forall(c in COURIERS)(
+  forall(i in ITEMS)(
+    if i<=count(item_responsability,c) then
+    stops[c,i+1]!=default_val else
+    stops[c,i+1]=default_val endif
+));
+
+constraint forall(c in COURIERS,i in ITEMS)(
+  if item_responsability[i]==c then
+  member(row(stops,c),i) endif
+);
+% 74317777
+array[COURIERS,NODES] of var NODES:circuit;
+constraint forall(c in COURIERS)(
+  forall(i in NODES)(
+    if stops[c,i+1]!=default_val then
+    circuit[c,stops[c,i+1]]=stops[c,i+2] else
+    circuit[c,i]=i endif
   )
 );
 
-
-
-% calculate the load for each courier
-array[COURIERS] of var 0..max(courier_sizes):courier_loads;
-
-constraint forall(c in COURIERS)(
-  courier_loads[c]=sum(i in ITEMS where item_responsability[i]==c)(item_sizes[i])
-);
-
-% link courier_loads and stops to carry the same weight
-constraint forall(c in COURIERS)(
-  courier_loads[c]=sum(i in ITEMS where member(row(stops,c),i))(item_sizes[i])
-);
-
-% if a courier has bigger capacity, it will deliver more weight
-constraint forall(c in 1..num_couriers-1)(
-  if courier_sizes[c]>courier_sizes[c+1] then
-  courier_loads[c]>courier_loads[c+1] endif
-);
-
-array[COURIERS] of var 0..upper_bound:distances_traveled;
-
+% constraint forall(c in COURIERS)(
+%   subcircuit([circuit[c, i] |i in NODES])
+% );
 % Compute total distance
 constraint forall(c in COURIERS)(
-  distances_traveled[c] = sum(j in NODES)(distances[stops[c,j], stops[c,j+1]])
+  distances_traveled[c] = sum([distances[i, circuit[c,i]]|i in NODES where circuit[c,i]!=i])
 );
 
+
 % minimize the optimization variable
-var lower_bound..upper_bound:longest_trip;
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
-  int_search(stops,first_fail, indomain_min),
-  int_search(item_responsability,first_fail, indomain_min)
-])minimize(longest_trip);
+  int_search(stops,first_fail, indomain_random),
+  int_search(item_responsability,first_fail, indomain_random),
+  int_search([longest_trip],smallest, indomain_min)
+])
+% minimize(longest_trip);
+satisfy;
 
 
 % output ["Stops:\n"] ++
@@ -103,11 +121,11 @@ solve :: seq_search([
 %         |i in COURIERS, j in 1..num_items+2
 %        ];
        
-  output["Obj: "++show(longest_trip)++"\n"];
+  % output["Obj: "++show(longest_trip)++"\n"];
 
-% output["Picks:\n"]++[show(item_responsability)];
+% output["Picks:\n"]++[show(item_responsability)++"\n"];
 
 % output for the json, to be parsed in python:
-output [ show(stops[i,j])++ "," ++ 
-         if j == num_items+2 /\i!=num_couriers then "\n" endif |
-         i in COURIERS, j in 1..num_items+2 ];
+% output [ show(stops[i,j])++ "," ++ 
+%          if j == num_items+2 /\i!=num_couriers then "\n" endif |
+%          i in COURIERS, j in 1..num_items+2 ];

@@ -1,0 +1,120 @@
+include "globals.mzn";
+
+% number of couriers
+int: num_couriers;
+set of int: COURIERS = 1..num_couriers;
+% number of items
+int: num_items;
+set of int: ITEMS = 1..num_items;
+% number of nodes(including the depot)
+set of int: NODES = 1..num_items + 1;
+int: depot=num_items + 1;
+
+% couriers load capacity 
+array[COURIERS] of int: courier_capacities;
+% items size 
+array[ITEMS] of int: item_sizes;
+% matrix of distances between nodes
+array[NODES, NODES] of int: distances;
+
+%%%%%%%%%%%%%%% DECISION VARIABLES %%%%%%%%%%%%%%%
+% route taken by each courier, represented as a sequence of nodes
+array[COURIERS, 1..num_items + 2] of var NODES: stops;
+
+% who is responsible for the delivery of a specific item
+array[ITEMS] of var COURIERS: item_responsability;
+
+% bounds for the objective function
+int:lower_bound;
+int:upper_bound;
+
+% total distance traveled by each courier
+array[COURIERS] of var 0..upper_bound: distances_traveled;
+% largest distance among all couriers
+var lower_bound..upper_bound: longest_trip;
+
+
+%%%%%%% CONSTRAINT FOR DECISION VARIABLES %%%%%%%%
+
+% capacity constraint: the sum of item sizes assigned to each courier must not exceed the courier's capacity
+constraint bin_packing_capa(courier_capacities, item_responsability, item_sizes);
+
+% courier's routes have to start and end at the depot
+constraint forall(i in COURIERS)(
+    stops[i, 1]=depot /\ stops[i, num_items+2]=depot
+);
+
+% each courier must deliver something
+constraint forall(c in COURIERS)(
+  member(item_responsability, c)
+);
+
+% each courier have to stops in at least one location different from the depot
+constraint forall(c in COURIERS)(
+  stops[c, 2]!=depot
+);
+
+% All items must be delivered(in theory it's already guaranteed by 'bin_packing_capa' still it helps the performances)
+constraint forall(i in ITEMS)(
+  count(stops, i, 1)
+);
+
+% Channeling constraint: a courier deliver a number of items that it's the same in both item_responsability and stops' rows
+constraint forall(c in COURIERS)(
+  forall(i in ITEMS)(
+    i<=count(item_responsability, c) <-> stops[c, i+1]!=depot
+));
+% All the items in item_responsability must be delivered by the associated courier
+constraint forall(c in COURIERS, i in ITEMS)(
+  if item_responsability[i]==c then
+  member(row(stops, c), i) endif
+);
+
+
+% Compute total distances for each courier
+% We use an auxiliary variable for better performance (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
+array[ITEMS] of var NODES:successors; 
+constraint forall(c in COURIERS)(
+  forall(i in ITEMS)(
+    if stops[c, i] != depot then
+     successors[stops[c, i]] = stops[c, i+1] endif
+  )
+);
+% the distance traveled by each courier is the sum of the distances between an items and its successor + the distance from the depot to the first item delivered
+constraint forall(c in COURIERS)(
+    distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[stops[c, 1], stops[c, 2]]
+);
+
+% minimize the optimization variable
+constraint longest_trip= max(distances_traveled);
+solve :: seq_search([
+  int_search(stops,first_fail, indomain_random),
+  int_search(item_responsability,first_fail, indomain_random),
+  int_search([longest_trip],first_fail, indomain_min)
+])minimize(longest_trip);
+
+
+
+%%%%%%%%%%%%%%%% OUTPUT UTILITIES %%%%%%%%%%%%%%%%
+% output ["Stops:\n"] ++
+%        [ show(stops[i,j])++ ", " ++ 
+%          if j == num_items+2 then "\n" else "" endif |
+%          i in COURIERS, j in 1..num_items+2 ]++["\n"];
+
+% output ["Itinerary:\n"] ++
+%        [ 
+%         % if j==1 then "Start, " else "" endif ++
+%         if fix(stops[i,j])==depot then "" else show(stops[i,j])++", " endif ++ 
+%         if j == num_items+2 then 
+%           % "End"++
+%           " --> Distance="++show(distances_traveled[i])++"\n" 
+%         else "" endif
+%         |i in COURIERS, j in 1..num_items+2
+%        ];
+       
+output["Obj: "++show(longest_trip)++"\n"];
+
+% output for the json, to be parsed in python:
+% output [ show(stops[i,j])++ "," ++ 
+%          if j == num_items+2 /\i!=num_couriers then "\n" endif |
+%          i in COURIERS, j in 1..num_items+2 ];
