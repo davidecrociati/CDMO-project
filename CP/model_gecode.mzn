@@ -41,38 +41,39 @@ constraint bin_packing_capa(courier_capacities, item_responsability, item_sizes)
 
 % courier's routes have to start and end at the depot
 constraint forall(i in COURIERS)(
-    stops[i, 1]=depot /\ stops[i, num_items+2]=depot
+    stops[i, 1] = depot /\ stops[i, num_items+2] = depot
 );
 
-% each courier must deliver something
+% each courier must be responsible for delivering at least one item
 constraint forall(c in COURIERS)(
   member(item_responsability, c)
 );
 
-% each courier have to stops in at least one location different from the depot
+% each courier have to stop in at least one location different from the depot
 constraint forall(c in COURIERS)(
   stops[c, 2]!=depot
 );
 
-% All items must be delivered(in theory it's already guaranteed by 'bin_packing_capa' still it helps the performances)
+% all items must be delivered(in theory it's already guaranteed by 'bin_packing_capa' but helps with the performances)
 constraint forall(i in ITEMS)(
   count(stops, i, 1)
 );
 
-% Channeling constraint: a courier deliver a number of items that it's the same in both item_responsability and stops' rows
+% channeling constraint: the number of items delivered by a courier in 'item_responsibility' matches the stops in 'stops'
 constraint forall(c in COURIERS)(
   forall(i in ITEMS)(
-    i<=count(item_responsability, c) <-> stops[c, i+1]!=depot
+    i <= count(item_responsability, c) <-> stops[c, i+1] != depot
 ));
-% All the items in item_responsability must be delivered by the associated courier
+
+% all the items assigned to a courier in 'item_responsibility' must appear in the courier's route in 'stops'
 constraint forall(c in COURIERS, i in ITEMS)(
-  if item_responsability[i]==c then
+  if item_responsability[i] == c then
   member(row(stops, c), i) endif
 );
 
 
-% Compute total distances for each courier
-% We use an auxiliary variable for better performance (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
+% compute total distances for each courier
+% compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
 array[ITEMS] of var NODES:successors; 
 constraint forall(c in COURIERS)(
   forall(i in ITEMS)(
@@ -80,12 +81,13 @@ constraint forall(c in COURIERS)(
      successors[stops[c, i]] = stops[c, i+1] endif
   )
 );
-% the distance traveled by each courier is the sum of the distances between an items and its successor + the distance from the depot to the first item delivered
+
+% the distance traveled by each courier is the sum of the distances between a node and its successor + the distance from the depot to the first item delivered
 constraint forall(c in COURIERS)(
     distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[stops[c, 1], stops[c, 2]]
 );
 
-% minimize the optimization variable
+% minimize the longest trip distance among all couriers
 constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
   int_search(stops,first_fail, indomain_random),
