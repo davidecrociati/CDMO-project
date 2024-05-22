@@ -45,7 +45,7 @@ def write_new_content(data):
     
     content += 'num_couriers='+data[0]+';\n'
     content += 'num_items='+data[1]+';\n'
-    content += 'courier_sizes=['+insert_commas(data[2])+'];\n'
+    content += 'courier_capacities=['+insert_commas(data[2])+'];\n'
     content += 'item_sizes=['+insert_commas(data[3])+'];\n'
     content += 'distances=['
     for table_row in data[4:]:
@@ -77,6 +77,7 @@ def save_dzn_file(filename, content):
         file.write(content)
 
 def main():
+    PRINT_TIME=False
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
 
@@ -90,9 +91,9 @@ def main():
             file_path = os.path.join(instances_folder, file_name)
 
             data=read_file(file_path)
-            start=time.time()
+            if PRINT_TIME:start=time.time()
             formatted_data=write_new_content(data)
-            print(time.time()-start)
+            if PRINT_TIME:print(time.time()-start)
 
             dzn_file_name=DZN_instances_folder+'/'+file_name[:-4]
             save_dzn_file(dzn_file_name,formatted_data)

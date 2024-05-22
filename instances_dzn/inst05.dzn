@@ -1,6 +1,6 @@
 num_couriers=2;
 num_items=3;
-courier_sizes=[18, 30];
+courier_capacities=[18, 30];
 item_sizes=[20, 17, 6];
 distances=[|0, 21, 86, 99
 |21, 0, 71, 80

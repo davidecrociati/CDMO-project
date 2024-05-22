@@ -42,24 +42,58 @@ def launch(instances: list, model: str = 'model.mzn', solver: str = 'chuffed', p
         if verbose:
             print(solution, getattr(solution, 'statistics'))
         if execTime > params['timeout'].total_seconds():
-            execTime = params['timeout'].total_seconds()
+            execTime = math.floor(params['timeout'].total_seconds())
         try:
             obj = solution['objective']
-        except KeyError:
+        except:
             obj = -1
             # print(solution,type(solution),str(solution))
         if obj == -1:
             obj = 'n/a'
         if str(solution) != 'None':
             solution = tolist(solution['stops'])
+        else:
+            solution=[]
         results.append({
             "time": execTime,
             "optimal": (execTime < params['timeout'].total_seconds()),
             "obj": obj,
             "sol": solution
         })
+        # print(solution)
 
     return results
+
+def solve_instance(
+        instance_file,
+        model,
+        solver,
+        params,
+        verbose=False
+):
+    execTime = time.time()
+    solution = solve_mzn('CP/'+model, instance_file, solver, params)
+    execTime = math.floor(time.time()-execTime)
+    if verbose:
+        print(solution, getattr(solution, 'statistics'))
+    if execTime > params['timeout'].total_seconds():
+        execTime = math.floor(params['timeout'].total_seconds())
+    try:
+        obj = solution['objective']
+    except:
+        obj = -1
+    if obj == -1:
+        obj = 'n/a'
+    if str(solution) != 'None':
+        solution = tolist(solution['stops'])
+    else:
+        solution=[]
+    return {
+        "time": execTime,
+        "optimal": (execTime < params['timeout'].total_seconds()),
+        "obj": obj,
+        "sol": solution
+    }
 
 
 # if __name__ == '__main__':

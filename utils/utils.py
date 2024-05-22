@@ -14,7 +14,15 @@ def add_solutions(solutions,name,solver,outputList):
     return outputList
 
 
-def saveJSON(JSONList,folder,format=False,firstInstanceNumber=1):
+def saveJSON(content,dzn_path,folder,format=False):
+    os.makedirs(folder, exist_ok=True)
+    filename = folder+'/'+os.path.splitext(os.path.basename(dzn_path))[0]+'.json'
+    with open(filename, 'w') as file:
+        indent= None if not format else 4
+        json.dump(content, file, indent=indent)
+
+
+def saveJSON_list(JSONList,folder,format=False,firstInstanceNumber=1):
     # script_dir = os.path.dirname(os.path.abspath(__file__))
     # os.chdir(script_dir)
     os.makedirs(folder, exist_ok=True)

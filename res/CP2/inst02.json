@@ -1,0 +1,114 @@
+{
+    "model_gecode_gecode_no_fs": {
+        "time": 0,
+        "optimal": true,
+        "obj": 226,
+        "sol": [
+            [
+                5
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                9,
+                8
+            ],
+            [
+                7
+            ],
+            [
+                1,
+                4
+            ],
+            [
+                6
+            ]
+        ]
+    },
+    "model_gecode_gecode_fs": {
+        "time": 0,
+        "optimal": true,
+        "obj": 226,
+        "sol": [
+            [
+                5
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                9,
+                8
+            ],
+            [
+                7
+            ],
+            [
+                1,
+                4
+            ],
+            [
+                6
+            ]
+        ]
+    },
+    "model_chuffed_chuffed_no_fs": {
+        "time": 0,
+        "optimal": true,
+        "obj": 226,
+        "sol": [
+            [
+                1,
+                4
+            ],
+            [
+                2,
+                7
+            ],
+            [
+                3,
+                9
+            ],
+            [
+                5
+            ],
+            [
+                6
+            ],
+            [
+                8
+            ]
+        ]
+    },
+    "model_chuffed_chuffed_fs": {
+        "time": 0,
+        "optimal": true,
+        "obj": 226,
+        "sol": [
+            [
+                1,
+                4
+            ],
+            [
+                2,
+                7
+            ],
+            [
+                3,
+                9
+            ],
+            [
+                5
+            ],
+            [
+                6
+            ],
+            [
+                8
+            ]
+        ]
+    }
+}

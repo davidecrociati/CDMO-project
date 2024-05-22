@@ -14,7 +14,7 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 SMT_MODELS_FOLDER='SMT/models'
 
 RESULTS_FOLDER='res'
-firstInstance=1 # inclusive
+firstInstance=17 # inclusive
 lastInstance=21 # inclusive
 
 if firstInstance<0:
@@ -57,7 +57,7 @@ def main():
                 CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
 
         # print(CP_JSON)
-        saveJSON(CP_JSON,RESULTS_FOLDER+'/CP/',format=True,firstInstanceNumber=firstInstance)
+        saveJSON_list(CP_JSON,RESULTS_FOLDER+'/CP/',format=True,firstInstanceNumber=firstInstance)
 
     # ============
     # |    SAT   |
@@ -85,7 +85,7 @@ def main():
                 SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
 
         # print(SAT_JSON)
-        saveJSON(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
+        saveJSON_list(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
 
     # ============
     # |    SMT   |
@@ -115,7 +115,7 @@ def main():
                 SMT_JSON=add_solutions(SMT_results,name,solver,SMT_JSON)
 
         # print(SMT_JSON)
-        saveJSON(SMT_JSON,RESULTS_FOLDER+'/SMT/',format=True,firstInstanceNumber=firstInstance)
+        saveJSON_list(SMT_JSON,RESULTS_FOLDER+'/SMT/',format=True,firstInstanceNumber=firstInstance)
 
 if __name__=='__main__':
     main()
