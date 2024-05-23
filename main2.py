@@ -19,7 +19,7 @@ INDENT_RESULTS=True # indented results on the json
 firstInstance=1 # inclusive
 lastInstance=21 # inclusive
 
-if firstInstance<0:
+if firstInstance<=0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21

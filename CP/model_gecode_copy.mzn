@@ -49,7 +49,7 @@ constraint forall(c in COURIERS)(
   member(item_responsability, c)
 );
 
-% each courier have to stops in at least one location different from the depot
+% each courier have to stop in at least one location different from the depot
 constraint forall(c in COURIERS)(
   stops[c, 2]!=depot
 );
@@ -114,7 +114,6 @@ solve :: seq_search([
        
 % output["Obj: "++show(longest_trip)++"\n"];
 
-% output for the json, to be parsed in python:
 % output [ show(stops[i,j])++ "," ++ 
 %          if j == num_items+2 /\i!=num_couriers then "\n" endif |
 %          i in COURIERS, j in 1..num_items+2 ];
