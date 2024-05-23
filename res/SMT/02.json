@@ -1,6 +1,6 @@
 {
     "smt_test_blank": {
-        "time": 0,
+        "time": 2,
         "optimal": true,
         "obj": "n/a",
         "sol": []

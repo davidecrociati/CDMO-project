@@ -16,19 +16,21 @@ SMT_MODELS_FOLDER='SMT/models'
 RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
-firstInstance=1 # inclusive
-lastInstance=21 # inclusive
+firstInstance=2 # inclusive
+lastInstance=2 # inclusive
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
+if firstInstance>lastInstance:
+    lastInstance=firstInstance
 
 TIMEOUT=300 # seconds
 
-RUN_CP=True
+RUN_CP=False
 RUN_SAT=False
-RUN_SMT=False
+RUN_SMT=True
 RUN_MIP=False
 
 CHECKER=False

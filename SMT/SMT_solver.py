@@ -9,11 +9,9 @@ def solve(model,params:dict):
     
     result = solver.check()
     
-    print(result)
-    
     if result == sat:
-        print(solver.model())
+        get_variables(solver.model())
     else:
-        print("No model found.")
+        print("UNSAT")
 
     return parse_solution(result)

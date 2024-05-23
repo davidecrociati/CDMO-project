@@ -21,27 +21,21 @@ def read_json_file(file_path):
 
 def main(args):
   '''
-  check_solution.py <input folder> <results folder> [<first inst> <last inst>]
+  check_solution.py <input folder> <results folder>
   '''
-  #       Input folder contains the input files (in the format instXY.dat). 
+  #FIXME: Input folder contains the input files (in the format instXY.dat). 
   #       The results folder contains the .json file of each approach. 
   #       No other file should appear in these folders.
   errors = []
   warnings = []  
   results_folder = args[2]
-  try:
-    first = args[3]
-    last = args[4]
-  except:
-    first=1
-    last=21
   for subfolder in os.listdir(results_folder):
     if subfolder.startswith('.'):
       # Skip hidden folders.
       continue
     folder = results_folder + subfolder
     print(f'\nChecking results in {folder} folder')
-    for results_file in sorted(os.listdir(folder))[first-1:last]:
+    for results_file in sorted(os.listdir(folder)):
       if results_file.startswith('.'):
         # Skip hidden folders.
         continue
