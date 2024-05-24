@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-def plot_solution_3d(solution, num_couriers, num_items):
+def plot_solution_3d(solution, num_couriers, num_items, num_orders):
     # Create a 3D matrix initialized to 0
-    matrix = np.zeros((num_couriers, num_items, num_items), dtype=int)
+    matrix = np.zeros((num_couriers, num_items, num_orders), dtype=int)
     
     # Update the matrix with the solution values
     for (c, i, o) in solution:
@@ -39,7 +39,7 @@ def plot_solution_3d(solution, num_couriers, num_items):
 
     for c in range(num_couriers):
         for i in range(num_items):
-            for o in range(num_items):
+            for o in range(num_orders):
                 draw_single_cube(ax, (c, i, o), colors[c, i, o], alpha[c, i, o], matrix[c, i, o])
     
     ax.set_xlabel('Courier')
@@ -47,11 +47,11 @@ def plot_solution_3d(solution, num_couriers, num_items):
     ax.set_zlabel('Order')
     ax.set_xticks(range(num_couriers))
     ax.set_yticks(range(num_items))
-    ax.set_zticks(range(num_items))
+    ax.set_zticks(range(num_orders))
     
     # Adjust the view and scaling for better visibility
     ax.view_init(elev=20., azim=-35)
-    ax.set_box_aspect([num_couriers, num_items, num_items])  # Aspect ratio is 1:1:1
+    ax.set_box_aspect([num_couriers, num_items, num_orders])  # Aspect ratio is 1:1:1
     
     plt.show()
 
