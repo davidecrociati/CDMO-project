@@ -5,6 +5,6 @@ def tolist(solution):
 
     output must be that string parsed to a list
     '''
-    # first value is the default_value, I hope that this holds always
+    # first value is the default_value, I hope that this always holds
     solution=[list(dict.fromkeys(r))[1:] for r in solution]
     return solution

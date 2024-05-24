@@ -70,7 +70,6 @@ constraint forall(c in COURIERS, i in ITEMS)(
   member(row(stops, c), i) endif
 );
 
-
 % Compute total distances for each courier
 % We use an auxiliary variable for better performance (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
 array[ITEMS] of var NODES:successors; 
@@ -80,6 +79,7 @@ constraint forall(c in COURIERS)(
      successors[stops[c, i]] = stops[c, i+1] endif
   )
 );
+
 % the distance traveled by each courier is the sum of the distances between an items and its successor + the distance from the depot to the first item delivered
 constraint forall(c in COURIERS)(
     distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[stops[c, 1], stops[c, 2]]

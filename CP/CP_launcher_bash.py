@@ -46,7 +46,7 @@ def launch(instances:list, model:str='model.mzn', solver:str='chuffed', params:d
             print(solution)
             # execTime=params['timeout'].total_seconds()
         if obj==-1:
-            obj='n/a'
+            obj='N/A'
         results.append({
             "time" : execTime,
             "optimal" : (execTime<params['timeout'].total_seconds()),

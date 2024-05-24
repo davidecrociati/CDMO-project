@@ -8,7 +8,7 @@ from utils.utils import *
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
-INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare 
+INSTANCES_FOLDER='instances_dzn' #da potenzialmente cambiare 
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
 SMT_MODELS_FOLDER='SMT/models'
@@ -16,7 +16,7 @@ SMT_MODELS_FOLDER='SMT/models'
 RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
-firstInstance=2 # inclusive
+firstInstance=7 # inclusive
 lastInstance=2 # inclusive
 
 if firstInstance<=0:
@@ -40,42 +40,42 @@ def main():
     # ============
     # |    CP    |
     # ============
-    CP_models = {
-        'model_gecode.mzn': {
-            'solvers': {
-                'gecode': [
-                    ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                    ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                ]
-            }
-        },
-        'model_chuffed.mzn': {
-            'solvers': {
-                'chuffed': [
-                    ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                    ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                ]
-            }
-        },
-        # 'model_gecode_copy.mzn': {
-        #     'solvers': {
-        #         'gecode': [
-        #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-        #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-        #         ]
-        #     }
-        # },
-        # 'model_chuffed_copy.mzn': {
-        #     'solvers': {
-        #         'chuffed': [
-        #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-        #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-        #         ]
-        #     }
-        # }
-    }
-
     if RUN_CP:
+        CP_models = {
+            'model_gecode.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+            'model_chuffed.mzn': {
+                'solvers': {
+                    'chuffed': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+            # 'model_gecode_copy.mzn': {
+            #     'solvers': {
+            #         'gecode': [
+            #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+            #         ]
+            #     }
+            # },
+            # 'model_chuffed_copy.mzn': {
+            #     'solvers': {
+            #         'chuffed': [
+            #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+            #         ]
+            #     }
+            # }
+        }
+
         for instance_file in INSTANCES[firstInstance-1:lastInstance]:
             print(f'Solving {instance_file}...')
             instance_results={}
@@ -93,37 +93,24 @@ def main():
                                             params)
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP2/',format=INDENT_RESULTS)
 
-
-
-    # if RUN_CP:
-    #     CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-    #     for model,name in CP_models.items():
-    #         for solver in CP_solvers:
-    #             print(f'Solving CP: {name}-{solver}...')
-    #             CP_results=CP.launch(INSTANCES[firstInstance-1:lastInstance],model,solver,CP_params,verbose=False)
-    #             CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
-
-    #     # print(CP_JSON)
-    #     saveJSON_list(CP_JSON,RESULTS_FOLDER+'/CP/',format=True,firstInstanceNumber=firstInstance)
-
     # ============
     # |    SAT   |
     # ============
-    SAT_models={
-        'placeholder': 'sat_test',
-        
-        # 'model.mzn': 'old'
-        }
-    SAT_solvers=[
-        'blank',
-        # 'gecode'
-        ]
-    SAT_params={
-        'timeout':timedelta(seconds=300),
-        } # those are default
-
-
     if RUN_SAT:
+        SAT_models={
+            'placeholder': 'sat_test',
+            
+            # 'model.mzn': 'old'
+            }
+        SAT_solvers=[
+            'blank',
+            # 'gecode'
+            ]
+        SAT_params={
+            'timeout':timedelta(seconds=300),
+            } # those are default
+
+
         SAT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
         for model,name in SAT_models.items():
             for solver in SAT_solvers:
@@ -137,32 +124,32 @@ def main():
     # ============
     # |    SMT   |
     # ============
-    SMT_models={
-        'placeholder': 'smt_test',
-        
-        # 'model.mzn': 'old'
-        }
-    SMT_solvers=[
-        'blank',
-        # 'gecode'
-        ]
-    SMT_params = {
-            'timeout': 300_000, # microseconds
-        }  # those are default
-
     if RUN_SMT:
-        models=SMT.generate_smt2_models(INSTANCES[firstInstance-1:lastInstance],SMT_MODELS_FOLDER)
+        SMT_models = {
+                'solvers': {
+                    'z3': [
+                        ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
+                    ],
+                    # 'cvc4':[
+                    #     ('', {'timeout': timedelta(seconds=TIMEOUT)}),
+                    # ]
+                }
+            }
 
-    if RUN_SMT:
-        SMT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-        for model,name in SMT_models.items():
-            for solver in SMT_solvers:
-                print(f'Solving SMT: {name}-{solver}...')
-                SMT_results=SMT.launch(models,SMT_params,verbose=False)
-                SMT_JSON=add_solutions(SMT_results,name,solver,SMT_JSON)
-
-        # print(SMT_JSON)
-        saveJSON_list(SMT_JSON,RESULTS_FOLDER+'/SMT/',format=True,firstInstanceNumber=firstInstance)
+        for instance_file in INSTANCES[firstInstance-1:lastInstance]:
+            print(f'Solving {instance_file}...')
+            instance_results={}
+            for solver in SMT_models['solvers']:
+                for param_name,params in SMT_models['solvers'][solver].copy():
+                    print(f'\tUsing {solver}-{param_name}...')
+                    result,model=SMT.solve_instance(instance_file,
+                                        solver,
+                                        params)
+                    # print(result)
+                    instance_results[f'{solver}_{param_name}'] = result
+                    if model:
+                        saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
 
 if __name__=='__main__':
     main()

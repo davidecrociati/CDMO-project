@@ -24,7 +24,7 @@ def launch(instances: list, params: dict = None, verbose=False):
             execTime = params['timeout'].total_seconds()
         obj = solution[0]
         if obj == -1:
-            obj = 'n/a'
+            obj = 'N/A'
         results.append({
             "time": execTime,
             "optimal": (execTime < params['timeout'].total_seconds()),

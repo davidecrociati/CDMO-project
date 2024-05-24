@@ -3,8 +3,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import parse_dzn
 import z3
 
-def generate_smt2_model(dzn_instance,obj=226):# TODO remove the 14
-    instance_data=parse_dzn(dzn_instance)
+def generate_smt2_model(instance_data):# TODO remove the 14
+    # instance_data=parse_dzn(dzn_instance)
 
     num_couriers = instance_data['num_couriers']
     num_items = instance_data['num_items']
@@ -15,7 +15,7 @@ def generate_smt2_model(dzn_instance,obj=226):# TODO remove the 14
     upper_bound = instance_data['upper_bound']
 
     # ===== INSTANCE VARIABLES =====
-    model = f'''
+    model_h = f'''
 (set-logic ALL)
 (declare-fun num_couriers () Int)
 (assert (= num_couriers {num_couriers}))
@@ -26,76 +26,87 @@ def generate_smt2_model(dzn_instance,obj=226):# TODO remove the 14
 (declare-fun upper_bound () Int)
 (assert (= upper_bound {upper_bound}))
 '''.lstrip()
-    for i, size in enumerate(courier_capacities, start=1):
-        model += f'(declare-fun courier_{i}_capacity () Int)\n'
-        model += f'(assert (= courier_{i}_capacity {size}))\n'
+    for c, size in enumerate(courier_capacities, start=1):
+        model_h += f'(declare-fun courier_{c}_capa () Int)\n'
+        model_h += f'(assert (= courier_{c}_capa {size}))\n'
     for i, size in enumerate(item_sizes, start=1):
-        model += f'(declare-fun item_{i}_size () Int)\n'
-        model += f'(assert (= item_{i}_size {size}))\n'
+        model_h += f'(declare-fun item_{i}_size () Int)\n'
+        model_h += f'(assert (= item_{i}_size {size}))\n'
     for i in range(num_items+1):
         for j in range(num_items+1):
-            model += f'(declare-fun distance_{i+1}_{j+1} () Int)\n'
-            model += f'(assert (= distance_{i+1}_{j+1} {distances[i][j]}))\n'
+            model_h += f'(declare-fun distance_{i+1}_{j+1} () Int)\n'
+            model_h += f'(assert (= distance_{i+1}_{j+1} {distances[i][j]}))\n'
 
     # ===== DECISION VARIABLES =====
     for c in range(1,num_couriers+1):
         for i in range(3,num_items+2):
-            model += f'(declare-fun stop_{c}_{i} () Int)\n'
-            model += f'(assert (>= stop_{c}_{i} 1))\n'
-            model += f'(assert (<= stop_{c}_{i} {num_items+1}))\n'
+            model_h += f'(declare-fun stop_{c}_{i} () Int)\n'
+            model_h += f'(assert (>= stop_{c}_{i} 1))\n'
+            model_h += f'(assert (<= stop_{c}_{i} {num_items+1}))\n'
     for i in range(1,num_items+1):
-        model += f'(declare-fun item_{i}_resp () Int)\n'
-        model += f'(assert (>= item_{i}_resp 1))\n'
-        model += f'(assert (<= item_{i}_resp {num_couriers}))\n'
+        model_h += f'(declare-fun item_{i}_resp () Int)\n'
+        model_h += f'(assert (>= item_{i}_resp 1))\n'
+        model_h += f'(assert (<= item_{i}_resp {num_couriers}))\n'
     for c in range(1,num_couriers+1):
-        model += f'(declare-fun distance_{c}_traveled () Int)\n'
-        model += f'(assert (>= distance_{c}_traveled 0))\n'
-        model += f'(assert (<= distance_{c}_traveled {upper_bound}))\n'
+        model_h += f'(declare-fun distance_{c}_traveled () Int)\n'
+        model_h += f'(assert (>= distance_{c}_traveled 0))\n'
+        model_h += f'(assert (<= distance_{c}_traveled {upper_bound}))\n'
     
-    model += f'''
-(declare-fun longest_trip () Int)
-(assert (>= longest_trip {lower_bound}))
-(assert (<= longest_trip {upper_bound}))
-'''.lstrip()
+#     model_h += f'''
+# (declare-fun longest_trip () Int)
+# (assert (>= longest_trip {lower_bound}))
+# (assert (<= longest_trip {upper_bound}))
+# '''.lstrip()
     # TODO decomenntare se serve successors
     # for i in range(1,num_items+1):
-    #     model += f'(declare-fun successors_{i} () Int)\n'
-    #     model += f'(assert (>= successors_{i} 0))\n'
-    #     model += f'(assert (<= successors_{i} {num_items+1}))\n'
+    #     model_h += f'(declare-fun successors_{i} () Int)\n'
+    #     model_h += f'(assert (>= successors_{i} 0))\n'
+    #     model_h += f'(assert (<= successors_{i} {num_items+1}))\n'
 
     # ===== CONSTRAINTS =====
     # bin packing
+    # -- declare and calculate couriers load
     # -- loads does not exceed capacities
     for c in range(1,num_couriers+1):
-        model+=f'(assert (>= courier_{c}_capacity (+'
+        model_h+=f'(declare-fun load_{c} () Int)\n'
+        model_h+=f'(assert (= load_{c} (+'
         for i in range(1,num_items+1):
-            model+=f'(ite (= item_{i}_resp {c}) item_{i}_size 0)'
-        model+=')))\n'
+            model_h+=f'(ite (= item_{i}_resp {c}) item_{i}_size 0)'
+        model_h+=')))\n'
+        model_h+=f'(assert (<= load_{c} courier_{c}_capa))\n'
 
     # start and end in depot
     for c in range(1,num_couriers+1):
-        model += f'(declare-fun stop_{c}_1 () Int)\n'
-        model += f'(declare-fun stop_{c}_{num_items+2} () Int)\n'
-        model += f'(assert (= stop_{c}_1 {num_items+1}))\n'
-        model += f'(assert (= stop_{c}_{num_items+2} {num_items+1}))\n'
+        model_h += f'(declare-fun stop_{c}_1 () Int)\n'
+        model_h += f'(declare-fun stop_{c}_{num_items+2} () Int)\n'
+        model_h += f'(assert (= stop_{c}_1 {num_items+1}))\n'
+        model_h += f'(assert (= stop_{c}_{num_items+2} {num_items+1}))\n'
 
     # each courier appears on item resp
     for c in range(1,num_couriers+1):
-        model+=f'(assert (or '
+        model_h+=f'(assert (or '
         for i in range(1,num_items+1):
-            model+=f'(= item_{i}_resp {c})'
-        model+='))\n'
+            model_h+=f'(= item_{i}_resp {c})'
+        model_h+='))\n'
 
     # each couriers must deliver something on 1st stop
     for c in range(1,num_couriers+1):
-        model += f'(declare-fun stop_{c}_2 () Int)\n'
-        model += f'(assert (>= stop_{c}_2 1))\n'
-        model += f'(assert (<= stop_{c}_2 {num_items}))\n'
+        model_h += f'(declare-fun stop_{c}_2 () Int)\n'
+        model_h += f'(assert (>= stop_{c}_2 1))\n'
+        model_h += f'(assert (<= stop_{c}_2 {num_items}))\n'
 
-    # all items must be delivered
+    # constraint the capacities to be in some sort of order
+    for c in range(1,num_couriers):
+        model_h+=f'(assert (=> (> courier_{c}_capa courier_{c+1}_capa) (> load_{c} load_{c+1})))'
+        # model_h+=f'(assert (=> (< courier_{c}_capa courier_{c+1}_capa) (< load_{c} load_{c+1})))'
+
+    # all items must be delivered. ===LENTO===
     # for i in range(1,num_items+1):
-    #     model+=f'(assert (or '
-            # TODO in teoria è ridondante, vediamo se servirà metterlo
+    #     model_h+=f'(assert (= (+'
+    #     for c in range(1,num_couriers+1):
+    #         for i_ in range(2,num_items+2):
+    #             model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
+    #     model_h+=f') 1))'
 
     # channeling; stops after completing the delivers must be depot
     for c in range(1,num_couriers+1):
@@ -107,51 +118,74 @@ def generate_smt2_model(dzn_instance,obj=226):# TODO remove the 14
                 lhs+=f'(ite (= item_{i_}_resp {c}) 1 0) '
             lhs+=f'))'
             rhs=f'(< stop_{c}_{i+1} {num_items+1})'
-            model+=f'(assert (=> {lhs} {rhs}))\n'
-            model+=f'(assert (=> {rhs} {lhs}))\n'
+            model_h+=f'(assert (=> {lhs} {rhs}))\n'
+            model_h+=f'(assert (=> {rhs} {lhs}))\n'
 
     # items delivered by c must appear in its row
     for c in range(1,num_couriers+1):
         for i in range(1,num_items+1):
-            model+=f'(assert (=> (= item_{i}_resp {c}) (or '
+            model_h+=f'(assert (=> (= item_{i}_resp {c}) (or '
             for i_ in range(1,num_items+1):
-                model+=f'(= stop_{c}_{i_+1} {i})'
-            model+=f')))\n'
+                model_h+=f'(= stop_{c}_{i_+1} {i})'
+            model_h+=f')))\n'
 
-    # create successors
-    # TODO maybe
+    # define successors
+    for i in range(1,num_items+1):
+        model_h+=f'(declare-fun successorOf_{i} () Int)\n'
+        model_h+=f'(assert (> successorOf_{i} 0))\n'
+        model_h+=f'(assert (<= successorOf_{i} {num_items+1}))\n'
+
+    # channeling of successors
+    for c in range(1,num_couriers+1):
+        for i in range(1,num_items+1):
+            lhs=f'(not (= stop_{c}_{i} {num_items+1}))'
+            rhs=''
+            for j in range(1,)
+            rhs=f'(= successorOf_)'
+            model_h+=f'(assert (=> {lhs} {rhs}))\n'
 
     # compute distances with successor
     # TODO maybe
 
-    # compute distances
-    for c in range(1,num_couriers+1):
-        model+=f'(assert (= distance_{c}_traveled (+ '
-        for i in range(1,num_items+2):
-            for j in range(1,num_items+2):
-                for k in range(1,num_items+2):
-                    model+=f'(ite (and (= stop_{c}_{i} {j})(= stop_{c}_{i+1} {k})) distance_{j}_{k} 0)'
-        model+=f')))\n'
-    # TODO continue...
-
-    # objective
-    # come fare il max????
-    for c in range(1,num_couriers+1):
-        model+=f'(assert (<= distance_{c}_traveled {obj}))\n'
+    # compute distances. === ci mette 10 secondi===
+    # for c in range(1,num_couriers+1):
+    #     model_h+=f'(assert (= distance_{c}_traveled (+ '
+    #     for i in range(1,num_items+2):
+    #         for j in range(1,num_items+2):
+    #             for k in range(1,num_items+2):
+    #                 model_h+=f'(ite (and (= stop_{c}_{i} {j})(= stop_{c}_{i+1} {k})) distance_{j}_{k} 0)'
+    #     model_h+=f')))\n'
         
-    model+='(check-sat)\n(get-model)'
+    model_t='(check-sat)\n(get-model)'
 
-    return model
+    return model_h,model_t
+
+def add_objective(num_couriers,obj,head,tail):
+    objective=''
+    for c in range(1,num_couriers+1):
+        # objective+=f'(assert (> distance_{c}_traveled 0))\n'
+        objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
+    return head+objective+tail
 
 
-def parse_solution(result):
-    # TODO
+def parse_solution(model):
+    if model==None:
+        return []
+    # print(model)
+    return get_itineraries(model)
 
-    return -1,[]
+def get_itineraries(model):
+    stops=get_stops(model,False,False)
+    stops=[[int(str(e))for e in row]for row in stops]
+    default=stops[0][0]
+    stops=[[e for e in row if e!=default]for row in stops ]
+    return stops
 
 def get_variables(model,print_names=False):
     get_responsabilities(model,print_names)
+    get_loads(model,print_names)
     get_stops(model,print_names)
+    get_successor(model,print_names)
     get_distances(model,print_names)
 
 def get_responsabilities(model,print_names):
@@ -162,7 +196,16 @@ def get_responsabilities(model,print_names):
     sorted_variables = sorted(variables, key=lambda x: x[0].name())
     print('resp:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
 
-def get_stops(model,print_names):
+
+def get_loads(model,print_names):
+    variables = []
+    for var in model:
+        if 'load_' in var.name():
+            variables.append((var, model[var]))
+    sorted_variables = sorted(variables, key=lambda x: x[0].name())
+    print('loads:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+
+def get_stops(model,print_names,print_=True):
     # variables = []
     # for var in model:
     #     if 'stop_' in var.name():
@@ -179,11 +222,21 @@ def get_stops(model,print_names):
             node=[var for var in model if f'stop_{i}_{j}' in var.name()][0]
             matrix[i-1].append(model[node])
             matrix_names[i-1].append(node)
+    if print_:
+        print('stops:')
+        for i in range(len(matrix)):
+            print('  ',matrix[i],matrix_names[i] if print_names else '')
+    return matrix
 
-    print('stops:')
-    for i in range(len(matrix)):
-        print('  ',matrix[i],matrix_names[i] if print_names else '')
-
+def get_successor(model,print_names):
+    variables = []
+    for var in model:
+        if 'successor' in var.name():
+            variables.append((var, model[var]))
+    sorted_variables = sorted(variables, key=lambda x: x[0].name())
+    print('succ:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+    
+    
 def get_distances(model,print_names):
     variables = []
     for var in model:
