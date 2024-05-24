@@ -117,38 +117,42 @@ def solve(instance_data): #, distance):
     for c in range(num_couriers) :
         distance_tot = 0
         for i1 in range(num_items): 
+            
             # First item
-            distance_tot += If(stops[c][i1][0], distances[num_items][i1], 0)
+            distance_tot += If(
+                                stops[c][i1][0]                         # Se l'item i1 è stano consegnato come primo
+                            , distances[num_items][i1], 0)
+            
             for i2 in range(num_items):
                 if i1 != i2:
                     # If we use delivered_before
                     # distance_tot += If(delivered_before[c][i][j], distances[i][j], 0)
                     for o in range(num_orders-1) :
                         # Middle items
+                        print((i1, i2))
                         distance_tot += If(And(
-                                            Or(stops[c][i1]),         # Se i1 è stato consegnato
-                                            Or(stops[c][i2]),         # Se i2 è stato consegnato
-                                            stops[c][i1][o],      
-                                            stops[c][i2][o+1]         # Se i2 è l'ordine dopo i1
+                                            stops[c][i1][o],            # Se i1 è stato consegnato
+                                            stops[c][i2][o+1]           # Se i2 è l'ordine dopo i1
                                         ), distances[i1][i2], 0)
                     # if i2 == 0 :
                     # TODO : spostare last_item qua sotto per usare un solo ciclo, i2==0 garantisce che venga fatto una volta sola per ogni i1
-            
-            # Last item
-            for o in range(1, num_orders) :
-                distance_tot += If(Or(                                          # O
-                    And(                                                            
-                        o == num_items-1,                                       # È l'ultimo ordine
-                        Or([stops[c][j][o] for j in range(num_items)]),         # e un item è stato consegnato in questo ordine
-                        stops[c][i1][o]                                         # e l'item consegnato è questo --> i1 è l'ultimo item
-                    ),
-                    And(                                                        # Oppure
-                        o < num_items-1,                                        # Non è l'ultimo ordine
-                        Not(Or([stops[c][j][o] for j in range(num_items)])),    # Ma non è valido
-                        Or([stops[c][j][o-1] for j in range(num_items)]),       # Mentre quello prima lo era
-                        stops[c][i1][o-1]                                       # Allora l'item consegnato nell'ordine prima è l'ultimo
-                    )
-                ), distances[i1][num_items], 0)
+            # distance_tot += If(stops[c][i1][0], distances[num_items][i1], 0)
+
+        # Last item
+        for o in range(1, num_orders) :
+            distance_tot += If(Or(                                          # O
+                And(                                                            
+                    o == num_items-1,                                       # È l'ultimo ordine
+                    Or([stops[c][j][o] for j in range(num_items)]),         # e un item è stato consegnato in questo ordine
+                    stops[c][i1][o]                                         # e l'item consegnato è questo --> i1 è l'ultimo item
+                ),
+                And(                                                        # Oppure
+                    o < num_items-1,                                        # Non è l'ultimo ordine
+                    Not(Or([stops[c][j][o] for j in range(num_items)])),    # Ma non è valido
+                    Or([stops[c][j][o-1] for j in range(num_items)]),       # Mentre quello prima lo era
+                    stops[c][i1][o-1]                                       # Allora l'item consegnato nell'ordine prima è l'ultimo
+                )
+            ), distances[i1][num_items], 0)
             
         # FIXME : continua a non filtrare valori superiori a TOT_dist
         s.add(distance_tot <= TOT_dist)       

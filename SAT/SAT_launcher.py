@@ -1,6 +1,6 @@
 from datetime import timedelta
 from  utils.utils import parse_dzn
-import SAT.solver as solver
+import SAT.SAT_solver as SAT_solver
 import time
 import math
 
@@ -18,7 +18,7 @@ def launch(instances: list, params: dict = None, verbose=False):
         execTime = time.time()
         instance_data = parse_dzn(instance)
         # TODO il solver nn prende il parametro del tempo
-        solution = solver.solve(instance_data)
+        solution = SAT_solver.solve(instance_data)
         execTime = math.floor(time.time()-execTime)
         if execTime > params['timeout'].total_seconds():
             execTime = params['timeout'].total_seconds()
