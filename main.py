@@ -14,20 +14,20 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 SMT_MODELS_FOLDER='SMT/models'
 
 RESULTS_FOLDER='res'
-firstInstance=17 # inclusive
-lastInstance=21 # inclusive
+firstInstance=1 # inclusive
+lastInstance=1 # inclusive
 
 if firstInstance<0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
 
-RUN_CP=True
-RUN_SAT=False
+RUN_CP=False
+RUN_SAT=True
 RUN_SMT=False
 RUN_MIP=False
 
-CHECKER=True
+CHECKER=False
 
 
 def main():
