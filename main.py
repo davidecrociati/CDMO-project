@@ -13,8 +13,8 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 
 SMT_MODELS_FOLDER='SMT/models'
 RESULTS_FOLDER='res'
-firstInstance=2 # inclusive
-lastInstance=2 # inclusive
+firstInstance=11 # inclusive
+lastInstance=11 # inclusive
 
 if firstInstance<0:
     firstInstance=1

@@ -1,0 +1,16 @@
+{
+    "sat_test_blank": {
+        "time": 2,
+        "optimal": true,
+        "obj": 206,
+        "sol": [
+            [
+                2
+            ],
+            [
+                1,
+                3
+            ]
+        ]
+    }
+}
