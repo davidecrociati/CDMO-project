@@ -1,17 +1,52 @@
 from SMT.SMT_utils import *
-from z3 import *
 
-def solve(model,params:dict):
+def solve_z3(model,params:dict):
+    from z3 import Solver,parse_smt2_string,sat
+    pars=params.copy()
+    if 'timeout' in params:
+        pars['timeout']=int(pars['timeout']*1000)
+
+    # print(pars['timeout'])
+
     solver = Solver()
-    solver.set(unsat_core=True)
-    solver.set(**params)
-    solver.add(parse_smt2_file(model))
+    solver.set(**pars)
+    solver.add(parse_smt2_string(model))
     
     result = solver.check()
     
     if result == sat:
         get_variables(solver.model())
+        return 'sat',solver.model()
     else:
-        print("UNSAT")
+        # print("UNSAT")
+        return 'unsat',None
+    
+def solve_cvc4(model,params):
+    raise ImportError('non so come cazz installare cvc4 diavolo lupo')
+    import pycvc4
+    from pycvc4 import kinds
 
-    return parse_solution(result)
+    pars=params.copy()
+    if 'timeout' in params:
+        pars['timeout']=int(pars['timeout']*1000)
+    solver = pycvc4.Solver()
+    solver.setOption("timeout", pycvc4.Term(solver, kinds.STRING, str(pars['timeout'])))
+    solver.readSMTLIB2String(model)
+    result = solver.checkSat()
+    if result.isSat():
+        print("Model:")
+        model = solver.getModel()
+        
+        # Iterate over the model to get variable assignments
+        for decl in model.getDeclarations():
+            if decl.getKind() == kinds.CONST_VARIABLE:
+                var_name = decl.toString()
+                var_value = model.getValue(decl).toString()
+                print(f"{var_name} = {var_value}")
+
+    if result.isSat():
+        return 'sat',None
+    else:
+        # print("UNSAT")
+        return 'unsat',None
+

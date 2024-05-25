@@ -2,13 +2,13 @@
     "sat_test_blank": {
         "time": 0,
         "optimal": true,
-        "obj": "n/a",
+        "obj": "N/A",
         "sol": []
     },
     "sat_test_gecode": {
         "time": 0,
         "optimal": true,
-        "obj": "n/a",
+        "obj": "N/A",
         "sol": []
     }
 }

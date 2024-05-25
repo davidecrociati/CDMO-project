@@ -2,13 +2,13 @@
     "model_gecode_gecode_no_fs": {
         "time": 300,
         "optimal": false,
-        "obj": "n/a",
+        "obj": "N/A",
         "sol": []
     },
     "model_gecode_gecode_fs": {
         "time": 300,
         "optimal": false,
-        "obj": "n/a",
+        "obj": "N/A",
         "sol": []
     },
     "model_chuffed_chuffed_no_fs": {

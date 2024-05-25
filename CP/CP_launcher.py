@@ -49,7 +49,7 @@ def launch(instances: list, model: str = 'model.mzn', solver: str = 'chuffed', p
             obj = -1
             # print(solution,type(solution),str(solution))
         if obj == -1:
-            obj = 'n/a'
+            obj = 'N/A'
         if str(solution) != 'None':
             solution = tolist(solution['stops'])
         else:
@@ -83,7 +83,7 @@ def solve_instance(
     except:
         obj = -1
     if obj == -1:
-        obj = 'n/a'
+        obj = 'N/A'
     if str(solution) != 'None':
         solution = tolist(solution['stops'])
     else:

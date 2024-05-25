@@ -2,7 +2,7 @@
     "default_gecode": {
         "time": 300.0,
         "optimal": false,
-        "obj": "n/a",
+        "obj": "N/A",
         "sol": []
     }
 }

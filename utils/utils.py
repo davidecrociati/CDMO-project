@@ -21,6 +21,13 @@ def saveJSON(content,dzn_path,folder,format=False):
         indent= None if not format else 4
         json.dump(content, file, indent=indent)
 
+def saveModel(content,solver,inst_name,folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    filename=folder+f'{solver}_'+os.path.splitext(os.path.basename(inst_name))[0]+'.smt2'
+    with open(filename,'w') as file:
+        file.write(content)
 
 def saveJSON_list(JSONList,folder,format=False,firstInstanceNumber=1):
     # script_dir = os.path.dirname(os.path.abspath(__file__))

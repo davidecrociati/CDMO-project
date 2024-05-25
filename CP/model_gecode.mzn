@@ -114,7 +114,7 @@ solve :: seq_search([
 %         |i in COURIERS, j in 1..num_items+2
 %        ];
        
-output["Obj: "++show(longest_trip)++"\n"];
+% output["Obj: "++show(longest_trip)++"\n"];
 
 % output for the json, to be parsed in python:
 % output [ show(stops[i,j])++ "," ++ 
