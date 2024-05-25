@@ -1,6 +1,6 @@
 {
     "model_gecode_gecode_no_fs": {
-        "time": 0,
+        "time": 1,
         "optimal": true,
         "obj": 14,
         "sol": [

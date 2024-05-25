@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=6 # inclusive
+lastInstance=2 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -25,8 +25,8 @@ if firstInstance>lastInstance:
 
 TIMEOUT=300 # seconds
 
-RUN_CP=False
-RUN_SAT=False
+RUN_CP=True
+RUN_SAT=True
 RUN_SMT=True
 RUN_MIP=False
 
@@ -34,9 +34,10 @@ CHECKER=False
 
 
 def main(argv):
-    try:
-        firstInstance=lastInstance=int(argv[1])
-    except:pass
+    first=firstInstance
+    last=lastInstance
+    if len(argv)>1:
+        first=last=int(argv[1])
 
     # ============
     # |    CP    |
@@ -78,7 +79,7 @@ def main(argv):
             # }
         }
 
-        for instance_file in INSTANCES[firstInstance-1:lastInstance]:
+        for instance_file in INSTANCES[first-1:last]:
             print(f'Solving {instance_file}...')
             instance_results={}
             for model in CP_models:
@@ -119,11 +120,11 @@ def main(argv):
         for model,name in SAT_models.items():
             for solver in SAT_solvers:
                 print(f'Solving SAT: {name}-{solver}...')
-                SAT_results=SAT.launch(INSTANCES[firstInstance-1:lastInstance],SAT_params,verbose=False)
+                SAT_results=SAT.launch(INSTANCES[first-1:last],SAT_params,verbose=False)
                 SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
 
         # print(SAT_JSON)
-        saveJSON_list(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
+        saveJSON_list(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=first)
 
     # ============
     # |    SMT   |
@@ -137,12 +138,12 @@ def main(argv):
                         ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
                     ],
                     # 'cvc4':[
-                    #     ('', {'timeout': timedelta(seconds=TIMEOUT)}),
+                    #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
                     # ]
                 }
             }
 
-        for instance_file in INSTANCES[firstInstance-1:lastInstance]:
+        for instance_file in INSTANCES[first-1:last]:
             print(f'Solving {instance_file}...')
             instance_results={}
             for solver in SMT_models['solvers']:
