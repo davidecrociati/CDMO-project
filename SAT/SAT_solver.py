@@ -25,7 +25,7 @@ def solve(instance_data): #, distance):
     ################################################################################################################
     ## VARIABLES ###################################################################################################
     ################################################################################################################
-    num_orders = num_items - num_couriers # a courier can't deliver more than n-m items
+    num_orders = num_items - (num_couriers -1)  # a courier can't deliver more than n-m items (-1 is due to the courier himself that doesn't count)
     
     stops = [[[Bool(f'stops_{c}_{i}_{o}')   for o in range(num_orders)]         # order of delivering ()
                                             for i in range(num_items)]                      # items
@@ -69,15 +69,16 @@ def solve(instance_data): #, distance):
                                 for i in range(num_items)
                                 ], f"only_one_item_can_be_delivered_by_{c}_at_order_{o}"))
 
-        for i in range(num_items):
-            for j in range(i + 1, num_items):
-                # If both items i and j are delivered by courier c, their delivery positions must be different
-                for o1 in range(num_orders):
-                    for o2 in range(o1 + 1, num_orders):
-                        s.add(Implies(
-                                And(stops[c][i][o1], stops[c][j][o2]), 
-                                o1 != o2)
-                              )
+        # TODO : forse già garantita da prima
+        # for i in range(num_items):
+        #     for j in range(i + 1, num_items):
+        #         # If both items i and j are delivered by courier c, their delivery positions must be different
+        #         for o1 in range(num_orders):
+        #             for o2 in range(o1 + 1, num_orders):
+        #                 s.add(Implies(
+        #                         And(stops[c][i][o1], stops[c][j][o2]), 
+        #                         o1 != o2)
+        #                       )
             
     # 3.2) Orders must be compact
     # so if you deliver 3 items out of 7 you have to have a T in 0, one in 1 and another in 2, not in 6 for examples
@@ -113,48 +114,36 @@ def solve(instance_data): #, distance):
     #                     ))
     
     # 6) Check distances
-    TOT_dist = 14 # per provare sull'istanza
+    TOT_dist = 226 # per provare sull'istanza
     for c in range(num_couriers) :
         distance_tot = 0
         for i1 in range(num_items): 
             
             # First item
-            distance_tot += If(
-                                stops[c][i1][0]                         # Se l'item i1 è stano consegnato come primo
-                            , distances[num_items][i1], 0)
+            distance_tot += If(stops[c][i1][0], distances[num_items][i1], 0)
             
             for i2 in range(num_items):
                 if i1 != i2:
                     # If we use delivered_before
                     # distance_tot += If(delivered_before[c][i][j], distances[i][j], 0)
                     for o in range(num_orders-1) :
+                        
                         # Middle items
-                        print((i1, i2))
                         distance_tot += If(And(
                                             stops[c][i1][o],            # Se i1 è stato consegnato
                                             stops[c][i2][o+1]           # Se i2 è l'ordine dopo i1
                                         ), distances[i1][i2], 0)
-                    # if i2 == 0 :
-                    # TODO : spostare last_item qua sotto per usare un solo ciclo, i2==0 garantisce che venga fatto una volta sola per ogni i1
-            # distance_tot += If(stops[c][i1][0], distances[num_items][i1], 0)
-
-        # Last item
-        for o in range(1, num_orders) :
-            distance_tot += If(Or(                                          # O
-                And(                                                            
-                    o == num_items-1,                                       # È l'ultimo ordine
-                    Or([stops[c][j][o] for j in range(num_items)]),         # e un item è stato consegnato in questo ordine
-                    stops[c][i1][o]                                         # e l'item consegnato è questo --> i1 è l'ultimo item
-                ),
-                And(                                                        # Oppure
-                    o < num_items-1,                                        # Non è l'ultimo ordine
-                    Not(Or([stops[c][j][o] for j in range(num_items)])),    # Ma non è valido
-                    Or([stops[c][j][o-1] for j in range(num_items)]),       # Mentre quello prima lo era
-                    stops[c][i1][o-1]                                       # Allora l'item consegnato nell'ordine prima è l'ultimo
-                )
-            ), distances[i1][num_items], 0)
             
-        # FIXME : continua a non filtrare valori superiori a TOT_dist
+            # Last item (if the courier filled all his orders)
+            distance_tot += If(stops[c][i1][num_orders-1], distances[i1][num_items], 0)
+            
+            # Last item (if there are empty orders after it)
+            for o in range(0, num_orders-1) :
+                distance_tot += If(And(                                                             
+                        stops[c][i1][o],                                        # If the item is delivered
+                        Not(Or([stops[c][j][o+1] for j in range(num_items)]))   # but there aren't delivered items in the next order
+                    ), distances[i1][num_items], 0)
+            
         s.add(distance_tot <= TOT_dist)       
     
     ##########################################################################################################
@@ -162,7 +151,6 @@ def solve(instance_data): #, distance):
     ##########################################################################################################
     
     if s.check() == sat:
-        print("\n\n\n## SOLUTION", "#"*38)
         m = s.model()
         solution = [(c, i, o) for o in range(num_orders)
                             for c in range(num_couriers)
@@ -179,22 +167,16 @@ def solve(instance_data): #, distance):
                         delivered_items.append(i)
 
             if delivered_items:
-                # Calculate the total distance for courier c
                 total_size = sum([item_sizes[i] for i in delivered_items ])
-                total_distance = distances[num_items][delivered_items[0]]  # Home to first item
+                total_distance = distances[num_items][delivered_items[0]]
                 total_distance += sum([distances[delivered_items[i - 1]][delivered_items[i]] for i in range(1, len(delivered_items))])
-                total_distance += distances[delivered_items[-1]][num_items]  # Last item to home
+                total_distance += distances[delivered_items[-1]][num_items]  
                 total_distances.append(total_distance)
-                print("*"*50)
-                print(f"Courier {c} delivers: {delivered_items}")
-                print(f"\tTravelled {total_distance}")
-                print(f"\tTrasported {total_size} out of {courier_capacities[c]} possible")
+                print(f"Courier {c} delivers: {[item+1 for item in delivered_items]} --> traveled {total_distance}")
                 
         if total_distances:
             obj = max(total_distances)
-            print("="*50)
-            print(f"The longest distance travelled is {obj}")
-            print("="*50)
+            print(f"The longest distance travelled is {obj}\n\n\n")
             plot_solution_3d(solution, num_couriers, num_items, num_orders)
         else:
             print("No items were delivered.")

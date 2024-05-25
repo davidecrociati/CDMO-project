@@ -3,6 +3,7 @@ from z3 import *
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from matplotlib.widgets import CheckButtons
 
 def plot_solution_3d(solution, num_couriers, num_items, num_orders):
     # Create a 3D matrix initialized to 0
@@ -31,17 +32,35 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
                  [vertices[j] for j in [0, 2, 6, 4]],
                  [vertices[j] for j in [1, 3, 7, 5]]]
         
-        ax.add_collection3d(Poly3DCollection(faces, facecolors=color, edgecolors='black', linewidths=0.5, alpha=alpha))
+        poly3d = Poly3DCollection(faces, facecolors=color, edgecolors='black', linewidths=0.5, alpha=alpha)
+        ax.add_collection3d(poly3d)
         
         # Add text on top of the cube
         x, y, z = position
-        ax.text(x + 0.5, y + 0.5, z + 0.5, str(value), color='black', ha='center', va='center', fontsize=8, weight='bold')
+        text = ax.text(x + 0.5, y + 0.5, z + 0.5, str(value), color='black', ha='center', va='center', fontsize=8, weight='bold')
+        return poly3d, text
 
-    for c in range(num_couriers):
-        for i in range(num_items):
-            for o in range(num_orders):
-                draw_single_cube(ax, (c, i, o), colors[c, i, o], alpha[c, i, o], matrix[c, i, o])
-    
+    drawn_cubes = []
+
+    def draw_cubes():
+        while drawn_cubes:
+            poly3d, text = drawn_cubes.pop()
+            poly3d.remove()
+            text.remove()
+        for c in range(num_couriers):
+            if not couriers_visible[c]:
+                continue
+            for i in range(num_items):
+                if not items_visible[i]:
+                    continue
+                for o in range(num_orders):
+                    drawn_cubes.append(draw_single_cube(ax, (c, i, o), colors[c, i, o], alpha[c, i, o], matrix[c, i, o]))
+
+    couriers_visible = [True] * num_couriers
+    items_visible = [True] * num_items
+
+    draw_cubes()
+
     ax.set_xlabel('Courier')
     ax.set_ylabel('Item')
     ax.set_zlabel('Order')
@@ -53,6 +72,34 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
     ax.view_init(elev=20., azim=-35)
     ax.set_box_aspect([num_couriers, num_items, num_orders])  # Aspect ratio is 1:1:1
     
+    # Adjust the limits of the axes
+    ax.set_xlim([0, num_couriers])
+    ax.set_ylim([0, num_items])
+    ax.set_zlim([0, num_orders])
+    
+    # Create widgets for interactivity
+    ax_checkbox_couriers = plt.axes([0.01, 0.4, 0.15, 0.15])
+    ax_checkbox_items = plt.axes([0.01, 0.2, 0.15, 0.15])
+    
+    courier_labels = [f'Courier {i}' for i in range(num_couriers)]
+    item_labels = [f'Item {i}' for i in range(num_items)]
+    
+    courier_check = CheckButtons(ax_checkbox_couriers, courier_labels, couriers_visible)
+    item_check = CheckButtons(ax_checkbox_items, item_labels, items_visible)
+    
+    def courier_func(label):
+        index = courier_labels.index(label)
+        couriers_visible[index] = not couriers_visible[index]
+        draw_cubes()
+
+    def item_func(label):
+        index = item_labels.index(label)
+        items_visible[index] = not items_visible[index]
+        draw_cubes()
+
+    courier_check.on_clicked(courier_func)
+    item_check.on_clicked(item_func)
+
     plt.show()
 
 def print_responsabilities(model, resp):
