@@ -53,6 +53,11 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
     ax.view_init(elev=20., azim=-35)
     ax.set_box_aspect([num_couriers, num_items, num_orders])  # Aspect ratio is 1:1:1
     
+    # Adjust the limits of the axes
+    ax.set_xlim([0, num_couriers])
+    ax.set_ylim([0, num_items])
+    ax.set_zlim([0, num_orders])
+    
     plt.show()
 
 def print_responsabilities(model, resp):
@@ -106,3 +111,21 @@ def delivered_items_list(stops, c, m):
         for i in range(len(stops[0][0])) :
             if m.evaluate(stops[c][n][i]) : idxs.append(i)
     return idxs
+
+import math
+
+def calculate_max_orders(num_items, num_couriers, courier_capacities, item_sizes):
+    # Calculate the sum of item sizes
+    total_size = sum(item_sizes)
+    
+    # Find the minimum capacity among all couriers
+    min_capacity = min(courier_capacities)
+    
+    # Calculate the maximum number of orders to avoid wastage
+    max_orders = min(math.ceil(total_size / min_capacity), num_items)
+    
+    # Ensure each courier delivers at least one item
+    min_orders_per_courier = math.ceil(num_items / num_couriers)
+    
+    # Return the maximum number of orders
+    return min(max_orders, min_orders_per_courier)
