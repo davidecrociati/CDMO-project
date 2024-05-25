@@ -12,10 +12,9 @@ INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
 SMT_MODELS_FOLDER='SMT/models'
-
 RESULTS_FOLDER='res'
-firstInstance=10 # inclusive
-lastInstance=10 # inclusive
+firstInstance=2 # inclusive
+lastInstance=2 # inclusive
 
 if firstInstance<0:
     firstInstance=1
