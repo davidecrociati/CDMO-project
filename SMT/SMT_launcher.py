@@ -50,15 +50,19 @@ def solve_instance(
     model_head,model_tail=generate_smt2_model(instance_data)
     obj='N/A'
     model=''
-    if type(params['timeout'])==timedelta:
-        params['timeout']=params['timeout'].total_seconds()
-    execTime = time.time()
+    try:
+        if type(params['timeout'])==timedelta:
+            params['timeout']=params['timeout'].total_seconds()
+    except: pass
     aux=params.copy()
+    execTime = time.time()
     for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
         model=add_objective(instance_data['num_couriers'],max_path,model_head,model_tail)
-        aux['timeout']-=(time.time()-execTime)
-        if aux['timeout']<=0:
-            break
+        try:
+            aux['timeout']-=(time.time()-execTime)
+            if aux['timeout']<=0:
+                break
+        except:pass
         # print('avalaible time:',aux['timeout'])
         result,solution=solve(model,aux)
         if result=='sat':
@@ -70,14 +74,23 @@ def solve_instance(
     solution=parse_solution(solution)
     if not solution:
         execTime=math.floor(params['timeout'])
-    if execTime > params['timeout']:
-        execTime = math.floor(params['timeout'])
-    return {
-        "time": execTime,
-        "optimal": (execTime < params['timeout']),
-        "obj": obj,
-        "sol": solution
-    },model
+    try:
+        if execTime > params['timeout']:
+            execTime = math.floor(params['timeout'])
+        return {
+            "time": execTime,
+            "optimal": (execTime < params['timeout']),
+            "obj": obj,
+            "sol": solution
+        },model
+    except:
+        return {
+            "time": execTime,
+            "optimal": True,
+            "obj": obj,
+            "sol": solution
+        },model
+    # TRY-EXCEPT are for when there is no timeout key in the dict
 
     
 def generate_smt2_models(instances,models_path):

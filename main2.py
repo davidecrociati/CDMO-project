@@ -134,8 +134,11 @@ def main(argv):
 
         SMT_models = {
                 'solvers': {
+                    # 'z3': [
+                    #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
+                    # ],
                     'z3': [
-                        ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
+                        ('default', {}),
                     ],
                     # 'cvc4':[
                     #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
