@@ -1,9 +1,5 @@
-import os
+import os,sys
 from datetime import timedelta
-import CP.CP_launcher as CP
-import SAT.SAT_launcher as SAT
-import MIP.MIP_launcher as MIP
-import SMT.SMT_launcher as SMT
 from utils.utils import *
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,8 +12,9 @@ SMT_MODELS_FOLDER='SMT/models'
 RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
-firstInstance=7 # inclusive
-lastInstance=2 # inclusive
+
+firstInstance=1 # inclusive
+lastInstance=6 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -36,11 +33,16 @@ RUN_MIP=False
 CHECKER=False
 
 
-def main():
+def main(argv):
+    try:
+        firstInstance=lastInstance=int(argv[1])
+    except:pass
+
     # ============
     # |    CP    |
     # ============
     if RUN_CP:
+        import CP.CP_launcher as CP
         CP_models = {
             'model_gecode.mzn': {
                 'solvers': {
@@ -97,6 +99,8 @@ def main():
     # |    SAT   |
     # ============
     if RUN_SAT:
+        import SAT.SAT_launcher as SAT
+
         SAT_models={
             'placeholder': 'sat_test',
             
@@ -125,6 +129,8 @@ def main():
     # |    SMT   |
     # ============
     if RUN_SMT:
+        import SMT.SMT_launcher as SMT
+
         SMT_models = {
                 'solvers': {
                     'z3': [
@@ -150,7 +156,10 @@ def main():
                     if model:
                         saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
+    if RUN_MIP:
+        import MIP.MIP_launcher as MIP
+
 
 if __name__=='__main__':
-    main()
+    main(sys.argv)
     if CHECKER:run_checker(firstInstance,lastInstance)

@@ -12,6 +12,8 @@ Magari poi lo chiamiamo _README.md_
 
 ## SMT
 
+bisogna capire come strutturare la ricerca. z3 ha un minimize/maximize, altri solver no. non so se farglielo usare o ocntinuare a partire dal lower bound e vedere se è sat
+
 ## MIP
 
 ## GENERICHE:

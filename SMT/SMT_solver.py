@@ -8,9 +8,15 @@ def solve_z3(model,params:dict):
 
     # print(pars['timeout'])
 
-    solver = Solver()
-    solver.set(**pars)
-    solver.add(parse_smt2_string(model))
+    try:
+        solver = Solver()
+        solver.set(**pars)
+        solver.add(parse_smt2_string(model))
+    except: 
+        from utils.utils import saveModel
+        saveModel(model,'error','',f'SMT/models/error/')
+        solver.add(parse_smt2_string(model))
+
     
     result = solver.check()
     

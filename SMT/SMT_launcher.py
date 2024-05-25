@@ -55,7 +55,7 @@ def solve_instance(
     execTime = time.time()
     aux=params.copy()
     for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
-        model=add_objective(instance_data['num_couriers'],1000,model_head,model_tail)
+        model=add_objective(instance_data['num_couriers'],max_path,model_head,model_tail)
         aux['timeout']-=(time.time()-execTime)
         if aux['timeout']<=0:
             break

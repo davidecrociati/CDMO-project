@@ -66,7 +66,7 @@ def generate_smt2_model(instance_data):# TODO remove the 14
     # ===== CONSTRAINTS =====
     # bin packing
     # -- declare and calculate couriers load
-    # -- loads does not exceed capacities
+    # -- loads must not exceed capacities
     for c in range(1,num_couriers+1):
         model_h+=f'(declare-fun load_{c} () Int)\n'
         model_h+=f'(assert (= load_{c} (+'
@@ -131,21 +131,30 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 
     # define successors
     for i in range(1,num_items+1):
-        model_h+=f'(declare-fun successorOf_{i} () Int)\n'
-        model_h+=f'(assert (> successorOf_{i} 0))\n'
-        model_h+=f'(assert (<= successorOf_{i} {num_items+1}))\n'
+        model_h+=f'(declare-fun successor_of_{i} () Int)\n'
+        model_h+=f'(assert (> successor_of_{i} 0))\n'
+        model_h+=f'(assert (<= successor_of_{i} {num_items+1}))\n'
 
     # channeling of successors
     for c in range(1,num_couriers+1):
-        for i in range(1,num_items+1):
-            lhs=f'(not (= stop_{c}_{i} {num_items+1}))'
-            rhs=''
-            for j in range(1,)
-            rhs=f'(= successorOf_)'
-            model_h+=f'(assert (=> {lhs} {rhs}))\n'
+        for i in range(2,num_items+2):
+            for j in range(1,num_items+1):
+                # (=> a b c) is (=> a (=> b c))
+                # logically a->(b->c)
+                A=f'(not (= stop_{c}_{i} {num_items+1}))'
+                B=f'(= stop_{c}_{i} {j})'
+                C=f'(= successor_of_{j} stop_{c}_{i+1})'
+                model_h+=f'(assert (=> {A} {B} {C}))\n'
 
     # compute distances with successor
-    # TODO maybe
+    for c in range(1,num_couriers+1):
+        model_h+=f'(assert (= distance_{c}_traveled (+ '
+        for i in range(1,num_items+1):
+            for j in range(1,num_items+2):
+                model_h+=f'(ite (and (= item_{i}_resp {c}) (= successor_of_{i} {j}) ) distance_{i}_{j} 0)'
+        for j in range(1,num_items+2):
+            model_h+=f'(ite (= {j} stop_{c}_2) distance_{num_items+1}_{j} 0)'
+        model_h+=f')))\n'
 
     # compute distances. === ci mette 10 secondi===
     # for c in range(1,num_couriers+1):

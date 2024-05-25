@@ -77,14 +77,20 @@ constraint forall(c in COURIERS, i in ITEMS)(
 array[ITEMS] of var NODES:successors; 
 constraint forall(c in COURIERS)(
   forall(i in 2..num_items+1)(
-    if stops[c, i] != depot then
-    successors[stops[c,i]] = stops[c, i+1] endif
+    forall (j in ITEMS)(
+    not(stops[c, i] = depot) -> (
+    (stops[c,i]=j)->
+    (successors[j] = stops[c, i+1])
+    )
+    )
   )
 );
 
 % the distance traveled by each courier is the sum of the distances between a node and its successor + the distance from the depot to the first item delivered
 constraint forall(c in COURIERS)(
+ 
     distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[depot, stops[c, 2]]
+
 );
 
 % minimize the longest trip distance among all couriers
