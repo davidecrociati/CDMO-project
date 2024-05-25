@@ -69,7 +69,6 @@ def solve_instance(
         print(solution)
     solution=parse_solution(solution)
     if not solution:
-        model=None
         execTime=math.floor(params['timeout'])
     if execTime > params['timeout']:
         execTime = math.floor(params['timeout'])
@@ -95,6 +94,3 @@ def generate_smt2_models(instances,models_path):
         file_paths.append(filename)
     
     return file_paths
-
-if __name__ == "__main__":
-    launch('instances_dzn/inst01.dzn')

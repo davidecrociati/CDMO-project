@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=2 # inclusive
+lastInstance=6 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -25,8 +25,8 @@ if firstInstance>lastInstance:
 
 TIMEOUT=300 # seconds
 
-RUN_CP=True
-RUN_SAT=True
+RUN_CP=False
+RUN_SAT=False
 RUN_SMT=True
 RUN_MIP=False
 
@@ -154,8 +154,7 @@ def main(argv):
                                         params)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
-                    if model:
-                        saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
+                    saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
     if RUN_MIP:
         import MIP.MIP_launcher as MIP

@@ -16,7 +16,7 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 
     # ===== INSTANCE VARIABLES =====
     model_h = f'''
-(set-logic ALL)
+(set-logic QF_LIA)
 (declare-fun num_couriers () Int)
 (assert (= num_couriers {num_couriers}))
 (declare-fun num_items () Int)
@@ -98,15 +98,15 @@ def generate_smt2_model(instance_data):# TODO remove the 14
     # constraint the capacities to be in some sort of order
     for c in range(1,num_couriers):
         model_h+=f'(assert (=> (> courier_{c}_capa courier_{c+1}_capa) (> load_{c} load_{c+1})))'
-        # model_h+=f'(assert (=> (< courier_{c}_capa courier_{c+1}_capa) (< load_{c} load_{c+1})))'
+        model_h+=f'(assert (=> (< courier_{c}_capa courier_{c+1}_capa) (< load_{c} load_{c+1})))'
 
-    # all items must be delivered. ===LENTO===
-    # for i in range(1,num_items+1):
-    #     model_h+=f'(assert (= (+'
-    #     for c in range(1,num_couriers+1):
-    #         for i_ in range(2,num_items+2):
-    #             model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
-    #     model_h+=f') 1))'
+    # all items must be delivered. ===era LENTO forse mo funziona però===
+    for i in range(1,num_items+1):
+        model_h+=f'(assert (= (+'
+        for c in range(1,num_couriers+1):
+            for i_ in range(2,num_items+2):
+                model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
+        model_h+=f') 1))'
 
     # channeling; stops after completing the delivers must be depot
     for c in range(1,num_couriers+1):
@@ -172,7 +172,7 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 def add_objective(num_couriers,obj,head,tail):
     objective=''
     for c in range(1,num_couriers+1):
-        # objective+=f'(assert (> distance_{c}_traveled 0))\n'
+        objective+=f'(assert (> distance_{c}_traveled 0))\n'
         objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
     return head+objective+tail
 
