@@ -35,6 +35,7 @@ def solve_instance(
     # solution=parse_solution(solution)
     if not solution:
         execTime=math.floor(params['timeout'])
+        solution=[]
     try:
         if execTime > params['timeout']:
             execTime = math.floor(params['timeout'])

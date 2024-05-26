@@ -104,7 +104,7 @@ def main(argv):
 
         SAT_params = {
                 'default': {'timeout': timedelta(seconds=TIMEOUT)},
-                'no_time_out': {},
+                # 'no_time_out': {},
             }
 
 
