@@ -26,8 +26,8 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 RUN_CP=False
-RUN_SAT=False
-RUN_SMT=True
+RUN_SAT=True
+RUN_SMT=False
 RUN_MIP=False
 
 CHECKER=False
@@ -102,29 +102,22 @@ def main(argv):
     if RUN_SAT:
         import SAT.SAT_launcher as SAT
 
-        SAT_models={
-            'placeholder': 'sat_test',
-            
-            # 'model.mzn': 'old'
+        SAT_params = {
+                'default': {'timeout': timedelta(seconds=TIMEOUT)},
+                'no_time_out': {},
             }
-        SAT_solvers=[
-            'blank',
-            # 'gecode'
-            ]
-        SAT_params={
-            'timeout':timedelta(seconds=300),
-            } # those are default
 
 
-        SAT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-        for model,name in SAT_models.items():
-            for solver in SAT_solvers:
-                print(f'Solving SAT: {name}-{solver}...')
-                SAT_results=SAT.launch(INSTANCES[first-1:last],SAT_params,verbose=False)
-                SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
 
-        # print(SAT_JSON)
-        saveJSON_list(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=first)
+        for instance_file in INSTANCES[first-1:last]:
+            print(f'Solving {instance_file}...')
+            instance_results={}
+            for param_name,params in SAT_params.items():
+                print(f'\tUsing {param_name} params...')
+                result=SAT.solve_instance(instance_file,params)
+                # print(result)
+                instance_results[f'{param_name}'] = result
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
 
     # ============
     # |    SMT   |
@@ -159,6 +152,7 @@ def main(argv):
                     instance_results[f'{solver}_{param_name}'] = result
                     saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
+    
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
 

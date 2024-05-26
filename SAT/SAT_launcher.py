@@ -5,6 +5,54 @@ import time
 import math
 
 
+def solve_instance(
+        instance_file,
+        params,
+        verbose=False
+):
+    instance_data=parse_dzn(instance_file)
+    obj='N/A'
+    try:
+        if type(params['timeout'])==timedelta:
+            params['timeout']=params['timeout'].total_seconds()
+    except: pass
+    aux=params.copy()
+    execTime = time.time()
+    for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
+        try:
+            aux['timeout']-=(time.time()-execTime)
+            if aux['timeout']<=0:
+                break
+        except:pass
+        # print('avalaible time:',aux['timeout'])
+        result, solution = SAT_solver.solve(instance_data, max_path, aux)
+        if result=='sat':
+            obj=max_path
+            break
+    execTime = math.floor(time.time()-execTime)
+    if verbose:
+        print(solution)
+    # solution=parse_solution(solution)
+    if not solution:
+        execTime=math.floor(params['timeout'])
+    try:
+        if execTime > params['timeout']:
+            execTime = math.floor(params['timeout'])
+        return {
+            "time": execTime,
+            "optimal": (execTime < params['timeout']),
+            "obj": obj,
+            "sol": solution
+        }
+    except:
+        return {
+            "time": execTime,
+            "optimal": True,
+            "obj": obj,
+            "sol": solution
+        }
+
+
 def launch(instances: list, params: dict = None, verbose=False):
 
     if params == None:
