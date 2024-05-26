@@ -1,8 +1,16 @@
 {
     "z3_default": {
-        "time": 300,
-        "optimal": false,
+        "time": 0,
+        "optimal": true,
         "obj": 206,
-        "sol": []
+        "sol": [
+            [
+                2
+            ],
+            [
+                1,
+                3
+            ]
+        ]
     }
 }

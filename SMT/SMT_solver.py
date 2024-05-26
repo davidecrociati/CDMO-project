@@ -23,7 +23,7 @@ def solve_z3(model,params:dict):
     if result == sat:
         model=solver.model()
         # print_variables(model)
-        print(get_distances(model,False,False))
+        # print(get_distances(model,False,False))
         return 'sat',model,get_distances(model,False,False)
     else:
         # print("UNSAT")

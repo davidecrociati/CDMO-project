@@ -57,10 +57,6 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 # (assert (>= longest_trip {lower_bound}))
 # (assert (<= longest_trip {upper_bound}))
 # '''.lstrip()
-    for i in range(1,num_items+1):
-        model_h += f'(declare-fun successor_of_{i} () Int)\n'
-        # model_h += f'(assert (>= successor_of_{i} 0))\n'
-        # model_h += f'(assert (<= successor_of_{i} {num_items+1}))\n'
 
     # ===== CONSTRAINTS =====
     # bin packing
@@ -95,17 +91,20 @@ def generate_smt2_model(instance_data):# TODO remove the 14
         model_h += f'(assert (<= stop_{c}_2 {num_items}))\n'
 
     # constraint the capacities to be in some sort of order
-    for c in range(1,num_couriers):
-        model_h+=f'(assert (=> (> courier_{c}_capa courier_{c+1}_capa) (> load_{c} load_{c+1})))'
-        model_h+=f'(assert (=> (< courier_{c}_capa courier_{c+1}_capa) (< load_{c} load_{c+1})))'
+    # TODO pairwise
+    for c1 in range(1,num_couriers+1):
+        for c2 in range(1,num_couriers+1):
+            if c1!=c2:
+                model_h+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))'
+                model_h+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))'
 
     # all items must be delivered. ===era LENTO forse mo funziona però===
-    for i in range(1,num_items+1):
-        model_h+=f'(assert (= (+'
-        for c in range(1,num_couriers+1):
-            for i_ in range(2,num_items+2):
-                model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
-        model_h+=f') 1))'
+    # for i in range(1,num_items+1):
+    #     model_h+=f'(assert (= (+'
+    #     for c in range(1,num_couriers+1):
+    #         for i_ in range(2,num_items+2):
+    #             model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
+    #     model_h+=f') 1))'
 
     # channeling; stops after completing the delivers must be depot
     for c in range(1,num_couriers+1):
@@ -130,6 +129,7 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 
     # define successors
     for i in range(1,num_items+1):
+        model_h+=f'(declare-fun successor_of_{i} () Int)\n'
         model_h+=f'(assert (> successor_of_{i} 0))\n'
         model_h+=f'(assert (<= successor_of_{i} {num_items+1}))\n'
 
@@ -163,14 +163,14 @@ def generate_smt2_model(instance_data):# TODO remove the 14
     #                 model_h+=f'(ite (and (= stop_{c}_{i} {j})(= stop_{c}_{i+1} {k})) distance_{j}_{k} 0)'
     #     model_h+=f')))\n'
         
-    model_t='(check-sat)\n(get-model)'
+    model_t='(check-sat)\n(get-model)\n'
 
     return model_h,model_t
 
 def add_objective(num_couriers,obj,head,tail):
     objective=''
     for c in range(1,num_couriers+1):
-        objective+=f'(assert (> distance_{c}_traveled 0))\n'
+        # objective+=f'(assert (> distance_{c}_traveled 0))\n'
         objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
     return head+objective+tail
 
@@ -188,7 +188,7 @@ def get_itineraries(model):
     stops=[[e for e in row if e!=default]for row in stops ]
     return stops
 
-def print_variables(model,print_names=False):
+def get_variables(model,print_names=False):
     get_responsabilities(model,print_names)
     get_loads(model,print_names)
     get_stops(model,print_names)

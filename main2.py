@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=7 # inclusive
+lastInstance=10 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -23,7 +23,7 @@ if lastInstance>21:
 if firstInstance>lastInstance:
     lastInstance=firstInstance
 
-TIMEOUT=15 # seconds
+TIMEOUT=300 # seconds
 
 RUN_CP=False
 RUN_SAT=False

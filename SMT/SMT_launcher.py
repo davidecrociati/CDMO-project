@@ -59,24 +59,39 @@ def solve_instance(
     solution=[]
     best_model=None
     max_path=instance_data['upper_bound']
+    opt=False
     while max_path>=instance_data['lower_bound']:
         model=add_objective(instance_data['num_couriers'],max_path,model_head,model_tail)
         try:
-            aux['timeout']-=(time.time()-execTime)
+            aux['timeout']=params['timeout']-(time.time()-execTime)
             if aux['timeout']<=0:
+                print('timeout! passati ',math.floor(time.time()-execTime))
+                print()
                 break
-        except:pass
-        # print('avalaible time:',aux['timeout'])
+        except:
+            print('error')
+            pass
+        print('available time:',aux['timeout'])
         result,sol,distances=solve(model,aux)
         if result=='unsat':
+            try:
+                if params['timeout']-(time.time()-execTime)>0:
+                    opt=True
+                    print(f'unsat con {max_path}. passati {time.time()-execTime}')
+                else:    
+                    print('timeout! passati ',math.floor(time.time()-execTime))
+            except: opt=True
             break
         obj=max(distances)
         max_path=obj-1
         solution=parse_solution(sol)
+        print(f'found {obj}, {solution}')
         best_model=model
+        if max_path<instance_data['lower_bound']:
+            print(f'arrivato al lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
+            opt=True
     execTime = math.floor(time.time()-execTime)
-    if verbose:
-        print(solution)
+    if verbose:print(solution)
     if not solution:
         execTime=math.floor(params['timeout'])
     try:
@@ -84,14 +99,14 @@ def solve_instance(
             execTime = math.floor(params['timeout'])
         return {
             "time": execTime,
-            "optimal": (execTime < params['timeout']),
+            "optimal": opt,
             "obj": obj,
             "sol": solution
         },best_model
     except:
         return {
             "time": execTime,
-            "optimal": True,
+            "optimal": opt,
             "obj": obj,
             "sol": solution
         },best_model
@@ -99,6 +114,9 @@ def solve_instance(
 
     
 def generate_smt2_models(instances,models_path):
+    '''
+	deprecated
+    '''
     if not os.path.exists(models_path):
         os.makedirs(models_path)
 
