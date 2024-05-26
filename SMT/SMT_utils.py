@@ -57,11 +57,10 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 # (assert (>= longest_trip {lower_bound}))
 # (assert (<= longest_trip {upper_bound}))
 # '''.lstrip()
-    # TODO decomenntare se serve successors
-    # for i in range(1,num_items+1):
-    #     model_h += f'(declare-fun successors_{i} () Int)\n'
-    #     model_h += f'(assert (>= successors_{i} 0))\n'
-    #     model_h += f'(assert (<= successors_{i} {num_items+1}))\n'
+    for i in range(1,num_items+1):
+        model_h += f'(declare-fun successor_of_{i} () Int)\n'
+        # model_h += f'(assert (>= successor_of_{i} 0))\n'
+        # model_h += f'(assert (<= successor_of_{i} {num_items+1}))\n'
 
     # ===== CONSTRAINTS =====
     # bin packing
@@ -131,7 +130,6 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 
     # define successors
     for i in range(1,num_items+1):
-        model_h+=f'(declare-fun successor_of_{i} () Int)\n'
         model_h+=f'(assert (> successor_of_{i} 0))\n'
         model_h+=f'(assert (<= successor_of_{i} {num_items+1}))\n'
 
@@ -190,7 +188,7 @@ def get_itineraries(model):
     stops=[[e for e in row if e!=default]for row in stops ]
     return stops
 
-def get_variables(model,print_names=False):
+def print_variables(model,print_names=False):
     get_responsabilities(model,print_names)
     get_loads(model,print_names)
     get_stops(model,print_names)
@@ -246,10 +244,11 @@ def get_successor(model,print_names):
     print('succ:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
     
     
-def get_distances(model,print_names):
+def get_distances(model,print_names,print_=True):
     variables = []
     for var in model:
         if '_traveled' in var.name():
             variables.append((var, model[var]))
     sorted_variables = sorted(variables, key=lambda x: x[0].name())
-    print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+    if print_:print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+    return [int(str(v[1])) for v in sorted_variables]

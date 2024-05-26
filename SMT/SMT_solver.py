@@ -21,11 +21,13 @@ def solve_z3(model,params:dict):
     result = solver.check()
     
     if result == sat:
-        get_variables(solver.model())
-        return 'sat',solver.model()
+        model=solver.model()
+        # print_variables(model)
+        print(get_distances(model,False,False))
+        return 'sat',model,get_distances(model,False,False)
     else:
         # print("UNSAT")
-        return 'unsat',None
+        return 'unsat',None,-1
     
 def solve_cvc4(model,params):
     raise ImportError('non so come cazz installare cvc4 diavolo lupo')
@@ -51,7 +53,7 @@ def solve_cvc4(model,params):
                 print(f"{var_name} = {var_value}")
 
     if result.isSat():
-        return 'sat',None
+        return 'sat',None#TODO parse solution
     else:
         # print("UNSAT")
         return 'unsat',None

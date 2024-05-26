@@ -56,7 +56,10 @@ def solve_instance(
     except: pass
     aux=params.copy()
     execTime = time.time()
-    for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
+    solution=[]
+    best_model=None
+    max_path=instance_data['upper_bound']
+    while max_path>=instance_data['lower_bound']:
         model=add_objective(instance_data['num_couriers'],max_path,model_head,model_tail)
         try:
             aux['timeout']-=(time.time()-execTime)
@@ -64,14 +67,16 @@ def solve_instance(
                 break
         except:pass
         # print('avalaible time:',aux['timeout'])
-        result,solution=solve(model,aux)
-        if result=='sat':
-            obj=max_path
+        result,sol,distances=solve(model,aux)
+        if result=='unsat':
             break
+        obj=max(distances)
+        max_path=obj-1
+        solution=parse_solution(sol)
+        best_model=model
     execTime = math.floor(time.time()-execTime)
     if verbose:
         print(solution)
-    solution=parse_solution(solution)
     if not solution:
         execTime=math.floor(params['timeout'])
     try:
@@ -82,14 +87,14 @@ def solve_instance(
             "optimal": (execTime < params['timeout']),
             "obj": obj,
             "sol": solution
-        },model
+        },best_model
     except:
         return {
             "time": execTime,
             "optimal": True,
             "obj": obj,
             "sol": solution
-        },model
+        },best_model
     # TRY-EXCEPT are for when there is no timeout key in the dict
 
     

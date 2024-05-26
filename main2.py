@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=6 # inclusive
+lastInstance=7 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -23,11 +23,11 @@ if lastInstance>21:
 if firstInstance>lastInstance:
     lastInstance=firstInstance
 
-TIMEOUT=300 # seconds
+TIMEOUT=15 # seconds
 
 RUN_CP=False
-RUN_SAT=True
-RUN_SMT=False
+RUN_SAT=False
+RUN_SMT=True
 RUN_MIP=False
 
 CHECKER=False
@@ -78,9 +78,9 @@ def main(argv):
             #     }
             # }
         }
-
+        print('Solving with CP:')
         for instance_file in INSTANCES[first-1:last]:
-            print(f'Solving {instance_file}...')
+            print(f'  Solving {instance_file}...')
             instance_results={}
             for model in CP_models:
                 # print(model)
@@ -108,9 +108,9 @@ def main(argv):
             }
 
 
-
+        print('Solving with SAT:')
         for instance_file in INSTANCES[first-1:last]:
-            print(f'Solving {instance_file}...')
+            print(f'  Solving {instance_file}...')
             instance_results={}
             for param_name,params in SAT_params.items():
                 print(f'\tUsing {param_name} params...')
@@ -127,20 +127,20 @@ def main(argv):
 
         SMT_models = {
                 'solvers': {
-                    # 'z3': [
-                    #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
-                    # ],
                     'z3': [
-                        ('default', {}),
+                        ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
                     ],
+                    # 'z3': [
+                    #     ('default', {}),
+                    # ],
                     # 'cvc4':[
                     #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
                     # ]
                 }
             }
-
+        print('Solving with SMT:')
         for instance_file in INSTANCES[first-1:last]:
-            print(f'Solving {instance_file}...')
+            print(f'  Solving {instance_file}...')
             instance_results={}
             for solver in SMT_models['solvers']:
                 for param_name,params in SMT_models['solvers'][solver].copy():
