@@ -10,7 +10,7 @@ def solve_z3(model,params:dict):
 
     try:
         solver = Solver()
-        solver.set(**pars)
+        solver.set(**pars,random_seed=42)
         solver.add(parse_smt2_string(model))
     except: 
         from utils.utils import saveModel

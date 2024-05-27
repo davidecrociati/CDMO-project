@@ -1,4 +1,5 @@
-include "globals.mzn";
+include "member.mzn";
+include "count.mzn";
 
 % number of couriers
 int: num_couriers;
@@ -35,9 +36,30 @@ var lower_bound..upper_bound: longest_trip;
 
 
 %%%%%%% CONSTRAINT FOR DECISION VARIABLES %%%%%%%%
+predicate bin_packing_capa(array[int] of int: c,
+                           array[int] of var int: bin,
+                           array[int] of int: w) =
+      forall( i in index_set(bin) ) (
+            min(index_set(c)) <= bin[i] /\ bin[i] <= max(index_set(c))
+      )
+    /\
+      forall( b in index_set(c) ) (
+            c[b] >= sum ( i in index_set(bin) ) (
+                w[i] * ( bin[i] = b )
+            )
+      );
+
+%-----------------------------------------------------------------------------%
 
 % capacity constraint: the sum of item sizes assigned to each courier must not exceed the courier's capacity
-constraint bin_packing_capa(courier_capacities, item_responsability, item_sizes);
+constraint 
+      forall( i in ITEMS) (1 <= item_responsability[i] /\ item_responsability[i] <= num_couriers)
+    /\
+      forall( c in COURIERS ) (
+            courier_capacities[c] >= sum ( i in ITEMS ) (
+                item_sizes[i] * ( item_responsability[i] = c )
+            )
+      );
 
 % courier's routes have to start and end at the depot
 constraint forall(i in COURIERS)(
@@ -78,20 +100,14 @@ array[ITEMS] of var NODES:successors;
 constraint forall(c in COURIERS)(
   forall(i in 2..num_items+1)(
     forall (j in ITEMS)(
-    not(stops[c, i] = depot) -> (
-    (stops[c,i]=j)->
-    (successors[j] = stops[c, i+1])
-    )
+    not((stops[c, i] = depot) /\stops[c,i]=j /\ not(successors[j] = stops[c, i+1]))
     )
   )
 );
 
 % the distance traveled by each courier is the sum of the distances between a node and its successor + the distance from the depot to the first item delivered
 constraint forall(c in COURIERS)(
- 
-    distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) + distances[depot, stops[c, 2]]
-
-);
+    distances_traveled[c] = sum(i in ITEMS)(distances[i, successors[i]] * (item_responsability[i] = c)) + distances[depot, stops[c, 2]]);
 
 % minimize the longest trip distance among all couriers
 constraint longest_trip= max(distances_traveled);

@@ -65,33 +65,31 @@ def solve_instance(
         try:
             aux['timeout']=params['timeout']-(time.time()-execTime)
             if aux['timeout']<=0:
-                print('timeout! passati ',math.floor(time.time()-execTime))
-                print()
+                if verbose:print('timeout! passati ',math.floor(time.time()-execTime))
                 break
         except:
             print('error')
             pass
-        print('available time:',aux['timeout'])
+        if verbose:print('available time:',aux['timeout'])
         result,sol,distances=solve(model,aux)
         if result=='unsat':
             try:
                 if params['timeout']-(time.time()-execTime)>0:
                     opt=True
-                    print(f'unsat con {max_path}. passati {time.time()-execTime}')
+                    if verbose:print(f'unsat con {max_path}. passati {time.time()-execTime}')
                 else:    
-                    print('timeout! passati ',math.floor(time.time()-execTime))
+                    if verbose:print('timeout! passati ',math.floor(time.time()-execTime))
             except: opt=True
             break
         obj=max(distances)
-        max_path=obj-1
+        max_path=obj-1  
         solution=parse_solution(sol)
-        print(f'found {obj}, {solution}')
+        if verbose:print(f'found {obj}, {solution}')
         best_model=model
         if max_path<instance_data['lower_bound']:
-            print(f'arrivato al lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
+            if verbose:print(f'arrivato al lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
             opt=True
     execTime = math.floor(time.time()-execTime)
-    if verbose:print(solution)
     if not solution:
         execTime=math.floor(params['timeout'])
     try:

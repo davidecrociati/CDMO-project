@@ -147,7 +147,8 @@ def main(argv):
                     print(f'\tUsing {solver}-{param_name}...')
                     result,model=SMT.solve_instance(instance_file,
                                         solver,
-                                        params)
+                                        params,
+                                        True)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
                     saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
