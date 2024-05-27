@@ -153,3 +153,5 @@ def delivered_items_list(stops, c, m):
         for i in range(len(stops[0][0])) :
             if m.evaluate(stops[c][n][i]) : idxs.append(i)
     return idxs
+
+# def search_strategy(mode, ) :
