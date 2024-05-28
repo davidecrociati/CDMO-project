@@ -254,33 +254,29 @@ def solve_bin(instance_data, MAX_dist, params):
             
     # 3.2) Orders must be compact
     # This means that i have use all the orders possible in the range(1, max(order_used)), so that there are no gaps
-    # NOTE: is really possible that 'num_delivered_items' different values in the possible range of value can univocally 
-    # sum up to  num_delivered_items*(num_delivered_items+1)/2 (Euler) ?
+    num_delivered_items = [0 for _ in range(num_couriers)] # we'll need it for distances
     for c in range(num_couriers) :
         tot = 0 
-        num_delivered_items = 0 
         for i in range(num_items) :
-            num_delivered_items += If(Or(stops[c][i]), 1, 0) # orders mus be in [1, num_delivered_items] --> their sum must be num_delivered_items*(num_delivered_items+1)/2 (Euler)
+            num_delivered_items[c] += If(Or(stops[c][i]), 1, 0) # orders mus be in [1, num_delivered_items] --> their sum must be num_delivered_items*(num_delivered_items+1)/2 (Euler)
             tot +=  sum([If(stops[c][i][b], 2**b, 0) for b in range(order_bits)])
-        solver.add( (2*tot) == (num_delivered_items * (num_delivered_items + 1)) ) # rearranging Euler for avoid divisions    
+        solver.add( (2*tot) == (num_delivered_items[c] * (num_delivered_items[c] + 1)) ) # rearranging Euler for avoid divisions    
     
     # 4) Bin packing : the sum of items sizes must not exceed the max size of the courier
     for c in range(num_couriers):
         solver.add( sum( [If(Or(stops[c][i]), item_sizes[i], 0) for i in range(num_items)] ) <= courier_capacities[c] )
     
-    # # 5) Symmetry breaking: 
-    # for c1 in range(num_couriers):
-    #     for c2 in range(num_couriers):
-    #         if c1!=c2 and courier_capacities[c1] > courier_capacities[c2] :     # If the courier c1 has a bigger capacity than courier c2
-    #             solver.add(
-    #                 sum([ If(stops[c1][i][o], item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c1
-    #                     for i in range(num_items)
-    #                     for o in range(num_orders)]) 
-    #                 >                                                           # must be greater than
-    #                 sum([ If(stops[c2][i][o], item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c2
-    #                     for i in range(num_items)
-    #                     for o in range(num_orders)]) 
-    #             )
+    # 5) Symmetry breaking: 
+    for c1 in range(num_couriers):
+        for c2 in range(c1+1, num_couriers):
+            if courier_capacities[c1] > courier_capacities[c2] :     # If the courier c1 has a bigger capacity than courier c2
+                solver.add(
+                    sum([ If(Or(stops[c1][i]), item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c1
+                        for i in range(num_items)]) 
+                    >                                                            # must be greater than
+                    sum([ If(Or(stops[c2][i]), item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c2
+                        for i in range(num_items)]) 
+                )
                 
     
     # NOTE : non ha senso farlo perchè a quel punto calcolo direttamente la distanza come faccio dopo
@@ -297,38 +293,30 @@ def solve_bin(instance_data, MAX_dist, params):
     #                         delivered_before[c][i1][i2]
     #                     ))
     
-    # # 6) Check distances
-    # for c in range(num_couriers) :
-    #     distance_tot = 0
-    #     for i1 in range(num_items): 
+    # 6) Check distances
+    for c in range(num_couriers) :
+        distance_tot = 0
+        for i1 in range(num_items): 
             
-    #         # First item
-    #         distance_tot += If(stops[c][i1][0], distances[num_items][i1], 0)
+            # First item
+            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==1 , distances[num_items][i], 0)
             
-    #         # Middle items
-    #         for i2 in range(num_items):
-    #             if i1 != i2:
-    #                 # If we use delivered_before
-    #                 # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
+            # Last item
+            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==num_delivered_items[c] , distances[num_items][i], 0)
+            
+            # Middle items
+            for i2 in range(num_items):
+                if i1 != i2:
+                    # If we use delivered_before
+                    # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
                     
-    #                 # If we check in place
-    #                 for o in range(num_orders-1) :
-    #                     distance_tot += If(And(
-    #                                         stops[c][i1][o],            # Se i1 è stato consegnato
-    #                                         stops[c][i2][o+1]           # Se i2 è l'ordine dopo i1
-    #                                     ), distances[i1][i2], 0)
+                    distance_tot += If(And(
+                                        Or(stops[c][i1]),
+                                        Or(stops[c][i2]),
+                                        sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)]) == sum([If(stops[c][i2][b], 2**b, 0) for b in range(order_bits)]) - 1
+                                    ), distances[i1][i2], 0)
             
-    #         # Last item (if the courier filled all his orders)
-    #         distance_tot += If(stops[c][i1][num_orders-1], distances[i1][num_items], 0)
-            
-    #         # Last item (if there are empty orders after it)
-    #         for o in range(0, num_orders-1) :
-    #             distance_tot += If(And(                                                             
-    #                     stops[c][i1][o],                                        # If the item is delivered
-    #                     Not(Or([stops[c][j][o+1] for j in range(num_items)]))   # but there aren't delivered items in the next order
-    #                 ), distances[i1][num_items], 0)
-            
-    #     solver.add(distance_tot <= MAX_dist)       
+        solver.add(distance_tot <= MAX_dist)       
     
     ############################################################################################################################################################
     ## SOLUTION ################################################################################################################################################
@@ -357,7 +345,7 @@ def solve_bin(instance_data, MAX_dist, params):
                 order = int(order_bin, 2)  # Convert binary string to decimal
                 if order > 0:  # If order is 0, it means the item is not delivered by this courier
                     courier_deliveries.append((i, order))
-                print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f"b_{b}" for b in range(order_bits)]})")
+                print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f"b_{b}" for b in reversed(range(order_bits))]})")
             
             # Sort items for this courier by order
             courier_deliveries.sort(key=lambda x: x[1])

@@ -22,7 +22,7 @@ def solve_instance(
     execTime = time.time()
     
     # BINARY TEST
-    obj, solution = SAT_solver.solve_bin(instance_data, 14, params)
+    obj, solution = SAT_solver.solve_bin(instance_data, 16, params)
     
     # obj, solution = search_strategy(instance_data, mode, aux, params, execTime, verbose=True)
                     
