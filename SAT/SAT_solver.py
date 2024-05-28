@@ -216,7 +216,7 @@ def solve_bin(instance_data, MAX_dist, params):
     ## VARIABLES #####################################################################################################################################################
     ##################################################################################################################################################################
     
-    order_bits = math.ceil(math.log2(num_items - (num_couriers - 1))) + 1 # number of binary digit to represent the max num of orders
+    order_bits = math.ceil(math.log2(num_items - (num_couriers - 1))) + 1       # number of binary digit to represent the max num of orders
                  
     stops = [[[Bool(f'stops_{c}_{i}_{b}')   for b in range(order_bits)]         # order of delivering
                                             for i in range(num_items)]          # items
@@ -238,60 +238,31 @@ def solve_bin(instance_data, MAX_dist, params):
     for c in range(num_couriers):
         solver.add(at_least_one_bw([Or(stops[c][i]) for i in range(num_items)]))
         
-    # 3.1) Orders of the items of the same courier must be different unless they are all 0s
+    # 3) Orders of items for the same courier must be unique and compact
+    num_delivered_items = []
     for c in range(num_couriers):
         for i in range(num_items):
+            # Uniqueness
             for j in range(i+1, num_items):
-                # Create integer representations of the orders
-                order_i = sum([If(stops[c][i][b], 2**b, 0) for b in range(order_bits)]) 
-                order_j = sum([If(stops[c][j][b], 2**b, 0) for b in range(order_bits)]) 
-                
-                # If both items are delivered, their orders must be different
-                solver.add(Implies(
-                        And(order_i > 0, order_j > 0), 
-                        order_i != order_j
-                    ))
-            
-    # 3.2) Orders must be compact
-    # This means that i have use all the orders possible in the range(1, max(order_used)), so that there are no gaps
-    num_delivered_items = [0 for _ in range(num_couriers)] # we'll need it for distances
-    for c in range(num_couriers) :
-        tot = 0 
-        for i in range(num_items) :
-            num_delivered_items[c] += If(Or(stops[c][i]), 1, 0) # orders mus be in [1, num_delivered_items] --> their sum must be num_delivered_items*(num_delivered_items+1)/2 (Euler)
-            tot +=  sum([If(stops[c][i][b], 2**b, 0) for b in range(order_bits)])
-        solver.add( (2*tot) == (num_delivered_items[c] * (num_delivered_items[c] + 1)) ) # rearranging Euler for avoid divisions    
+                order_i = binary_to_int(stops[c][i], order_bits)
+                order_j = binary_to_int(stops[c][j], order_bits)
+                solver.add(Implies(And(order_i > 0, order_j > 0), order_i != order_j))
+        # Compactness
+        num_delivered_items.append(sum(If(Or(stops[c][i]), 1, 0) for i in range(num_items)))
+        total_order_sum = sum(binary_to_int(stops[c][i]) for i in range(num_items))
+        solver.add(2 * total_order_sum == num_delivered_items[c] * (num_delivered_items[c] + 1)) # Euler formula (restrict and all-different values make it univocal) 
     
     # 4) Bin packing : the sum of items sizes must not exceed the max size of the courier
     for c in range(num_couriers):
         solver.add( sum( [If(Or(stops[c][i]), item_sizes[i], 0) for i in range(num_items)] ) <= courier_capacities[c] )
     
-    # 5) Symmetry breaking: 
+    # 5) Symmetry breaking: the higher your capacity the higher your load
     for c1 in range(num_couriers):
         for c2 in range(c1+1, num_couriers):
-            if courier_capacities[c1] > courier_capacities[c2] :     # If the courier c1 has a bigger capacity than courier c2
-                solver.add(
-                    sum([ If(Or(stops[c1][i]), item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c1
-                        for i in range(num_items)]) 
-                    >                                                            # must be greater than
-                    sum([ If(Or(stops[c2][i]), item_sizes[i], 0)                 # Then he sum of all the sizes of the item brought by the courier c2
-                        for i in range(num_items)]) 
-                )
-                
-    
-    # NOTE : non ha senso farlo perchè a quel punto calcolo direttamente la distanza come faccio dopo
-    # FIXME : comunuque NON FUNZIONA
-    # # 5) Channeling between stops and delivered_before
-    # for c in range(num_couriers) :
-    #     for i1 in range(num_couriers) :
-    #         for i2 in range(num_couriers) :
-    #             if i1 != i2 :
-    #                 # If item i2 is delivered rigth after i1
-    #                 for o in range(num_orders-1) :
-    #                     solver.add(Implies(
-    #                         And(stops[c][i1][o], stops[c][i2][o+1]),
-    #                         delivered_before[c][i1][i2]
-    #                     ))
+            if courier_capacities[c1] > courier_capacities[c2] :
+                c1_load = sum([ If(Or(stops[c1][i]), item_sizes[i], 0) for i in range(num_items)])
+                c2_load = sum([ If(Or(stops[c2][i]), item_sizes[i], 0) for i in range(num_items)]) 
+                solver.add(c1_load > c2_load)
     
     # 6) Check distances
     for c in range(num_couriers) :
@@ -299,27 +270,30 @@ def solve_bin(instance_data, MAX_dist, params):
         for i1 in range(num_items): 
             
             # First item
-            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==1 , distances[num_items][i1], 0)
+            distance_tot += If( binary_to_int(stops[c][i1], order_bits) ==1 , distances[num_items][i1], 0)
             
             # Last item
-            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==num_delivered_items[c] , distances[i1][num_items], 0)
+            distance_tot += If( binary_to_int(stops[c][i1], order_bits) ==num_delivered_items[c] , distances[i1][num_items], 0)
             
             # Middle items
+            order1 = binary_to_int(stops[c][i1], order_bits)
             for i2 in range(num_items):
                 if i1 != i2:
                 # If we use delivered_before
                 # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
-                
+                    order2 = binary_to_int(stops[c][i2], order_bits)
                     distance_tot += If(And(
                                         Or(stops[c][i1]),
-                                        sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)]) == (sum([If(stops[c][i2][b], 2**b, 0) for b in range(order_bits)]) - 1)
+                                        order1 == order2 - 1
                                     ), distances[i1][i2], 0)
-            
+                    
         solver.add(distance_tot <= MAX_dist)       
     
     ############################################################################################################################################################
     ## SOLUTION ################################################################################################################################################
     ############################################################################################################################################################
+    
+    # TODO : sistemare una volta finita (ci sono troppi cicli e variabili solo per il debug)
     
     pars=params.copy()
     load_time = time.time()-t
@@ -350,10 +324,8 @@ def solve_bin(instance_data, MAX_dist, params):
             # Sort items for this courier by order
             courier_deliveries.sort(key=lambda x: x[1])
             
-            # Append sorted items (only item indices) to the sol list for this courier
-            sol[c] = [item for item, order in courier_deliveries]
-            # for launcher format
-            solution[c] = [item+1 for item, order in courier_deliveries]
+            sol[c] = [item for item, order in courier_deliveries] # for DEBUG format
+            solution[c] = [item+1 for item, order in courier_deliveries] # for launcher format
             # print(f"\nCourier {c} delivers items in order: {solution[c]}")
 
             # DEBUG
@@ -365,7 +337,6 @@ def solve_bin(instance_data, MAX_dist, params):
                 total_distances.append(total_distance)
                 # print(f"Courier {c} delivers: {solution[c]} --> traveled {total_distance} and loaded {total_size} out of {courier_capacities[c]}")
             
-        
         # plot_solution_3d(sol, num_couriers, num_items, order_bits) # DEBUG
         
         obj = max(total_distances)

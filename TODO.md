@@ -10,6 +10,12 @@ Magari poi lo chiamiamo _README.md_
 
 ## SAT
 
+* [ ] Semplificare a -> b con -a  \\/ b
+* [ ] Mi sono perso qualche simmetria ???
+* [ ] Provare a cambiare il range delle distanze nelle istanze simmetriche `for i2 in range(i1+1, num_items)`
+* [ ] Pulire i constraint anche nel 1-hot model
+* [ ] Collegare bene il launcher con il mani (`solve_instance` richiede modello e strategia di ricerca ora)
+
 ## SMT
 
 bisogna capire come strutturare la ricerca. z3 ha un minimize/maximize, altri solver no. non so se farglielo usare o ocntinuare a partire dal lower bound e vedere se è sat

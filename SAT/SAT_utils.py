@@ -114,21 +114,27 @@ def display_instance(instance):
         print("  ", row)
     print("lower_bound:", instance['lower_bound'])
     print("upper_bound:", instance['upper_bound'])
+    
+def binary_to_int(bits, order_bits):
+    return sum(If(bits[b], 2**b, 0) for b in range(order_bits))
 
-def solve_strategy(instance_data, model, strategy, aux, params, execTime, incremental_factor=2, verbose=False) :
+def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=2, incremental_factor=2, verbose=False) :
     """
-    This function searches for a solution to a given instance using different search strategies.
+    Searches for a solution to a given instance using different search strategies.
     
     Parameters:
     - instance_data (dict): Contains information about the instance, including 'lower_bound' and 'upper_bound'.
-    - strategy (str): The search strategy to use. Options are:
+    - model (str): The model type to use for solving. Options are:
+        - "binary": Uses the binary model for solving.
+        - "1-hot": Uses the 1-hot model for solving.
+    - strategy (str): The search strategy to use. Options include:
         - "lower_upper": Incrementally increases the bound from lower_bound to upper_bound.
         - "upper_lower": Decrementally decreases the bound from upper_bound to lower_bound.
         - "binary_search": Uses a binary search to find the minimum bound that yields a SAT solution.
         - "incremental_lower_upper": Increases the bound exponentially until a SAT solution is found, then searches backward to find the minimum bound.
-    - aux (dict): Auxiliary parameters, including 'timeout'.
     - params (dict): Additional parameters for the search, including 'timeout'.
     - execTime (float): The starting execution time of the search.
+    - binary_cut (int, optional): The factor by which to divide the search space in "binary_search" mode. Defaults to 2.
     - incremental_factor (int, optional): The factor by which to increase the bound in "incremental_lower_upper" mode. Defaults to 2.
     - verbose (bool, optional): If True, prints detailed debug information. Defaults to False.
     
@@ -138,6 +144,8 @@ def solve_strategy(instance_data, model, strategy, aux, params, execTime, increm
     """
     obj='N/A'
     solution = []
+    
+    aux=params.copy()
     
     if verbose : print(f"Using {model} model with {strategy} search-strategy")
     
@@ -201,7 +209,7 @@ def solve_strategy(instance_data, model, strategy, aux, params, execTime, increm
                     pass
                     
                 # Execution    
-                mid = (lower_bound + upper_bound) // 2
+                mid = (lower_bound + upper_bound) // binary_cut
                 result, sol = solve(instance_data, mid, aux)
 
                 # Backup + update value
