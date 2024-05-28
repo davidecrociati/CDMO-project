@@ -36,7 +36,8 @@ def solve_instance(
         instance_file,
         solver,
         params,
-        verbose=False
+        verbose=False,
+        array=True
 ):
     solve=None
     match solver:
@@ -47,7 +48,10 @@ def solve_instance(
         case _:
             raise KeyError('Unsupported solver')
     instance_data=parse_dzn(instance_file)
-    model_head,model_tail=generate_smt2_model(instance_data)
+    if array:
+        model_head,model_tail=generate_array_smt2_model(instance_data)
+    else:
+        model_head,model_tail=generate_smt2_model(instance_data)
     obj='N/A'
     model=''
     try:

@@ -34,27 +34,10 @@ array[COURIERS] of var 0..upper_bound: distances_traveled;
 % largest distance among all couriers
 var lower_bound..upper_bound: longest_trip;
 
-
-%%%%%%% CONSTRAINT FOR DECISION VARIABLES %%%%%%%%
-predicate bin_packing_capa(array[int] of int: c,
-                           array[int] of var int: bin,
-                           array[int] of int: w) =
-      forall( i in index_set(bin) ) (
-            min(index_set(c)) <= bin[i] /\ bin[i] <= max(index_set(c))
-      )
-    /\
-      forall( b in index_set(c) ) (
-            c[b] >= sum ( i in index_set(bin) ) (
-                w[i] * ( bin[i] = b )
-            )
-      );
-
-%-----------------------------------------------------------------------------%
-
 % capacity constraint: the sum of item sizes assigned to each courier must not exceed the courier's capacity
 constraint 
-      forall( i in ITEMS) (1 <= item_responsability[i] /\ item_responsability[i] <= num_couriers)
-    /\
+%       forall( i in ITEMS) (1 <= item_responsability[i] /\ item_responsability[i] <= num_couriers)
+%     /\
       forall( c in COURIERS ) (
             courier_capacities[c] >= sum ( i in ITEMS ) (
                 item_sizes[i] * ( item_responsability[i] = c )
@@ -63,7 +46,11 @@ constraint
 
 % courier's routes have to start and end at the depot
 constraint forall(i in COURIERS)(
-    stops[i, 1] = depot /\ stops[i, num_items+2] = depot
+    stops[i, 1] = depot
+);
+
+constraint forall(i in COURIERS)(
+    stops[i, num_items+2] = depot
 );
 
 % each courier must be responsible for delivering at least one item
@@ -84,7 +71,12 @@ constraint forall(i in ITEMS)(
 % channeling constraint: the number of items delivered by a courier in 'item_responsibility' matches the stops in 'stops'
 constraint forall(c in COURIERS)(
   forall(i in ITEMS)(
-    i <= count(item_responsability, c) <-> stops[c, i+1] != depot
+    not(i <= count(item_responsability, c)) \/ (stops[c, i+1] != depot)
+));
+
+constraint forall(c in COURIERS)(
+  forall(i in ITEMS)(
+  not(stops[c, i+1] != depot) \/ (i <= count(item_responsability, c))
 ));
 
 % all the items assigned to a courier in 'item_responsibility' must appear in the courier's route in 'stops'
@@ -96,12 +88,19 @@ constraint forall(c in COURIERS, i in ITEMS)(
 
 % compute total distances for each courier
 % compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
+% array[ITEMS] of var NODES:successors; 
+% constraint forall(c in COURIERS)(
+%   forall(i in 2..num_items+1)(
+%     forall (j in ITEMS)(
+%     not((stops[c, i] = depot) /\stops[c,i]=j /\ not(successors[j] = stops[c, i+1]))
+%     )
+%   )
+% );
 array[ITEMS] of var NODES:successors; 
 constraint forall(c in COURIERS)(
   forall(i in 2..num_items+1)(
-    forall (j in ITEMS)(
-    not((stops[c, i] = depot) /\stops[c,i]=j /\ not(successors[j] = stops[c, i+1]))
-    )
+    if stops[c, i] != depot then
+    successors[stops[c,i]] = stops[c, i+1] endif
   )
 );
 
