@@ -190,7 +190,7 @@ def solve(instance_data, MAX_dist, params):
         # print("No solution found")
         return 'unsat',solution
 
-# BINARY APPROACH ON ORDERS (TODO)
+# BINARY APPROACH ON ORDERS (FIXME : forse ancora ottimizzabile)
 def solve_bin(instance_data, MAX_dist, params):
     t = time.time()
     '''
@@ -216,7 +216,7 @@ def solve_bin(instance_data, MAX_dist, params):
     ## VARIABLES #####################################################################################################################################################
     ##################################################################################################################################################################
     
-    order_bits = math.ceil(math.log2(num_items - (num_couriers - 1))) # number of binary digit to represent the max num of orders
+    order_bits = math.ceil(math.log2(num_items - (num_couriers - 1))) + 1 # number of binary digit to represent the max num of orders
                  
     stops = [[[Bool(f'stops_{c}_{i}_{b}')   for b in range(order_bits)]         # order of delivering
                                             for i in range(num_items)]          # items
@@ -299,21 +299,20 @@ def solve_bin(instance_data, MAX_dist, params):
         for i1 in range(num_items): 
             
             # First item
-            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==1 , distances[num_items][i], 0)
+            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==1 , distances[num_items][i1], 0)
             
             # Last item
-            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==num_delivered_items[c] , distances[num_items][i], 0)
+            distance_tot += If( sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)])==num_delivered_items[c] , distances[i1][num_items], 0)
             
             # Middle items
             for i2 in range(num_items):
                 if i1 != i2:
-                    # If we use delivered_before
-                    # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
-                    
+                # If we use delivered_before
+                # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
+                
                     distance_tot += If(And(
                                         Or(stops[c][i1]),
-                                        Or(stops[c][i2]),
-                                        sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)]) == sum([If(stops[c][i2][b], 2**b, 0) for b in range(order_bits)]) - 1
+                                        sum([If(stops[c][i1][b], 2**b, 0) for b in range(order_bits)]) == (sum([If(stops[c][i2][b], 2**b, 0) for b in range(order_bits)]) - 1)
                                     ), distances[i1][i2], 0)
             
         solver.add(distance_tot <= MAX_dist)       
@@ -336,6 +335,7 @@ def solve_bin(instance_data, MAX_dist, params):
     if res == sat:
         m = solver.model()
         solution = [[] for _ in range(num_couriers)]  # Initialize a list of lists for each courier
+        sol = [[] for _ in range(num_couriers)]  # Initialize a list of lists for each courier
         total_distances = []
         
         for c in range(num_couriers):
@@ -345,31 +345,34 @@ def solve_bin(instance_data, MAX_dist, params):
                 order = int(order_bin, 2)  # Convert binary string to decimal
                 if order > 0:  # If order is 0, it means the item is not delivered by this courier
                     courier_deliveries.append((i, order))
-                print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f"b_{b}" for b in reversed(range(order_bits))]})")
+                # print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f"b_{b}" for b in reversed(range(order_bits))]})")
             
             # Sort items for this courier by order
             courier_deliveries.sort(key=lambda x: x[1])
             
-            # Append sorted items (only item indices) to the solution list for this courier
-            solution[c] = [item for item, order in courier_deliveries]
-            print(f"\nCourier {c} delivers items in order: {solution[c]}")
+            # Append sorted items (only item indices) to the sol list for this courier
+            sol[c] = [item for item, order in courier_deliveries]
+            # for launcher format
+            solution[c] = [item+1 for item, order in courier_deliveries]
+            # print(f"\nCourier {c} delivers items in order: {solution[c]}")
 
             # DEBUG
-            if solution[c]:
-                total_size = sum([item_sizes[i] for i in solution[c] ])
-                total_distance = distances[num_items][solution[c][0]]
-                total_distance += sum([distances[solution[c][i - 1]][solution[c][i]] for i in range(1, len(solution[c]))])
-                total_distance += distances[solution[c][-1]][num_items]  
+            if sol[c]:
+                total_size = sum([item_sizes[i] for i in sol[c] ])
+                total_distance = distances[num_items][sol[c][0]]
+                total_distance += sum([distances[sol[c][i - 1]][sol[c][i]] for i in range(1, len(sol[c]))])
+                total_distance += distances[sol[c][-1]][num_items]  
                 total_distances.append(total_distance)
-                print(f"Courier {c} delivers: {solution[c]} --> traveled {total_distance} and loaded {total_size} out of {courier_capacities[c]}")
+                # print(f"Courier {c} delivers: {solution[c]} --> traveled {total_distance} and loaded {total_size} out of {courier_capacities[c]}")
+            
         
         # plot_solution_3d(sol, num_couriers, num_items, order_bits) # DEBUG
         
-        # obj = max(total_distances)
-        return str(res), solution
+        obj = max(total_distances)
         # print(f"The longest distance travelled is {obj}") # DEBUG
+        return str(res), solution
     else:
-        print("No solution found")
+        # print("No solution found")
         return 'unsat',solution
 
 

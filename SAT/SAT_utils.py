@@ -104,17 +104,6 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
 
     plt.show()
 
-def print_responsabilities(model, resp):
-    s='Responsabilities:\nItems: '
-    s+=' '.join(str(i+1) for i in range(len(resp)))+'\n'+'--'*(len(resp)+3)+'\nCour:  '
-    for i in range(len(resp)):
-        for c in range(len(resp[i])):
-            if is_true(model[resp[i][c]]):
-                s+=f'{c+1} '
-                # break
-        # s+='\n'
-    print(s)
-
 
 def display_instance(instance):
     print("num_items:", instance['num_items'])
@@ -125,44 +114,14 @@ def display_instance(instance):
         print("  ", row)
     print("lower_bound:", instance['lower_bound'])
     print("upper_bound:", instance['upper_bound'])
-    
-def print_matrix(matrix, level=0):
-    indent = '    ' * level  # indent for each level
-    if isinstance(matrix[0], list):  # Check if it's a 2D matrix or higher
-        for sub_matrix in matrix:
-            if isinstance(sub_matrix[0], list):  # If it's a 3D matrix
-                print_matrix(sub_matrix, level + 1)
-            else:  # If it's a 2D matrix
-                print(indent + '\t'.join(map(str, sub_matrix)))
-    else:
-        print(indent + '\t'.join(map(str, matrix)))
 
-def print_solution(solution, num_couriers, num_items):
-    for courier in range(num_couriers):
-        delivered_items = []
-        for item in range(num_items):
-            for order in range(num_items):
-                if (courier, item, order) in solution:
-                    delivered_items.append(item)
-        if delivered_items:
-            print(f"Courier {courier} delivers items: {delivered_items}")
-        else:
-            print(f"Courier {courier} does not deliver any items.")
-            
-def delivered_items_list(stops, c, m):
-    idxs = []
-    for n in range(len(stops[0])) :
-        for i in range(len(stops[0][0])) :
-            if m.evaluate(stops[c][n][i]) : idxs.append(i)
-    return idxs
-
-def search_strategy(instance_data, mode, aux, params, execTime, incremental_factor=2, verbose=False) :
+def solve_strategy(instance_data, model, strategy, aux, params, execTime, incremental_factor=2, verbose=False) :
     """
     This function searches for a solution to a given instance using different search strategies.
     
     Parameters:
     - instance_data (dict): Contains information about the instance, including 'lower_bound' and 'upper_bound'.
-    - mode (str): The search strategy to use. Options are:
+    - strategy (str): The search strategy to use. Options are:
         - "lower_upper": Incrementally increases the bound from lower_bound to upper_bound.
         - "upper_lower": Decrementally decreases the bound from upper_bound to lower_bound.
         - "binary_search": Uses a binary search to find the minimum bound that yields a SAT solution.
@@ -180,7 +139,14 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
     obj='N/A'
     solution = []
     
-    match mode:
+    if verbose : print(f"Using {model} model with {strategy} search-strategy")
+    
+    solve=None
+    match model :
+        case "binary" : solve = SAT_solver.solve_bin
+        case "1-hot" : solve = SAT_solver.solve
+    
+    match strategy:
         case "lower_upper" :
             # Mode 1: lower --> upper
             for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
@@ -192,7 +158,7 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                 except:pass
                 
                 # Execution
-                result, solution = SAT_solver.solve(instance_data, max_path, aux)
+                result, solution = solve(instance_data, max_path, aux)
 
                 # Backup
                 if result=='sat':
@@ -211,7 +177,7 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                 except:pass
                 
                 # Execution
-                result, sol = SAT_solver.solve(instance_data, max_path, aux)
+                result, sol = solve(instance_data, max_path, aux)
                  
                 # Backup
                 if result=='sat' : 
@@ -236,7 +202,7 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                     
                 # Execution    
                 mid = (lower_bound + upper_bound) // 2
-                result, sol = SAT_solver.solve(instance_data, mid, aux)
+                result, sol = solve(instance_data, mid, aux)
 
                 # Backup + update value
                 if result == 'sat':
@@ -264,7 +230,7 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                     pass
 
                 # Execution
-                result, sol = SAT_solver.solve(instance_data, bound, aux)
+                result, sol = solve(instance_data, bound, aux)
                 if verbose : print(f"{bound}) In the incremental part i found: ", sol)
 
                 if result == 'sat':
@@ -282,7 +248,7 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                             pass
 
                         # Execution
-                        result, sol = SAT_solver.solve(instance_data, bound, aux)
+                        result, sol = solve(instance_data, bound, aux)
                         
                         # Backup
                         if result == 'sat':
@@ -301,9 +267,12 @@ def search_strategy(instance_data, mode, aux, params, execTime, incremental_fact
                     # The solution is unsat so we need a bigger bound
                     next_bound = bound * incremental_factor
                     # Check not to use a too big bound
-                    if next_bound > upper_bound : bound += 1 
-                    else : bound = next_bound
-                    print(f"Unsat, try incrementing by {incremental_factor}: bound = {bound}")
+                    if next_bound > upper_bound : 
+                        bound += 1 
+                        print(f"Unsat, try incrementing by 1 in order not to overcome {upper_bound}: bound = {bound}")
+                    else : 
+                        bound = next_bound
+                        print(f"Unsat, try incrementing by {incremental_factor}: bound = {bound}")
     return obj, solution
     
     

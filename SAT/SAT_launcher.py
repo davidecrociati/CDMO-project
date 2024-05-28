@@ -9,7 +9,8 @@ import math
 def solve_instance(
         instance_file,
         params,
-        mode="incremental_lower_upper", # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
+        search_strategy="binary_search",   # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
+        model="binary",                              # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
         verbose=False
 ):
     instance_data=parse_dzn(instance_file)
@@ -22,9 +23,9 @@ def solve_instance(
     execTime = time.time()
     
     # BINARY TEST
-    obj, solution = SAT_solver.solve_bin(instance_data, 16, params)
+    # obj, solution = SAT_solver.solve_bin(instance_data, 14, params)
     
-    # obj, solution = search_strategy(instance_data, mode, aux, params, execTime, verbose=True)
+    obj, solution = solve_strategy(instance_data, model, search_strategy, aux, params, execTime, verbose=True)
                     
     execTime = math.floor(time.time()-execTime)
     if verbose:
