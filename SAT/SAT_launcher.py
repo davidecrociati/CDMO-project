@@ -21,7 +21,10 @@ def solve_instance(
     aux=params.copy()
     execTime = time.time()
     
-    obj, solution = search_strategy(instance_data, mode, aux, params, execTime, verbose=True)
+    # BINARY TEST
+    obj, solution = SAT_solver.solve_bin(instance_data, 14, params)
+    
+    # obj, solution = search_strategy(instance_data, mode, aux, params, execTime, verbose=True)
                     
     execTime = math.floor(time.time()-execTime)
     if verbose:
