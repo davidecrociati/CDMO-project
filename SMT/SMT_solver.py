@@ -1,6 +1,6 @@
 from SMT.SMT_utils import *
 
-def solve_z3(model,params:dict):
+def solve_z3(model,params:dict,arrays=True,successor=True):
     from z3 import Solver,parse_smt2_string,sat
     pars=params.copy()
     if 'timeout' in params:
@@ -22,9 +22,9 @@ def solve_z3(model,params:dict):
     
     if result == sat:
         model=solver.model()
-        # get_variables(model)
+        get_variables(model)
         # print(get_distances(model,False,False))
-        return 'sat',model,get_distances(model,False,False)
+        return 'sat',model,get_distances(model,False,arrays=arrays,print_=False)
     else:
         # print("UNSAT")
         return 'unsat',None,-1

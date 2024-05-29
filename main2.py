@@ -25,19 +25,44 @@ if firstInstance>lastInstance:
 
 TIMEOUT=300 # seconds
 
-RUN_CP=False
-RUN_SAT=False
-RUN_SMT=True
-RUN_MIP=False
 
 CHECKER=False
 
 
 def main(argv):
+    RUN_CP=False
+    RUN_SAT=False
+    RUN_SMT=True
+    RUN_MIP=False
     first=firstInstance
     last=lastInstance
     if len(argv)>1:
         first=last=int(argv[1])
+        if len(argv)>2:
+            match argv[2]:
+                case 'cp':
+                    RUN_CP=True
+                    RUN_SAT=False
+                    RUN_SMT=False
+                    RUN_MIP=False
+                case 'sat':
+                    RUN_CP=False
+                    RUN_SAT=True
+                    RUN_SMT=False
+                    RUN_MIP=False
+                case 'smt':
+                    RUN_CP=False
+                    RUN_SAT=False
+                    RUN_SMT=True
+                    RUN_MIP=False
+                case 'mip':
+                    RUN_CP=False
+                    RUN_SAT=False
+                    RUN_SMT=False
+                    RUN_MIP=True
+                case _:
+                    pass
+
 
     # ============
     # |    CP    |
@@ -49,7 +74,7 @@ def main(argv):
                 'solvers': {
                     'gecode': [
                         ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                     ]
                 }
             },
@@ -148,10 +173,10 @@ def main(argv):
                     result,model=SMT.solve_instance(instance_file,
                                         solver,
                                         params,
-                                        True)
+                                        verbose=True)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
-                    saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
+                    if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
     
     if RUN_MIP:

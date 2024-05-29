@@ -3,7 +3,258 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import parse_dzn
 import z3
 
-def generate_array_smt2_model(instance_data):# TODO remove the 14
+
+def define_decision_variables(data,use_arrays):
+    '''
+	couriers_capa,items_size,distances,stops,items_resp,distances_travld
+    '''
+    num_couriers = data['num_couriers']
+    num_items = data['num_items']
+    courier_capacities = data['courier_capacities']
+    item_sizes = data['item_sizes']
+    distances = data['distances']
+    upper_bound = data['upper_bound']
+    s = ''
+    if use_arrays:
+        # capacities
+        s += f'(declare-fun couriers_capa () (Array Int Int))\n'
+        for c in range(1,num_couriers):
+            s += f'(assert (= (select couriers_capa {c}) {courier_capacities[c-1]}))\n'
+        # sizes
+        s += f'(declare-fun items_size () (Array Int Int))\n'
+        for i in range(1,num_items):
+            s += f'(assert (= (select items_size {i}) {item_sizes[i-1]}))\n'
+        # distances
+        for i in range(1,num_items+2):
+            s += f'(declare-fun distances_{i} () (Array Int Int))\n'
+            for j in range(1,num_items+2):
+                s += f'(assert (= (select distances_{i} {j}) {distances[i-1][j-1]}))\n'
+        # stops
+        for c in range(1,num_couriers+1):
+            s += f'(declare-fun stops_{c} () (Array Int Int))\n'
+            for i in range(1,num_items+1):
+                s += f'(assert (>= (select stops_{c} {i}) 1))\n'
+                s += f'(assert (<= (select stops_{c} {i}) {num_items if i==1 else num_items+1}))\n'
+        # resp
+        s += f'(declare-fun items_resp () (Array Int Int))\n'
+        for i in range(1,num_items+1):
+            s += f'(assert (>= (select items_resp {i}) 1))\n'
+            s += f'(assert (<= (select items_resp {i}) {num_couriers}))\n'
+        # distances traveled    
+        s += f'(declare-fun distances_traveled () (Array Int Int))\n'
+        for c in range(1,num_couriers+1):
+            s += f'(assert (>= (select distances_traveled {c}) 0))\n'
+            s += f'(assert (<= (select distances_traveled {c}) {upper_bound}))\n'
+    else:
+        for c, size in enumerate(courier_capacities, start=1):
+            s += f'(declare-fun courier_{c}_capa () Int)\n'
+            s += f'(assert (= courier_{c}_capa {size}))\n'
+        for i, size in enumerate(item_sizes, start=1):
+            s += f'(declare-fun item_{i}_size () Int)\n'
+            s += f'(assert (= item_{i}_size {size}))\n'
+        for i in range(num_items+1):
+            for j in range(num_items+1):
+                s += f'(declare-fun distance_{i+1}_{j+1} () Int)\n'
+                s += f'(assert (= distance_{i+1}_{j+1} {distances[i][j]}))\n'
+        for c in range(1,num_couriers+1):
+            for i in range(3,num_items+2):
+                s += f'(declare-fun stop_{c}_{i} () Int)\n'
+                s += f'(assert (>= stop_{c}_{i} 1))\n'
+                s += f'(assert (<= stop_{c}_{i} {num_items+1}))\n'
+        for i in range(1,num_items+1):
+            s += f'(declare-fun item_{i}_resp () Int)\n'
+            s += f'(assert (>= item_{i}_resp 1))\n'
+            s += f'(assert (<= item_{i}_resp {num_couriers}))\n'
+        for c in range(1,num_couriers+1):
+            s += f'(declare-fun distance_{c}_traveled () Int)\n'
+            s += f'(assert (>= distance_{c}_traveled 0))\n'
+            s += f'(assert (<= distance_{c}_traveled {upper_bound}))\n'
+    return s
+
+def define_bin_packing(nc,ni,arrays):
+    # TODO PENSO CI SIA ERRORE QUOI
+    s=''
+    if arrays:
+        s+=f'(declare-fun loads () (Array Int Int))\n'
+        for c in range(1,nc+1):
+            s+=f'(assert (= (select loads {c}) (+ '
+            for i in range(1,ni+1):
+                s+=f'(ite (= (select items_resp {i}) {c}) (select items_size {i}) 0)'
+            s+=')))\n'
+            s+=f'(assert (>= (select couriers_capa {c}) (select loads {c})))\n'
+    else:
+        for c in range(1,nc+1):
+            s+=f'(declare-fun load_{c} () Int)\n'
+            s+=f'(assert (= load_{c} (+'
+            for i in range(1,ni+1):
+                s+=f'(ite (= item_{i}_resp {c}) item_{i}_size 0)'
+            s+=')))\n'
+            s+=f'(assert (>= courier_{c}_capa load_{c}))\n'
+    return s
+
+def define_couriers_duty(nc,ni,arrays):
+    s=''
+    if arrays:
+        for c in range(1,nc+1):
+            s+=f'(assert (or '
+            for i in range(1,ni+1):
+                s+=f'(= (select items_resp {i}) {c})'
+            s+='))\n'
+    else:
+        for c in range(1,nc+1):
+            s+=f'(assert (or '
+            for i in range(1,ni+1):
+                s+=f'(= item_{i}_resp {c})'
+            s+='))\n'
+    return s
+
+def define_simmetry(nc,method,arrays):
+    s=''
+    for c1 in range(1,nc+1):
+        for c2 in range(1,nc+1):
+            if c1!=c2:
+                match method:
+                    case 'both':
+                        if arrays:
+                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
+                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
+                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                    case '>':
+                        if arrays:
+                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
+                    case '<':
+                        if arrays:
+                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                    case _: pass
+    return s
+
+def define_deliver_everything(nc,ni,arrays):
+    s=''
+    if arrays:
+        for i in range(1,ni+1):
+            s+=f'(assert (= (+'
+            for c in range(1,nc+1):
+                for j in range(1,ni+1):
+                    s+=f'(ite (= (select stops_{c} {j}) {i}) 1 0) '
+            s+=f') 1))'
+    else:
+        for i in range(1,ni+1):
+            s+=f'(assert (= (+'
+            for c in range(1,nc+1):
+                for j in range(1,ni+1):
+                    s+=f'(ite (= stop_{c}_{j} {i}) 1 0) '
+            s+=f') 1))'
+    return s
+
+def define_padding(nc,ni,arrays):
+    s=''
+    if arrays:
+        for c in range(1,nc+1):
+            for i in range(1,ni+1):
+                lhs=f'(<= {i} (+ '
+                for j in range(1,ni+1):
+                    lhs+=f'(ite (= (select items_resp {j}) {c}) 1 0) '
+                lhs+=f'))'
+                rhs=f'(< (select stops_{c} {i}) {ni+1})'
+    else:
+        for c in range(1,nc+1):
+            for i in range(1,ni+1):
+                lhs=f'(<= {i} (+ '
+                for j in range(1,ni+1):
+                    lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
+                lhs+=f'))'
+                rhs=f'(< stop_{c}_{i} {ni+1})'
+    s+=f'(assert (=> {lhs} {rhs}))\n'
+    s+=f'(assert (=> {rhs} {lhs}))\n'
+    return s
+
+def define_courier_items(nc,ni,arrays):
+    s=''
+    if arrays:
+        for c in range(1,nc+1):
+            for i in range(1,ni+1):
+                s+=f'(assert (=> (= (select items_resp {i}) {c}) (or '
+                for j in range(1,ni+1):
+                    s+=f'(= (select stops_{c} {j}) {i})'
+                s+=f')))\n'
+    else:
+        for c in range(1,nc+1):
+            for i in range(1,ni+1):
+                s+=f'(assert (=> (= item_{i}_resp {c}) (or '
+                for j in range(1,ni+1):
+                    s+=f'(= stop_{c}_{j} {i})'
+                s+=f')))\n'
+    return s
+
+def define_successors_distances(nc,ni,lowerbound,arrays):
+    s,d='',''
+    if arrays:
+        s+=f'(declare-const successors (Array Int Int))\n'
+        for c in range(1,nc+1):
+            for i in range(1,ni):
+                A=f'(not (= (select stops_{c} {i}) {ni+1}))'
+                B=f'(= (select successors (select stops_{c} {i})) (select stops_{c} {i+1}))'
+                s+=f'(assert (=> {A} {B}))\n'
+        
+        for c in range(1,nc+1):
+            d+=f'(assert (= (select distances_traveled {c}) (+ '
+            for i in range(1,ni+1):
+                for j in range(1,ni+2):
+                    d+=f'(ite (and (= (select items_resp {i}) {c}) (= (select successors {i}) {j}) ) (select distances_{i} {j}) 0)'
+            d+=f'(select distances_{ni+1} (select stops_{c} 1))'
+            d+=f')))\n'
+    else:
+        for i in range(1,ni+1):
+            s+=f'(declare-fun successor_of_{i} () Int)\n'
+            s+=f'(assert (> successor_of_{i} 0))\n' if lowerbound else ""
+            s+=f'(assert (<= successor_of_{i} {ni+1}))\n'
+
+        for c in range(1,nc+1):
+            for i in range(1,ni):
+                for j in range(1,ni+1):
+                    # logically a->(b->c) is not(a and b and not(c))
+                    A=f'(not (= stop_{c}_{i} {ni+1}))'
+                    B=f'(= stop_{c}_{i} {j})'
+                    C=f'(= successor_of_{j} stop_{c}_{i+1})'
+                    s+=f'(assert (not (and {A} {B} (not {C}))))\n'
+
+        for c in range(1,nc+1):
+            d+=f'(assert (= distance_{c}_traveled (+ '
+            for i in range(1,ni+1):
+                for j in range(1,ni+2):
+                    d+=f'(ite (and (= item_{i}_resp {c}) (= successor_of_{i} {j}) ) distance_{i}_{j} 0)'
+            for j in range(1,ni+2):
+                d+=f'(ite (= {j} stop_{c}_2) distance_{ni+1}_{j} 0)'
+            d+=f')))\n'
+    return s,d
+
+def define_distances(nc,ni,arrays):
+    s=''
+    if arrays:
+        for c in range(1,nc+1):
+            for i in range(1,ni+1):
+                s+=f'(assert (=> (= (select items_resp {i}) {c}) (or '
+                for j in range(1,ni+1):
+                    s+=f'(= (select stops_{c} {j}) {i})'
+                s+=f')))\n'
+    else:
+        for c in range(1,nc+1):
+            s+=f'(assert (= distance_{c}_traveled (+ '
+            for i in range(1,ni):
+                for j in range(1,ni+2):
+                    for k in range(1,ni+2):
+                        s+=f'(ite (and (= stop_{c}_{i} {j})(= stop_{c}_{i+1} {k})) distance_{j}_{k} 0)'
+            s+=f')))\n'
+    return s
+
+
+def generate_array_smt2_model(instance_data):# TODO remove the 14item
     # instance_data=parse_dzn(dzn_instance)
 
     num_couriers = instance_data['num_couriers']
@@ -39,10 +290,10 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
 
     # ===== DECISION VARIABLES =====
     for c in range(1,num_couriers+1):
-        for i in range(3,num_items+2):
+        for i in range(1,num_items+1):
             model_h += f'(declare-fun stop_{c}_{i} () Int)\n'
             model_h += f'(assert (>= stop_{c}_{i} 1))\n'
-            model_h += f'(assert (<= stop_{c}_{i} {num_items+1}))\n'
+            model_h += f'(assert (<= stop_{c}_{i} {num_items if i==1 else num_items+1}))\n'
     for i in range(1,num_items+1):
         model_h += f'(declare-fun item_{i}_resp () Int)\n'
         model_h += f'(assert (>= item_{i}_resp 1))\n'
@@ -71,11 +322,11 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
         model_h+=f'(assert (>= courier_{c}_capa load_{c}))\n'
 
     # start and end in depot
-    for c in range(1,num_couriers+1):
-        model_h += f'(declare-fun stop_{c}_1 () Int)\n'
-        model_h += f'(declare-fun stop_{c}_{num_items+2} () Int)\n'
-        model_h += f'(assert (= stop_{c}_1 {num_items+1}))\n'
-        model_h += f'(assert (= stop_{c}_{num_items+2} {num_items+1}))\n'
+    # for c in range(1,num_couriers+1):
+    #     model_h += f'(declare-fun stop_{c}_1 () Int)\n'
+    #     model_h += f'(assert (= stop_{c}_1 {num_items+1}))\n'
+    #     model_h += f'(declare-fun stop_{c}_{num_items+2} () Int)\n'
+    #     model_h += f'(assert (= stop_{c}_{num_items+2} {num_items+1}))\n'
 
     # each courier appears on item resp
     for c in range(1,num_couriers+1):
@@ -85,10 +336,10 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
         model_h+='))\n'
 
     # each couriers must deliver something on 1st stop
-    for c in range(1,num_couriers+1):
-        model_h += f'(declare-fun stop_{c}_2 () Int)\n'
-        model_h += f'(assert (>= stop_{c}_2 1))\n'
-        model_h += f'(assert (<= stop_{c}_2 {num_items}))\n'
+    # for c in range(1,num_couriers+1):
+    #     model_h += f'(declare-fun stop_{c}_1 () Int)\n'
+    #     model_h += f'(assert (>= stop_{c}_1 1))\n'
+    #     model_h += f'(assert (<= stop_{c}_1 {num_items}))\n'
 
     # constraint the capacities to be in some sort of order
     # simmetry
@@ -102,8 +353,8 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
     # for i in range(1,num_items+1):
     #     model_h+=f'(assert (= (+'
     #     for c in range(1,num_couriers+1):
-    #         for i_ in range(2,num_items+2):
-    #             model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
+    #         for j in range(1,num_items+1):
+    #             model_h+=f'(ite (= stop_{c}_{j} {i}) 1 0) '
     #     model_h+=f') 1))'
 
     # channeling; stops after completing the delivers must be depot
@@ -112,10 +363,10 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
             # lhs=>rhs
             # rhs=>lhs
             lhs=f'(<= {i} (+ '
-            for i_ in range(1,num_items+1):
-                lhs+=f'(ite (= item_{i_}_resp {c}) 1 0) '
+            for j in range(1,num_items+1):
+                lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
             lhs+=f'))'
-            rhs=f'(< stop_{c}_{i+1} {num_items+1})'
+            rhs=f'(< stop_{c}_{i} {num_items+1})'
             model_h+=f'(assert (=> {lhs} {rhs}))\n'
             model_h+=f'(assert (=> {rhs} {lhs}))\n'
 
@@ -123,8 +374,8 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
     for c in range(1,num_couriers+1):
         for i in range(1,num_items+1):
             model_h+=f'(assert (=> (= item_{i}_resp {c}) (or '
-            for i_ in range(1,num_items+1):
-                model_h+=f'(= stop_{c}_{i_+1} {i})'
+            for j in range(1,num_items+1):
+                model_h+=f'(= stop_{c}_{j} {i})'
             model_h+=f')))\n'
 
     # define successors
@@ -132,7 +383,7 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
     # model_h+=f'(assert (= (select successors 0) {num_couriers}))\n'
     # channeling of successors
     for c in range(1,num_couriers+1):
-        for i in range(2,num_items+2):
+        for i in range(1,num_items):
             A=f'(not (= stop_{c}_{i} {num_items+1}))'
             B=f'(= (select successors stop_{c}_{i}) stop_{c}_{i+1})'
             model_h+=f'(assert (=> {A} {B}))\n'
@@ -144,7 +395,8 @@ def generate_array_smt2_model(instance_data):# TODO remove the 14
             for j in range(1,num_items+2):
                 model_h+=f'(ite (and (= item_{i}_resp {c}) (= (select successors {i}) {j}) ) distance_{i}_{j} 0)'
         for j in range(1,num_items+2):
-            model_h+=f'(ite (= {j} stop_{c}_2) distance_{num_items+1}_{j} 0)'
+            model_h+=f'(ite (= {j} stop_{c}_1) distance_{num_items+1}_{j} 0)'
+            # model_h+=f'(ite (= {j} stop_{c}_{num_items}) distance_{j}_{num_items} 0)'
         model_h+=f')))\n'
         
     model_t='(check-sat)\n(get-model)\n'
@@ -251,8 +503,8 @@ def generate_smt2_model(instance_data):# TODO remove the 14
     for i in range(1,num_items+1):
         model_h+=f'(assert (= (+'
         for c in range(1,num_couriers+1):
-            for i_ in range(2,num_items+2):
-                model_h+=f'(ite (= stop_{c}_{i_} {i}) 1 0) '
+            for j in range(2,num_items+2):
+                model_h+=f'(ite (= stop_{c}_{j} {i}) 1 0) '
         model_h+=f') 1))'
 
     # channeling; stops after completing the delivers must be depot
@@ -261,8 +513,8 @@ def generate_smt2_model(instance_data):# TODO remove the 14
             # lhs=>rhs
             # rhs=>lhs
             lhs=f'(<= {i} (+ '
-            for i_ in range(1,num_items+1):
-                lhs+=f'(ite (= item_{i_}_resp {c}) 1 0) '
+            for j in range(1,num_items+1):
+                lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
             lhs+=f'))'
             rhs=f'(< stop_{c}_{i+1} {num_items+1})'
             model_h+=f'(assert (=> {lhs} {rhs}))\n'
@@ -272,8 +524,8 @@ def generate_smt2_model(instance_data):# TODO remove the 14
     for c in range(1,num_couriers+1):
         for i in range(1,num_items+1):
             model_h+=f'(assert (=> (= item_{i}_resp {c}) (or '
-            for i_ in range(1,num_items+1):
-                model_h+=f'(= stop_{c}_{i_+1} {i})'
+            for j in range(1,num_items+1):
+                model_h+=f'(= stop_{c}_{j+1} {i})'
             model_h+=f')))\n'
 
     # define successors
@@ -315,53 +567,67 @@ def generate_smt2_model(instance_data):# TODO remove the 14
 
     return model_h,model_t
 
-def add_objective(num_couriers,obj,head,tail):
+def add_objective(num_couriers,obj,head,tail,arrays=True,impose_lower_bound=True):
     objective=''
     for c in range(1,num_couriers+1):
-        objective+=f'(assert (> distance_{c}_traveled 0))\n'
-        objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
+        if arrays:
+            objective+=f'(assert (> (select distances_traveled {c}) 0))\n' if impose_lower_bound else ''
+            objective+=f'(assert (<= (select distances_traveled {c}) {obj}))\n'
+        else:
+            objective+=f'(assert (> distance_{c}_traveled 0))\n' if impose_lower_bound else ''
+            objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
     return head+objective+tail
 
-def parse_solution(model):
+def parse_solution(model,arrays):
     if model==None:
         return []
     # print(model)
-    return get_itineraries(model)
+    num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
+    num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
+    return get_itineraries(model,arrays,num_c,num_i)
 
-def get_itineraries(model):
-    stops=get_stops(model,False,False)
+def get_itineraries(model,arrays,num_c,num_i):
+    stops=get_stops(model,False,arrays,num_c,num_i,False)
     stops=[[int(str(e))for e in row]for row in stops]
-    default=stops[0][0]
+    default=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))+1
     stops=[[e for e in row if e!=default]for row in stops ]
     return stops
 
-def get_variables(model,print_names=False,array=True):
-    get_responsabilities(model,print_names)
-    get_loads(model,print_names)
-    get_stops(model,print_names)
-    if array:
-        get_successor_array(model,print_names)
+def get_variables(model,print_names=False,arrays=True):
+    num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
+    num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
+
+    get_responsabilities(model,print_names,arrays,num_i)
+    get_loads(model,print_names,arrays,num_c)
+    get_stops(model,print_names,arrays,num_c,num_i)
+    get_successor(model,print_names,arrays,num_i)
+    get_distances(model,print_names,arrays,num_c)
+
+def get_responsabilities(model,print_names,arrays,num_i):
+    variables = []
+    if arrays:
+        var=[model[var] for var in model if 'items_resp' in var.name()][0]
+        print('resp:',convertArrayRef(var,num_i))
     else:
-        get_successor(model,print_names)
-    get_distances(model,print_names)
+        for var in model:
+            if '_resp' in var.name():
+                variables.append((var, model[var]))
+        sorted_variables = sorted(variables, key=lambda x: x[0].name())
+        print('resp:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
 
-def get_responsabilities(model,print_names):
+def get_loads(model,print_names,arrays,num_c):
     variables = []
-    for var in model:
-        if '_resp' in var.name():
-            variables.append((var, model[var]))
-    sorted_variables = sorted(variables, key=lambda x: x[0].name())
-    print('resp:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+    if arrays:
+        var=[model[var] for var in model if 'loads' in var.name()][0]
+        print('loads:',convertArrayRef(var,num_c))
+    else:
+        for var in model:
+            if 'load_' in var.name():
+                variables.append((var, model[var]))
+        sorted_variables = sorted(variables, key=lambda x: x[0].name())
+        print('loads:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
 
-def get_loads(model,print_names):
-    variables = []
-    for var in model:
-        if 'load_' in var.name():
-            variables.append((var, model[var]))
-    sorted_variables = sorted(variables, key=lambda x: x[0].name())
-    print('loads:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
-
-def get_stops(model,print_names,print_=True):
+def get_stops(model,print_names,arrays,num_c,num_i,print_=True):
     # variables = []
     # for var in model:
     #     if 'stop_' in var.name():
@@ -369,47 +635,114 @@ def get_stops(model,print_names,print_=True):
     # sorted_variables = [(str(name),val) for name,val in sorted(variables, key=lambda x: x[0].name())]
     matrix=[]
     matrix_names=[]
-    num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
-    num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
-    for i in range(1,num_c+1):
-        matrix.append([])
-        matrix_names.append([])
-        for j in range(1,num_i+3):
-            node=[var for var in model if f'stop_{i}_{j}' in var.name()][0]
-            matrix[i-1].append(model[node])
-            matrix_names[i-1].append(node)
-    if print_:
-        print('stops:')
-        for i in range(len(matrix)):
-            print('  ',matrix[i],matrix_names[i] if print_names else '')
-    return matrix
+    if arrays:
+        for i in range(1,num_c+1):
+            row=[var for var in model if f'stops_{i}' in var.name()][0]
+            # if print_:print(model[row])
+            matrix.append(convertArrayRef(model[row],num_i))
+        if print_:
+            print('stops:')
+            for i in range(len(matrix)):
+                print('  ',matrix[i],matrix_names[i] if print_names else '')
+        return matrix
+    else:
+        for i in range(1,num_c+1):
+            matrix.append([])
+            matrix_names.append([])
+            for j in range(1,num_i+1):
+                node=[var for var in model if f'stop_{i}_{j}' in var.name()][0]
+                matrix[i-1].append(model[node])
+                matrix_names[i-1].append(node)
+            print('stops:')
+            for i in range(len(matrix)):
+                print('  ',matrix[i],matrix_names[i] if print_names else '')
+        return matrix
 
-def get_successor(model,print_names):
+def get_successor(model,print_names,arrays,num_i):
     variables = []
-    for var in model:
-        if 'successor' in var.name():
-            variables.append((var, model[var]))
-    sorted_variables = sorted(variables, key=lambda x: x[0].name())
-    print('succ:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')    
+    if arrays:
+        var=[model[var] for var in model if 'successors' in var.name()][0]
+        print('succ:',convertArrayRef(var,num_i))
+    else:
+        for var in model:
+            if 'successor' in var.name():
+                variables.append((var, model[var]))
+        sorted_variables = sorted(variables, key=lambda x: x[0].name())
+        print('succ:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')    
 
-def get_successor_array(model,print_names):
-    array=None
-    ni=None
-    for var in model:
-        if 'successor' in var.name():
-            array=model[var]
-        if 'num_items' in var.name():
-            ni=int(str(model[var]))
-    s=''
-    for i in range(ni):
-        s+=f'{array[i+1].sexpr()}, '
-    print('succ:',array)
-
-def get_distances(model,print_names,print_=True):
+def get_distances(model,print_names,arrays,num_c=None,print_=True,):
     variables = []
-    for var in model:
-        if '_traveled' in var.name():
-            variables.append((var, model[var]))
-    sorted_variables = sorted(variables, key=lambda x: x[0].name())
-    if print_:print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
-    return [int(str(v[1])) for v in sorted_variables]
+    if arrays:
+        var=[model[var] for var in model if 'distances_traveled' in var.name()][0]
+        variables=convertArrayRef(var,num_c)
+        if print_:print('dist:',variables)
+        return variables
+    else:
+        for var in model:
+            if '_traveled' in var.name():
+                variables.append((var, model[var]))
+        sorted_variables = sorted(variables, key=lambda x: x[0].name())
+        if print_:print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+        return [int(str(v[1])) for v in sorted_variables]
+    
+def check_model_params(input_dict):
+    model_params = {
+        'simmetry_method': '>',
+        'use_successors': True,
+        'use_arrays': True,
+        'impose_lower_bound': True,
+        'redundancy': False
+    }
+
+    expected_types = {
+        'simmetry_method': str,
+        'use_successors': bool,
+        'use_arrays': bool,
+        'impose_lower_bound': bool,
+        'redundancy': bool
+    }
+
+    for key in input_dict.keys():
+        if key not in model_params:
+            raise KeyError(f"Unexpected key: {key}")
+        if not isinstance(input_dict[key], expected_types[key]):
+            raise TypeError(f"Incorrect type for key: {key}. Expected {expected_types[key].__name__}, got {type(input_dict[key]).__name__}.")
+
+    validated_dict = model_params.copy()
+    
+    validated_dict.update(input_dict)
+    
+    return validated_dict
+
+def convertArrayRef(array,length=None):
+    try:
+        s=str(array).replace('\n','').replace(' ','')
+        _,s=s.split('K(Int,')
+        s=s.split(')')[:-1]
+        depot=int(s[0])
+        s=s[1:]
+        pairs=[]
+        for pair in s:
+            vals=pair.split(',')
+            pairs.append((int(vals[1]),int(vals[2])))
+        i_max=max([i[0] for i in pairs])
+        if length:
+            res=[depot]*length
+        else:
+            res=[depot]*(i_max+1)
+        for pair in pairs:
+            res[pair[0]-1]=pair[1]
+    except:
+        print('!!exception!!',array)
+        return [0]
+    return res
+
+
+
+# if __name__=='__main__':
+#     array='''Store(Store(Store(Store(K(Int, 17), 5, 4), 1, 3), 4, 6),
+# 2,
+# 5)
+# '''
+#     converted=convertArrayRef(array,10)
+#     print(converted)

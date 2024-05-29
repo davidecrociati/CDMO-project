@@ -71,12 +71,11 @@ constraint forall(i in ITEMS)(
 % channeling constraint: the number of items delivered by a courier in 'item_responsibility' matches the stops in 'stops'
 constraint forall(c in COURIERS)(
   forall(i in ITEMS)(
-    not(i <= count(item_responsability, c)) \/ (stops[c, i+1] != depot)
+    (i <= count(item_responsability, c)) -> (stops[c, i+1] != depot)
 ));
-
 constraint forall(c in COURIERS)(
   forall(i in ITEMS)(
-  not(stops[c, i+1] != depot) \/ (i <= count(item_responsability, c))
+  (stops[c, i+1] != depot) -> (i <= count(item_responsability, c))
 ));
 
 % all the items assigned to a courier in 'item_responsibility' must appear in the courier's route in 'stops'
