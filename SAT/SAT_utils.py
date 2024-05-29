@@ -147,12 +147,18 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
     
     aux=params.copy()
     
-    if verbose : print(f"Using {model} model with {strategy} search-strategy")
+    if verbose : 
+        l=len(instance_data['distances'])*4
+        print("#"*10, " INSTANCE ", "#"*(l-10))
+        display_instance(instance_data)
+        print("#"*(l+10))
+        print(f"\nUsing {model} model with {strategy} search-strategy...")
     
     solve=None
     match model :
+        case "1-hot" : solve = SAT_solver.solve_hot
         case "binary" : solve = SAT_solver.solve_bin
-        case "1-hot" : solve = SAT_solver.solve
+        case "ibrid" : solve = SAT_solver.solve_to_decide
     
     match strategy:
         case "lower_upper" :
@@ -169,10 +175,10 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 result, solution = solve(instance_data, max_path, aux)
 
                 # Backup
+                if verbose : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat':
                     obj=max_path
                     break
-                if verbose : print(f"max_path={max_path}\tsolution={solution}")
                 
         case "upper_lower" :
             # Mode 2: upper --> lower 
@@ -188,12 +194,12 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 result, sol = solve(instance_data, max_path, aux)
                  
                 # Backup
+                if verbose : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat' : 
                     obj=max_path
                     solution = sol
                 else :
                     break
-                if verbose : print(f"max_path={max_path}\tsolution={solution}")
             
         case "binary_search" :
             # Mode 3: binary search
