@@ -40,9 +40,7 @@ var lower_bound..upper_bound: longest_trip;
 constraint bin_packing_capa(courier_capacities, item_responsability, item_sizes);
 
 % each courier must be responsible for delivering at least one item
-constraint forall(c in COURIERS)(
-  member(item_responsability, c)
-);
+constraint nvalue(num_couriers,item_responsability);
 
 % each courier have to stop in at least one location different from the depot
 constraint forall(c in COURIERS)(
