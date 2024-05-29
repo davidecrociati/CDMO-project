@@ -117,7 +117,7 @@ solve :: seq_search([
 % output["Obj: "++show(longest_trip)++"\n"];
 
 % output for the json, to be parsed in python:
-% output [ show(stops[i,j])++ "," ++ 
-%          if j == num_items /\i!=num_couriers then "\n" endif |
-%          i in COURIERS, j in ITEMS
-%          ];
+output [ show(stops[i,j])++ "," ++ 
+         if j == num_items /\i!=num_couriers then "\n" endif |
+         i in COURIERS, j in ITEMS
+         ];
