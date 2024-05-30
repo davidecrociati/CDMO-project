@@ -147,6 +147,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
     - model (str): The model type to use for solving. Options are:
         - "binary": Uses the binary model for solving.
         - "1-hot": Uses the 1-hot model for solving.
+        - "circuit": Uses the circuit model for solving. 
     - strategy (str): The search strategy to use. Options include:
         - "lower_upper": Incrementally increases the bound from lower_bound to upper_bound.
         - "upper_lower": Decrementally decreases the bound from upper_bound to lower_bound.
@@ -178,7 +179,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
     match model :
         case "1-hot" : solve = SAT_solver.solve_hot
         case "binary" : solve = SAT_solver.solve_bin
-        case "ibrid" : solve = SAT_solver.solve_to_decide
+        case "circuit" : solve = SAT_solver.solve_circuit
     
     match strategy:
         case "lower_upper" :
@@ -308,5 +309,29 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                         bound = next_bound
                         print(f"Unsat, try incrementing by {incremental_factor}: bound = {bound}")
     return obj, solution
+
+def break_subcircuits(solver, successor, num_items):
+    # Create auxiliary variables for reachability
+    reach = [[Bool(f'reach_{i}_{j}') for j in range(num_items)] for i in range(num_items)]
     
+    # An item i can reach itself (base of reachability)
+    for i in range(num_items):
+        solver.add(reach[i][i])
+        
+    # If item i can reach item j and item j can reach item k, then item i can reach item k
+    for i in range(num_items):
+        for j in range(num_items):
+            for k in range(num_items):
+                if i != j and j != k and i != k:
+                    solver.add(Implies(And(reach[i][j], reach[j][k]), reach[i][k]))
+
+    # If item i has a successor j, then i can reach j
+    for i in range(num_items):
+        for j in range(num_items):
+            solver.add(Implies(successor[i][j], reach[i][j]))
     
+    # Prevent cycles (an item should not be able to reach itself through any other item)
+    for i in range(num_items):
+        for j in range(num_items):
+            if i != j:
+                solver.add(Not(And(reach[i][j], reach[j][i])))

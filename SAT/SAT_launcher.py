@@ -15,7 +15,7 @@ def solve_instance(
         # search_strategy="incremental_lower_upper",                # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
         # model="binary",                                             # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
         # model="1-hot",                                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        model="ibrid",                                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
+        model="circuit",                                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
         verbose=False
 ):
     instance_data=parse_dzn(instance_file)
@@ -27,10 +27,7 @@ def solve_instance(
     # aux=params.copy() # inserito dentro solve_strategy
     execTime = time.time()
     
-    # TEST circuit
-    obj, solution = SAT_solver.solve_circuit(instance_data, 14, params)
-    
-    # obj, solution = solve_strategy(instance_data, model, search_strategy, params, execTime, verbose=True, binary_cut=8)
+    obj, solution = solve_strategy(instance_data, model, search_strategy, params, execTime, verbose=True, binary_cut=8)
                     
     execTime = math.floor(time.time()-execTime)
     if verbose:
