@@ -104,6 +104,26 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
 
     plt.show()
 
+def print_2D_matrix(matrix, model, ax1, ax2):
+    r1 = len(matrix)
+    r2 = len(matrix[0])
+
+    # Stampa la barra superiore degli indici
+    print("\t", end="")
+    for j in range(r2):
+        print(f"{ax2}_{j}", end="\t")
+    print()
+
+    for i in range(r1):
+        # Stampa la barra laterale degli indici
+        print(f"{ax1}_{i}", end="\t")
+        for j in range(r2):
+            if model.evaluate(matrix[i][j]):  # If the element is True
+                print(1, end="\t")  # Print 1 followed by a tab
+            else:  # If the element is False
+                print(0, end="\t")  # Print 0 followed by a tab
+        print()  # Move to the next line after printing a row
+
 
 def display_instance(instance):
     print("num_items:", instance['num_items'])

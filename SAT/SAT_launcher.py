@@ -27,7 +27,10 @@ def solve_instance(
     # aux=params.copy() # inserito dentro solve_strategy
     execTime = time.time()
     
-    obj, solution = solve_strategy(instance_data, model, search_strategy, params, execTime, verbose=True, binary_cut=8)
+    # TEST circuit
+    obj, solution = SAT_solver.solve_circuit(instance_data, 14, params)
+    
+    # obj, solution = solve_strategy(instance_data, model, search_strategy, params, execTime, verbose=True, binary_cut=8)
                     
     execTime = math.floor(time.time()-execTime)
     if verbose:
