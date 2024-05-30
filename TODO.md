@@ -14,7 +14,7 @@ Magari poi lo chiamiamo _README.md_
 * [X] Provare a cambiare il range delle distanze nelle istanze simmetriche `for i2 in range(i1+1, num_items)` (NON CAMBIA NIENTE) (**riprovare se ottimi un modello migliore nel frattempo**)
 * [X] Pulire i constraint anche nel 1-hot model
 * [ ] Collegare bene il launcher con il main (`solve_instance` richiede modello e strategia di ricerca ora), ultimo dei problemi prima trovare una soluzione presentabile
-* [ ] PROVARE ALTRI MODELLI MADONNA DE DIO (usando solo codifica binaria)
+* [ ] Rompere il subcircuit
 
 ## SMT
 
