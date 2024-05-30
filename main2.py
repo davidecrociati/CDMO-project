@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=10 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -26,13 +26,13 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=False
+CHECKER=True
 
 
 def main(argv):
-    RUN_CP=False
+    RUN_CP=True
     RUN_SAT=False
-    RUN_SMT=True
+    RUN_SMT=False
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -78,6 +78,14 @@ def main(argv):
                     ]
                 }
             },
+            'model_gecode_SB.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
             'model_chuffed.mzn': {
                 'solvers': {
                     'chuffed': [
@@ -86,22 +94,14 @@ def main(argv):
                     ]
                 }
             },
-            # 'model_gecode_copy.mzn': {
-            #     'solvers': {
-            #         'gecode': [
-            #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-            #         ]
-            #     }
-            # },
-            # 'model_chuffed_copy.mzn': {
-            #     'solvers': {
-            #         'chuffed': [
-            #             ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-            #         ]
-            #     }
-            # }
+            'model_chuffed_SB.mzn': {
+                'solvers': {
+                    'chuffed': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
         }
         print('Solving with CP:')
         for instance_file in INSTANCES[first-1:last]:

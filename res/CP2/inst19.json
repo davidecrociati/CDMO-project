@@ -1,6 +1,6 @@
 {
     "model_gecode_gecode_no_fs": {
-        "time": 186,
+        "time": 174,
         "optimal": true,
         "obj": 334,
         "sol": [
@@ -117,8 +117,14 @@
             ]
         ]
     },
+    "model_gecode_SB_gecode_no_fs": {
+        "time": 300,
+        "optimal": false,
+        "obj": "N/A",
+        "sol": []
+    },
     "model_chuffed_chuffed_no_fs": {
-        "time": 177,
+        "time": 155,
         "optimal": true,
         "obj": 334,
         "sol": [
@@ -352,5 +358,17 @@
                 72
             ]
         ]
+    },
+    "model_chuffed_SB_chuffed_no_fs": {
+        "time": 300,
+        "optimal": false,
+        "obj": "N/A",
+        "sol": []
+    },
+    "model_chuffed_SB_chuffed_fs": {
+        "time": 300,
+        "optimal": false,
+        "obj": "N/A",
+        "sol": []
     }
 }
