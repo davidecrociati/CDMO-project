@@ -226,6 +226,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
             # Mode 3: binary search
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
+            minimum = lower_bound
             while lower_bound <= upper_bound:
                 # Timer
                 try:
@@ -236,7 +237,8 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     pass
                     
                 # Execution    
-                mid = (lower_bound + upper_bound) // binary_cut
+                mid = minimum + (upper_bound - lower_bound) // binary_cut
+                mid = max(minimum, min(mid, upper_bound))
                 result, sol = solve(instance_data, mid, aux)
 
                 # Backup + update value

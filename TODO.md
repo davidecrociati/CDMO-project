@@ -10,11 +10,19 @@ Magari poi lo chiamiamo _README.md_
 
 ## SAT
 
-* [X] Semplificare a -> b con -a  \\/ b (NON CAMBIA NIENTE però a davidino cambiava uffa) (**riprovare se ottimi un modello migliore nel frattempo**)
-* [X] Provare a cambiare il range delle distanze nelle istanze simmetriche `for i2 in range(i1+1, num_items)` (NON CAMBIA NIENTE) (**riprovare se ottimi un modello migliore nel frattempo**)
-* [X] Pulire i constraint anche nel 1-hot model
+* [ ] Semplificare a -> b con -a  \\/ b
+* [ ] Provare a cambiare il range delle distanze nelle istanze simmetriche `for i2 in range(i1+1, num_items)`
 * [ ] Collegare bene il launcher con il main (`solve_instance` richiede modello e strategia di ricerca ora), ultimo dei problemi prima trovare una soluzione presentabile
-* [ ] Rompere il subcircuit
+* [ ] Provare simmetrie nel modello e approcci diversi
+* [ ] Rivedere meglio il modello per pulire/migliorare
+* [ ] @davidino prova a lanciare le istanze per vedere se cambia qualcosa
+* [ ] Rendere selezionabile la simmetria dal launcher per i test
+
+Da notare che:
+
+1. Per la **inst16** la migliore è la binary-search con la binary_cut=15 altrimenti le altre o sono troppo vicine all'ottimale e non danno risultati oppure sono troppo lontane e ci mettono troppo a scendere
+2. La **inst19** non riesce a trovare una soluzione nemmeno col upper_bound :(
+3. Le altre istanze hanno problemi a caricare i constraint e questo è un problema meccanico di avere troppi dati e troppe iterazioni per farci tutti i constraint, alcuni come la 11 ci mettono anche più di 20 min di cui 5 o 6 anche solo senza distanze (se non ricordo male) quindi c'è poco da fare con le simmetrie.
 
 ## SMT
 

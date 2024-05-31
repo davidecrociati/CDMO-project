@@ -140,7 +140,7 @@ def solve_hot(instance_data, MAX_dist, params):
     # print(f"Ci ha messo {load_time} secondi a caricare i constraint")
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        if load_time > pars['timeout'] : pars['timeout']=load_time # exit immediatly
+        if load_time > pars['timeout'] : pars['timeout']=0 # exit immediatly
         pars['timeout'] = int((pars['timeout']-load_time)*1000) 
     solver.set(**pars, random_seed=42)
     
@@ -284,7 +284,7 @@ def solve_bin(instance_data, MAX_dist, params):
     # print(f"Ci ha messo {load_time} secondi a caricare i constraint")
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        if load_time > pars['timeout'] : pars['timeout']=load_time # exit immediatly
+        if load_time > pars['timeout'] : pars['timeout']=0 # exit immediatly
         pars['timeout'] = int((pars['timeout']-load_time)*1000) 
     solver.set(**pars, random_seed=42)
     
@@ -454,7 +454,7 @@ def solve_circuit(instance_data, MAX_dist, params):
     # print(f"Ci ha messo {load_time} secondi a caricare i constraint")
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        if load_time > pars['timeout'] : pars['timeout']=load_time # exit immediatly
+        if load_time > pars['timeout'] : pars['timeout']=0 # exit immediatly
         pars['timeout'] = int((pars['timeout']-load_time)*1000) 
     solver.set(**pars, random_seed=42)
     
