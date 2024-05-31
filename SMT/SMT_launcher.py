@@ -97,25 +97,6 @@ def solve_instance(
         },best_model
     # TRY-EXCEPT are for when there is no timeout key in the dict
 
-    
-# def generate_smt2_models(instances,models_path):
-#     '''
-# 	deprecated
-#     '''
-#     if not os.path.exists(models_path):
-#         os.makedirs(models_path)
-
-#     file_paths = []
-
-#     for instance in instances:
-#         model_content=generate_smt2_model(instance)
-#         filename=models_path+'/model_'+os.path.splitext(os.path.basename(instance))[0]+'.smt2'
-#         with open(filename,'w') as file:
-#             file.write(model_content)
-#         file_paths.append(filename)
-    
-#     return file_paths
-
 def generate_model(
         data,
         simmetry_method:str='>',

@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=7 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -26,13 +26,13 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=False
+CHECKER=True
 
 
 def main(argv):
-    RUN_CP=False
+    RUN_CP=True
     RUN_SAT=False
-    RUN_SMT=True
+    RUN_SMT=False
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -62,7 +62,6 @@ def main(argv):
                     RUN_MIP=True
                 case _:
                     pass
-
 
     # ============
     # |    CP    |
@@ -119,7 +118,7 @@ def main(argv):
                                             model,
                                             solver,
                                             params)
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP2/',format=INDENT_RESULTS)
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP/',format=INDENT_RESULTS)
 
     # ============
     # |    SAT   |
@@ -199,7 +198,7 @@ def main(argv):
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT2/',format=INDENT_RESULTS)
     
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
