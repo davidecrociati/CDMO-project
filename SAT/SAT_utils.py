@@ -138,10 +138,10 @@ def display_instance(instance):
 def binary_to_int(bits, order_bits):
     return sum(If(bits[b], 2**b, 0) for b in range(order_bits))
 
-def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=2, incremental_factor=2, verbose=False) :
+def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=2, incremental_factor=2, symmetry=False, verbose_search=False, verbose_solver=False) :
     """
     Searches for a solution to a given instance using different search strategies.
-    
+
     Parameters:
     - instance_data (dict): Contains information about the instance, including 'lower_bound' and 'upper_bound'.
     - model (str): The model type to use for solving. Options are:
@@ -157,8 +157,10 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
     - execTime (float): The starting execution time of the search.
     - binary_cut (int, optional): The factor by which to divide the search space in "binary_search" mode. Defaults to 2.
     - incremental_factor (int, optional): The factor by which to increase the bound in "incremental_lower_upper" mode. Defaults to 2.
-    - verbose (bool, optional): If True, prints detailed debug information. Defaults to False.
-    
+    - symmetry (bool, optional): If True, considers symmetry in the solving process. Defaults to False.
+    - verbose_search (bool, optional): If True, prints detailed debug information about the search process. Defaults to False.
+    - verbose_solver (bool, optional): If True, prints detailed debug information from the solver. Defaults to False.
+
     Returns:
     - obj (str or int): The objective value, either the minimum bound found for a SAT solution or 'N/A' if no solution is found.
     - solution (list): The solution corresponding to the minimum bound found.
@@ -168,7 +170,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
     
     aux=params.copy()
     
-    if verbose : 
+    if verbose_search : 
         l=len(instance_data['distances'])*4
         print("#"*10, " INSTANCE ", "#"*(l-10))
         display_instance(instance_data)
@@ -193,10 +195,10 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 except:pass
                 
                 # Execution
-                result, solution = solve(instance_data, max_path, aux)
+                result, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry)
 
                 # Backup
-                if verbose : print(f"max_path={max_path}\tsolution={solution}")
+                if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat':
                     obj=max_path
                     break
@@ -212,10 +214,10 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 except:pass
                 
                 # Execution
-                result, sol = solve(instance_data, max_path, aux)
+                result, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry)
                  
                 # Backup
-                if verbose : print(f"max_path={max_path}\tsolution={solution}")
+                if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat' : 
                     obj=max_path
                     solution = sol
@@ -239,7 +241,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 # Execution    
                 mid = minimum + (upper_bound - lower_bound) // binary_cut
                 mid = max(minimum, min(mid, upper_bound))
-                result, sol = solve(instance_data, mid, aux)
+                result, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry)
 
                 # Backup + update value
                 if result == 'sat':
@@ -249,7 +251,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     upper_bound = mid - 1  # Try for a smaller feasible solution
                 else:
                     lower_bound = mid + 1  # Try for a larger feasible solution
-                if verbose : print(f"max_path={mid}\tsolution={solution}")
+                if verbose_search : print(f"max_path={mid}\tsolution={solution}")
         
         case "incremental_lower_upper":
             # Mode 4: incremental lower --> upper
@@ -267,8 +269,8 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     pass
 
                 # Execution
-                result, sol = solve(instance_data, bound, aux)
-                if verbose : print(f"{bound}) In the incremental part i found: ", sol)
+                result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry)
+                if verbose_search : print(f"{bound}) In the incremental part i found: ", sol)
 
                 if result == 'sat':
                     # We have found a sat solution but maybe it's not the smallest
@@ -285,7 +287,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                             pass
 
                         # Execution
-                        result, sol = solve(instance_data, bound, aux)
+                        result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry)
                         
                         # Backup
                         if result == 'sat':
@@ -296,7 +298,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                             # The previous one was the smalles
                             break
                         # Update values
-                        if verbose : print(f"{bound}) In the backtracking part i found: ", sol)
+                        if verbose_search : print(f"{bound}) In the backtracking part i found: ", sol)
                         bound -= 1
                     break  # We found the smallest or the timout ended
                 else:
@@ -325,12 +327,14 @@ def break_subcircuits(solver, successor, num_items):
         for j in range(num_items):
             for k in range(num_items):
                 if i != j and j != k and i != k:
-                    solver.add(Implies(And(reach[i][j], reach[j][k]), reach[i][k]))
+                    # solver.add(Implies(And(reach[i][j], reach[j][k]), reach[i][k]))
+                    solver.add(Or(Not(And(reach[i][j], reach[j][k])), reach[i][k]))
 
     # If item i has a successor j, then i can reach j
     for i in range(num_items):
         for j in range(num_items):
-            solver.add(Implies(successor[i][j], reach[i][j]))
+            # solver.add(Implies(successor[i][j], reach[i][j]))
+            solver.add(Or(Not(successor[i][j]), reach[i][j]))
     
     # Prevent cycles (an item should not be able to reach itself through any other item)
     for i in range(num_items):
