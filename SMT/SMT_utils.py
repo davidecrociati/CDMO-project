@@ -468,9 +468,9 @@ def generate_array_smt2_model(instance_data):
         model_h += f'(declare-fun item_{i}_size () Int)\n'
         model_h += f'(assert (= item_{i}_size {size}))\n'
     for i in range(1,num_items+2):
+        model_h += f'(declare-fun distances_{i} () (Array Int Int))\n'
         for j in range(1,num_items+2):
-            model_h += f'(declare-fun distance_{i}_{j} () Int)\n'
-            model_h += f'(assert (= distance_{i}_{j} {distances[i-1][j-1]}))\n'
+            model_h += f'(assert (= (select distances_{i} {j}) {distances[i-1][j-1]}))\n'
 
     # ===== DECISION VARIABLES =====
     for c in range(1,num_couriers+1):
@@ -531,7 +531,7 @@ def generate_array_smt2_model(instance_data):
         for c2 in range(1,num_couriers+1):
             if c1!=c2: # only the first is better than second and both
                 model_h+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
-                model_h+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                # model_h+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
 
     # all items must be delivered. ===era LENTO forse mo funziona però===
     # for i in range(1,num_items+1):
@@ -576,11 +576,12 @@ def generate_array_smt2_model(instance_data):
     for c in range(1,num_couriers+1):
         model_h+=f'(assert (= distance_{c}_traveled (+ '
         for i in range(1,num_items+1):
-            for j in range(1,num_items+2):
-                model_h+=f'(ite (and (= item_{i}_resp {c}) (= (select successors {i}) {j}) ) distance_{i}_{j} 0)'
-        for j in range(1,num_items+2):
-            model_h+=f'(ite (= {j} stop_{c}_1) distance_{num_items+1}_{j} 0)'
+            # for j in range(1,num_items+2):
+                model_h+=f'(ite (= item_{i}_resp {c}) (select distances_{i} (select successors {i})) 0)'
+        # for j in range(1,num_items+2):
+            # model_h+=f'(ite (= {j} stop_{c}_1) distance_{num_items+1}_{j} 0)'
             # model_h+=f'(ite (= {j} stop_{c}_{num_items}) distance_{j}_{num_items} 0)'
+        model_h+=f'(select distances_{num_items+1} stop_{c}_1)'
         model_h+=f')))\n'
         
     model_t='(check-sat)\n(get-model)\n'
