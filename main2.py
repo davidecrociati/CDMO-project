@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=21 # inclusive
+lastInstance=7 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -26,13 +26,13 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=True
+CHECKER=False
 
 
 def main(argv):
-    RUN_CP=True
+    RUN_CP=False
     RUN_SAT=False
-    RUN_SMT=False
+    RUN_SMT=True
     RUN_MIP=False
     first=firstInstance
     last=lastInstance

@@ -28,9 +28,9 @@ def solve_instance(
         model_params={
             'simmetry_method':'>',
             'use_successors':True,
-            'use_arrays':True,
+            'use_arrays':False,
             'impose_lower_bound':True,
-            'redundancy':False
+            'redundancy':True
         }
     model_head,model_tail=generate_model(instance_data,**model_params)
     obj='N/A'
@@ -45,6 +45,7 @@ def solve_instance(
     best_model=None
     max_path=instance_data['upper_bound']
     opt=False
+    num_couriers=instance_data['num_couriers']
     use_arrays=model_params['use_arrays']
     use_successors=model_params['use_successors']
     impose_lower_bound=model_params['impose_lower_bound']
@@ -65,7 +66,7 @@ def solve_instance(
         except:
             print('error')
             pass
-        result,sol,distances=solve(model,aux)
+        result,sol,distances=solve(model,aux,use_arrays,use_successors,num_couriers)
         if result=='unsat':
             try:
                 if params['timeout']-(time.time()-execTime)>0:
@@ -105,23 +106,23 @@ def solve_instance(
     # TRY-EXCEPT are for when there is no timeout key in the dict
 
     
-def generate_smt2_models(instances,models_path):
-    '''
-	deprecated
-    '''
-    if not os.path.exists(models_path):
-        os.makedirs(models_path)
+# def generate_smt2_models(instances,models_path):
+#     '''
+# 	deprecated
+#     '''
+#     if not os.path.exists(models_path):
+#         os.makedirs(models_path)
 
-    file_paths = []
+#     file_paths = []
 
-    for instance in instances:
-        model_content=generate_smt2_model(instance)
-        filename=models_path+'/model_'+os.path.splitext(os.path.basename(instance))[0]+'.smt2'
-        with open(filename,'w') as file:
-            file.write(model_content)
-        file_paths.append(filename)
+#     for instance in instances:
+#         model_content=generate_smt2_model(instance)
+#         filename=models_path+'/model_'+os.path.splitext(os.path.basename(instance))[0]+'.smt2'
+#         with open(filename,'w') as file:
+#             file.write(model_content)
+#         file_paths.append(filename)
     
-    return file_paths
+#     return file_paths
 
 def generate_model(
         data,
