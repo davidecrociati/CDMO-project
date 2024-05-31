@@ -153,14 +153,35 @@ def main(argv):
         SMT_models = {
                 'solvers': {
                     'z3': [
-                        ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
+                        ('SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'use_successors':True,
+                                'use_arrays':False,
+                                }
+                            }),
+                        ('arrays_SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'use_successors':True,
+                                'use_arrays':True,
+                                }
+                            }),
+                        ('arrays', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'None',
+                                'use_successors':True,
+                                'use_arrays':False,
+                                }
+                            }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
                     ],
-                    # 'z3': [
-                    #     ('default', {}),
-                    # ],
-                    # 'cvc4':[
-                    #     ('default', {'timeout': timedelta(seconds=TIMEOUT)}),
-                    # ]
                 }
             }
         print('Solving with SMT:')
@@ -172,8 +193,9 @@ def main(argv):
                     print(f'\tUsing {solver}-{param_name}...')
                     result,model=SMT.solve_instance(instance_file,
                                         solver,
-                                        params,
-                                        verbose=True)
+                                        params['params'],
+                                        params['model_params'],
+                                        verbose=False)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')

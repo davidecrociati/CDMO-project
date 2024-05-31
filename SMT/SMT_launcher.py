@@ -10,8 +10,8 @@ def solve_instance(
         instance_file,
         solver,
         params,
+        model_params:dict=None,
         verbose=False,
-        model_params:dict=None
 ):
     solve=None
     match solver:
@@ -22,16 +22,8 @@ def solve_instance(
         case _:
             raise KeyError('Unsupported solver')
     instance_data=parse_dzn(instance_file)
-    if model_params:
-        check_model_params(model_params)
-    else:
-        model_params={
-            'simmetry_method':'>',
-            'use_successors':True,
-            'use_arrays':False,
-            'impose_lower_bound':True,
-            'redundancy':True
-        }
+    model_params=check_model_params(model_params)
+    # print(model_params)
     model_head,model_tail=generate_model(instance_data,**model_params)
     obj='N/A'
     model=''

@@ -376,13 +376,16 @@ def get_distances(model,print_names,arrays,num_c=None,print_=True,):
         return [int(str(v[1])) for v in sorted_variables]
     
 def check_model_params(input_dict):
-    model_params = {
-        'simmetry_method': '>',
-        'use_successors': True,
-        'use_arrays': True,
-        'impose_lower_bound': True,
-        'redundancy': False
+    model_params={
+        'simmetry_method':'>',
+        'use_successors':True,
+        'use_arrays':True,
+        'impose_lower_bound':False,
+        'redundancy':True
     }
+
+    if not input_dict:
+        return model_params
 
     expected_types = {
         'simmetry_method': str,
