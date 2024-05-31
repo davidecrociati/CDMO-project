@@ -175,12 +175,12 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
         print("#"*10, " INSTANCE ", "#"*(l-10))
         display_instance(instance_data)
         print("#"*(l+10))
-        print(f"\nUsing {model} model with {strategy} search-strategy...")
+    print(f"\tUsing {model} model with {strategy} search-strategy...")
     
     solve=None
     match model :
-        case "1-hot" : solve = SAT_solver.solve_hot
-        case "binary" : solve = SAT_solver.solve_bin
+        case "1-hot-cube" : solve = SAT_solver.solve_hot
+        case "binary-cube" : solve = SAT_solver.solve_bin
         case "circuit" : solve = SAT_solver.solve_circuit
     
     match strategy:
@@ -229,7 +229,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
             minimum = lower_bound
-            while lower_bound <= upper_bound:
+            while lower_bound < upper_bound:
                 # Timer
                 try:
                     aux['timeout'] = params['timeout']-(time.time()-execTime)
@@ -239,8 +239,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     pass
                     
                 # Execution    
-                mid = minimum + (upper_bound - lower_bound) // binary_cut
-                mid = max(minimum, min(mid, upper_bound))
+                mid = (upper_bound + lower_bound) // binary_cut
                 result, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry)
 
                 # Backup + update value
@@ -251,8 +250,9 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     upper_bound = mid - 1  # Try for a smaller feasible solution
                 else:
                     lower_bound = mid + 1  # Try for a larger feasible solution
+                if lower_bound==upper_bound : obj=lower_bound
                 if verbose_search : print(f"max_path={mid}\tsolution={solution}")
-        
+            
         case "incremental_lower_upper":
             # Mode 4: incremental lower --> upper
             lower_bound = instance_data['lower_bound']
@@ -308,10 +308,10 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     # Check not to use a too big bound
                     if next_bound > upper_bound : 
                         bound += 1 
-                        print(f"Unsat, try incrementing by 1 in order not to overcome {upper_bound}: bound = {bound}")
+                        if verbose_search : print(f"Unsat, try incrementing by 1 in order not to overcome {upper_bound}: bound = {bound}")
                     else : 
                         bound = next_bound
-                        print(f"Unsat, try incrementing by {incremental_factor}: bound = {bound}")
+                        if verbose_search : print(f"Unsat, try incrementing by {incremental_factor}: bound = {bound}")
     return obj, solution
 
 def break_subcircuits(solver, successor, num_items):

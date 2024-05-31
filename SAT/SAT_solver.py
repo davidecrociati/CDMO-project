@@ -24,6 +24,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     courier_capacities = instance_data['courier_capacities']
     item_sizes = instance_data['item_sizes']
     distances = instance_data['distances']
+    timeout = params['timeout']
     
     num_orders = num_items - (num_couriers - 1)  # a courier can't deliver more than n-m items (-1 is due to the courier himself that doesn't count)
     
@@ -36,10 +37,10 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     ##################################################################################################################################################################
     ## CONSTRAINTS ###################################################################################################################################################
     ##################################################################################################################################################################
-    
+
     # 1) Each items must be delivered once
     if verbose : print(f"constraint-1 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for i in range(num_items):
         solver.add(exactly_one_seq([stops[c][i][o]
                                     for c in range(num_couriers)
@@ -48,7 +49,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 2) Each courrier must deliver at least one item (also structurally guarantted by num_orders)
     if verbose : print(f"constraint-2 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         solver.add(at_least_one_np([stops[c][i][o]
                                     for i in range(num_items)
@@ -57,7 +58,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
 
     # 3.1) Orders of the items of the same courier must be different unless they are all False
     if verbose : print(f"constraint-3.1 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         for o in range(num_orders):
             # Each courier can deliver at most one item at each order position --> 0 (not delivered item) or 1 (delivered)
@@ -67,7 +68,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 3.2) Orders must be compact
     if verbose : print(f"constraint-3.2 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit        
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit        
     for c in range(num_couriers):
         for o in range(1, num_orders):
             # solver.add(Implies(
@@ -81,7 +82,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 4) Bin packing : the sum of items sizes must not exceed the max size of the courier
     if verbose : print(f"constraint-4 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         solver.add(sum([ If(stops[c][i][o], item_sizes[i], 0)
                         for i in range(num_items)
@@ -90,7 +91,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 5) Symmetry breaking: the higher your capacity the higher your load
     if verbose : print(f"constraint-5 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c1 in range(num_couriers):
         for c2 in range(c1+1, num_couriers):
             if courier_capacities[c1] > courier_capacities[c2] :     
@@ -104,7 +105,7 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
 
     # 6) Check distances
     if verbose : print(f"constraint-6 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers) :
         distance_tot = 0
         for i1 in range(num_items): 
@@ -153,14 +154,13 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     ## SOLUTION ################################################################################################################################################
     ############################################################################################################################################################
     
-    pars=params.copy()
     load_time = time.time()-t
     if verbose : print(f"It takes {load_time} seconds to load all the constraints")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        pars['timeout'] = int((pars['timeout']-load_time)*1000) 
-    solver.set(**pars, random_seed=42)
+        timeout = int((timeout-load_time)*1000) 
+    solver.set(timeout=timeout, random_seed=42)
     
     res = solver.check()
 
@@ -217,6 +217,7 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     courier_capacities = instance_data['courier_capacities']
     item_sizes = instance_data['item_sizes']
     distances = instance_data['distances']
+    timeout = params['timeout']
     
     order_bits = math.ceil(math.log2(num_items - (num_couriers - 1))) + 1       # number of binary digit to represent the max num of orders
                  
@@ -232,21 +233,21 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 1) Each items must be delivered once
     if verbose : print(f"constraint-1 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     # NOTE: An item is delivered if it has an encoding different from 0 --> if Or(encoding)=1
     for i in range(num_items):
         solver.add(exactly_one_bw([Or(stops[c][i]) for c in range(num_couriers)], f"item_{i}_delivered_once"))
     
     # 2) Each courrier must deliver at least one item (also structurally guarantted by num_orders)
     if verbose : print(f"constraint-2 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     # NOTE: An item is delivered if it has an encoding different from 0 --> if Or(encoding)=1
     for c in range(num_couriers):
         solver.add(at_least_one_np([Or(stops[c][i]) for i in range(num_items)]))
         
     # 3) Orders of items for the same courier must be unique and compact
     if verbose : print(f"constraint-3 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     num_delivered_items = []
     for c in range(num_couriers):
         for i in range(num_items):
@@ -263,13 +264,13 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 4) Bin packing : the sum of items sizes must not exceed the max size of the courier
     if verbose : print(f"constraint-4 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         solver.add( sum( [If(Or(stops[c][i]), item_sizes[i], 0) for i in range(num_items)] ) <= courier_capacities[c] )
     
     # 5) Symmetry breaking: the higher your capacity the higher your load
     if verbose : print(f"constraint-5 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c1 in range(num_couriers):
         for c2 in range(c1+1, num_couriers):
             if courier_capacities[c1] > courier_capacities[c2] :
@@ -279,7 +280,7 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     
     # 6) Check distances
     if verbose : print(f"constraint-6 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers) :
         distance_tot = 0
         for i1 in range(num_items): 
@@ -319,14 +320,13 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
     ## SOLUTION ################################################################################################################################################
     ############################################################################################################################################################
     
-    pars=params.copy()
     load_time = time.time()-t
     if verbose : print(f"It takes {load_time} seconds to load all the constraints")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        pars['timeout'] = int((pars['timeout']-load_time)*1000) 
-    solver.set(**pars, random_seed=42)
+        timeout = int((timeout-load_time)*1000) 
+    solver.set(timeout=timeout, random_seed=42)
     
     res = solver.check()
 
@@ -362,8 +362,7 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
             
         # plot_solution_3d(sol, num_couriers, num_items, order_bits) # DEBUG
         
-        obj = max(total_distances)
-        if verbose : print(f"The longest distance travelled is {obj}") # DEBUG
+        if verbose : print(f"The longest distance travelled is {max(total_distances)}") # DEBUG
         return 'sat', solution
     else:
         if verbose : print("No solution found")
@@ -391,6 +390,7 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
     courier_capacities = instance_data['courier_capacities']
     item_sizes = instance_data['item_sizes']
     distances = instance_data['distances']
+    timeout = params['timeout']
     
     successor = [[Bool(f'Item{i}-->Item{j}')    for j in range(num_items)]      
                                                 for i in range(num_items)]     
@@ -410,7 +410,7 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
 
     # 1) Each items must be delivered once by one courier
     if verbose : print(f"constraint-1 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for i in range(num_items):
         # In 'stops', each item has to appear in just one row (courier)
         solver.add(exactly_one_np([stops[c][i] for c in range(num_couriers)], f"{i}_exactly_once_stops"))
@@ -419,7 +419,7 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
     # NOTE : Every courier must deliver at least an item which will be his first and last one, so in general each courier must have a 
     # first and a last item
     if verbose : print(f"constraint-2 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         solver.add(at_least_one_np(stops[c]))
         solver.add(And(
@@ -430,21 +430,21 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
         
     # 3) Item cannot succed or preceed itself
     if verbose : print(f"constraint-3 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for i in range(num_items) :
         solver.add(Not(successor[i][i]))
         solver.add(Not(predecessor[i][i]))
         
     # 4) Each items must not have more than one successor and one predecessor
     if verbose : print(f"constraint-4 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for i in range(num_items):
         solver.add(at_most_one_np(successor[i]))        # successor
         solver.add(at_most_one_np(predecessor[i]))      # predecessor
     
     # 5) An item and its successor must be delivered by the same courier
     if verbose : print(f"constraint-5 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for i1 in range(num_items) :
         for i2 in range(num_items) :
             for c in range(num_couriers):
@@ -453,13 +453,13 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
                 
     # 6) Bin packing : the sum of items sizes must not exceed the max size of the courier
     if verbose : print(f"constraint-6 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         solver.add(sum([If(stops[c][i], item_sizes[i], 0) for i in range(num_items)]) <= courier_capacities[c])
     
     # 7) Symmetry breaking: the higher your capacity the higher your load
     if verbose : print(f"constraint-7 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c1 in range(num_couriers):
         for c2 in range(c1+1, num_couriers):
             if courier_capacities[c1] > courier_capacities[c2] :     
@@ -469,12 +469,12 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
     
     # 8) Break subcircuit
     if verbose : print(f"constraint-8 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     break_subcircuits(solver, successor,num_items)
     
     # 9) Check distances
     if verbose : print(f"constraint-9 {time.time()-t} seconds")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     for c in range(num_couriers):
         distance_tot = 0
         for i1 in range(num_items):
@@ -510,14 +510,13 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
     ## SOLUTION ################################################################################################################################################
     ############################################################################################################################################################
     
-    pars=params.copy()
     load_time = time.time()-t
     if verbose : print(f"It takes {load_time} seconds to load all the constraints")
-    if (params['timeout']-(time.time()-t)) <= 0 : return "N/A", [] # exit
+    if (timeout-(time.time()-t)) <= 0 : return "N/A", [] # exit
     if 'timeout' in params:
         # We have to consider the constraint loading time in the timer
-        pars['timeout'] = int((pars['timeout']-load_time)*1000) 
-    solver.set(**pars, random_seed=42)
+        timeout = int((timeout-load_time)*1000) 
+    solver.set(timeout=timeout, random_seed=42)
     
     res = solver.check()
 

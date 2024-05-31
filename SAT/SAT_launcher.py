@@ -9,19 +9,11 @@ import math
 def solve_instance(
         instance_file,
         params,
-        
-        search_strategy="lower_upper",                              # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        # search_strategy="upper_lower",                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        # search_strategy="binary_search",                          # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        # search_strategy="incremental_lower_upper",                # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        
-        # model="1-hot",                                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        # model="binary",                                             # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        model="circuit",                                            # TODO: da far selezionare nel main più avanti, per ora si chiama da qui
-        
+        search_strategy,                                           
+        model,                                            
         verbose_search=False, 
-        verbose_solver=True,
-        symmetry=True
+        verbose_solver=False,
+        symmetry=False
 ):
     instance_data=parse_dzn(instance_file)
     
@@ -31,10 +23,16 @@ def solve_instance(
     except: pass
     
     execTime = time.time()
-    obj, solution = solve_strategy(instance_data, model, search_strategy, params, execTime, 
-                                    binary_cut=15,          # Non credo le selezioneremo mai dal main
-                                    incremental_factor=30,  # Non credo le selezioneremo mai dal main
-                                    symmetry=symmetry, verbose_search=verbose_search, verbose_solver=verbose_solver
+    
+    obj, solution = solve_strategy(instance_data, 
+                                   model, 
+                                   search_strategy, 
+                                   params, 
+                                   execTime, 
+                                   **(params['search']), 
+                                   symmetry=symmetry, 
+                                   verbose_search=verbose_search, 
+                                   verbose_solver=verbose_solver
                                 )
                     
     execTime = math.floor(time.time()-execTime)
