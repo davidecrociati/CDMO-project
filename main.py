@@ -1,121 +1,235 @@
-import os
+import os,sys
 from datetime import timedelta
-import CP.CP_launcher as CP
-import SAT.SAT_launcher as SAT
-import MIP.MIP_launcher as MIP
-import SMT.SMT_launcher as SMT
 from utils.utils import *
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
-INSTANCES_FOLDER='instances_dzn' #da potenizalmente cambiare 
+INSTANCES_FOLDER='instances_dzn' #da potenzialmente cambiare 
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
 SMT_MODELS_FOLDER='SMT/models'
-RESULTS_FOLDER='res'
-firstInstance=11 # inclusive
-lastInstance=11 # inclusive
 
-if firstInstance<0:
+RESULTS_FOLDER='res'
+INDENT_RESULTS=True # indented results on the json
+
+
+firstInstance=1 # inclusive
+lastInstance=21 # inclusive
+
+if firstInstance<=0:
     firstInstance=1
 if lastInstance>21:
     lastInstance=21
+if firstInstance>lastInstance:
+    lastInstance=firstInstance
 
-RUN_CP=False
-RUN_SAT=True
-RUN_SMT=False
-RUN_MIP=False
+TIMEOUT=300 # seconds
+
 
 CHECKER=False
 
 
-def main():
+def main(argv):
+    RUN_CP=False
+    RUN_SAT=True
+    RUN_SMT=False
+    RUN_MIP=False
+    first=firstInstance
+    last=lastInstance
+    if len(argv)>1:
+        first=last=int(argv[1])
+        if len(argv)>2:
+            match argv[2]:
+                case 'cp':
+                    RUN_CP=True
+                    RUN_SAT=False
+                    RUN_SMT=False
+                    RUN_MIP=False
+                case 'sat':
+                    RUN_CP=False
+                    RUN_SAT=True
+                    RUN_SMT=False
+                    RUN_MIP=False
+                case 'smt':
+                    RUN_CP=False
+                    RUN_SAT=False
+                    RUN_SMT=True
+                    RUN_MIP=False
+                case 'mip':
+                    RUN_CP=False
+                    RUN_SAT=False
+                    RUN_SMT=False
+                    RUN_MIP=True
+                case _:
+                    pass
+
+
     # ============
     # |    CP    |
     # ============
-    CP_models={
-        'model_dave.mzn': 'default',
-        
-        # 'model.mzn': 'old'
-        }
-    CP_solvers=[
-        'gecode',
-        # 'chuffed',
-        ]
-    CP_params={
-        'timeout':timedelta(seconds=300),
-        'free_search':False
-        } # those are default
-
     if RUN_CP:
-        CP_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-        for model,name in CP_models.items():
-            for solver in CP_solvers:
-                print(f'Solving CP: {name}-{solver}...')
-                CP_results=CP.launch(INSTANCES[firstInstance-1:lastInstance],model,solver,CP_params,verbose=False)
-                CP_JSON=add_solutions(CP_results,name,solver,CP_JSON)
-
-        # print(CP_JSON)
-        saveJSON_list(CP_JSON,RESULTS_FOLDER+'/CP/',format=True,firstInstanceNumber=firstInstance)
+        import CP.CP_launcher as CP
+        CP_models = {
+            'model_gecode.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+            'model_gecode_SB.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+            'model_chuffed.mzn': {
+                'solvers': {
+                    'chuffed': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+            'model_chuffed_SB.mzn': {
+                'solvers': {
+                    'chuffed': [
+                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                    ]
+                }
+            },
+        }
+        print('Solving with CP:')
+        for instance_file in INSTANCES[first-1:last]:
+            print(f'  Solving {instance_file}...')
+            instance_results={}
+            for model in CP_models:
+                # print(model)
+                for solver in CP_models[model]['solvers']:
+                    # print(solver)
+                    for param_name,params in CP_models[model]['solvers'][solver]:
+                        print(f'\tUsing {model} with {solver}-{param_name}...')
+                        instance_results[
+                            f'{os.path.splitext(model)[0]}_{solver}_{param_name}'
+                        ]=CP.solve_instance(instance_file,
+                                            model,
+                                            solver,
+                                            params)
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP2/',format=INDENT_RESULTS)
 
     # ============
     # |    SAT   |
     # ============
-    SAT_models={
-        'placeholder': 'sat_test',
-        
-        # 'model.mzn': 'old'
-        }
-    SAT_solvers=[
-        'blank',
-        # 'gecode'
-        ]
-    SAT_params={
-        'timeout':timedelta(seconds=300),
-        } # those are default
-
-
     if RUN_SAT:
-        SAT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-        for model,name in SAT_models.items():
-            for solver in SAT_solvers:
-                print(f'Solving SAT: {name}-{solver}...')
-                SAT_results=SAT.launch(INSTANCES[firstInstance-1:lastInstance],SAT_params,verbose=False)
-                SAT_JSON=add_solutions(SAT_results,name,solver,SAT_JSON)
+        import SAT.SAT_launcher as SAT
 
-        # print(SAT_JSON)
-        saveJSON_list(SAT_JSON,RESULTS_FOLDER+'/SAT/',format=True,firstInstanceNumber=firstInstance)
+        SAT_params = {
+                'timeout': timedelta(seconds=TIMEOUT),
+                'search' : {
+                    'binary_cut' : 2, 
+                    'incremental_factor' : 30
+                }
+                # 'no_time_out': {},
+            }
+        
+        SAT_models = ['1-hot-cube', 'binary-cube', 'circuit']
+        
+        SAT_searches = {
+            "lower_upper" : "LU",
+            'upper_lower' : "UL", 
+            'incremental_lower_upper' : "ILU",
+            'binary_search' : "BS"
+        }
+        
+        print('Solving with SAT:')
+        for n, instance_file in enumerate(INSTANCES[first-1:last], 1):
+            print(f'\n- Solving {instance_file}...')
+            instance_results={}
+            for model in SAT_models :
+                for search_name, s in SAT_searches.items() :
+                    result=SAT.solve_instance(instance_file,SAT_params,search_name, model, symmetry=(n > 10))
+                    if (n > 10) : sym="SYM"
+                    else : sym="NO_SYM"
+                    instance_results[f'{model}_{s}_{sym}'] = result
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
+                    
+                    
+        # print('Solving with SAT:')
+        # for instance_file in INSTANCES[first-1:last]:
+        #     print(f'Solving {instance_file}...')
+        #     instance_results={}
+        #     for param_name,params in SAT_params.items():
+        #         print(f'\tUsing {param_name} params...')
+        #         result=SAT.solve_instance(instance_file,params)
+        #         # print(result)
+        #         instance_results[f'{param_name}'] = result
+        #     saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
 
     # ============
     # |    SMT   |
     # ============
-    SMT_models={
-        'placeholder': 'smt_test',
-        
-        # 'model.mzn': 'old'
-        }
-    SMT_solvers=[
-        'blank',
-        # 'gecode'
-        ]
-    SMT_params = {
-            'timeout': 300_000, # microseconds
-        }  # those are default
-
     if RUN_SMT:
-        models=SMT.generate_smt2_models(INSTANCES[firstInstance-1:lastInstance],SMT_MODELS_FOLDER)
+        import SMT.SMT_launcher as SMT
 
-    if RUN_SMT:
-        SMT_JSON=[] # lista di dizionari. Ogni diz ha 'metodo':{result}
-        for model,name in SMT_models.items():
-            for solver in SMT_solvers:
-                print(f'Solving SMT: {name}-{solver}...')
-                SMT_results=SMT.launch(models,SMT_params,verbose=False)
-                SMT_JSON=add_solutions(SMT_results,name,solver,SMT_JSON)
+        SMT_models = {
+                'solvers': {
+                    'z3': [
+                        ('SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'use_successors':True,
+                                'use_arrays':False,
+                                }
+                            }),
+                        ('arrays_SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'use_successors':True,
+                                'use_arrays':True,
+                                }
+                            }),
+                        ('arrays', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'None',
+                                'use_successors':True,
+                                'use_arrays':False,
+                                }
+                            }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
+                    ],
+                }
+            }
+        print('Solving with SMT:')
+        for instance_file in INSTANCES[first-1:last]:
+            print(f'  Solving {instance_file}...')
+            instance_results={}
+            for solver in SMT_models['solvers']:
+                for param_name,params in SMT_models['solvers'][solver].copy():
+                    print(f'\tUsing {solver}-{param_name}...')
+                    result,model=SMT.solve_instance(instance_file,
+                                        solver,
+                                        params['params'],
+                                        params['model_params'],
+                                        verbose=False)
+                    # print(result)
+                    instance_results[f'{solver}_{param_name}'] = result
+                    if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
+    
+    if RUN_MIP:
+        import MIP.MIP_launcher as MIP
 
-        # print(SMT_JSON)
-        saveJSON_list(SMT_JSON,RESULTS_FOLDER+'/SMT/',format=True,firstInstanceNumber=firstInstance)
 
 if __name__=='__main__':
-    main()
+    main(sys.argv)
     if CHECKER:run_checker(firstInstance,lastInstance)
