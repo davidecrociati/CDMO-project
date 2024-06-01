@@ -13,8 +13,8 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=7 # inclusive
-lastInstance=7 # inclusive
+firstInstance=1 # inclusive
+lastInstance=10 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -31,8 +31,8 @@ CHECKER=False
 
 def main(argv):
     RUN_CP=False
-    RUN_SAT=True
-    RUN_SMT=False
+    RUN_SAT=False
+    RUN_SMT=True
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -63,42 +63,39 @@ def main(argv):
                 case _:
                     pass
 
-
     # ============
     # |    CP    |
     # ============
     if RUN_CP:
         import CP.CP_launcher as CP
         CP_models = {
-            'model_gecode.mzn': {
-                'solvers': {
-                    'gecode': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                    ]
-                }
-            },
-            'model_gecode_SB.mzn': {
-                'solvers': {
-                    'gecode': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                        # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                    ]
-                }
-            },
             'model_chuffed.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                    ]
+                }
+            },
+            'model_gecode.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('', {'timeout': timedelta(seconds=TIMEOUT)}),
                     ]
                 }
             },
             'model_chuffed_SB.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                    ]
+                }
+            },
+            'model_gecode_SB.mzn': {
+                'solvers': {
+                    'gecode': [
+                        ('', {'timeout': timedelta(seconds=TIMEOUT)}),
                     ]
                 }
             },
@@ -113,13 +110,13 @@ def main(argv):
                     # print(solver)
                     for param_name,params in CP_models[model]['solvers'][solver]:
                         print(f'\tUsing {model} with {solver}-{param_name}...')
-                        instance_results[
-                            f'{os.path.splitext(model)[0]}_{solver}_{param_name}'
-                        ]=CP.solve_instance(instance_file,
-                                            model,
-                                            solver,
-                                            params)
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP2/',format=INDENT_RESULTS)
+                        key=f'{os.path.splitext(model)[0]}_{solver}_{param_name}'
+                        instance_results[key]=CP.solve_instance(instance_file,
+                                                                model,
+                                                                solver,
+                                                                params)
+            # saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP/',format=INDENT_RESULTS)
+                        updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/test/',format=INDENT_RESULTS)
 
     # ============
     # |    SAT   |
@@ -136,38 +133,53 @@ def main(argv):
                 # 'no_time_out': {},
             }
         
-        SAT_models = ['1-hot-cube', 'binary-cube', 'circuit']
-        
-        SAT_searches = {
-            "lower_upper" : "LU",
-            'upper_lower' : "UL", 
-            'incremental_lower_upper' : "ILU",
-            'binary_search' : "BS"
+        SAT_models = {
+            'circuit':[
+                ('ILU', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{
+                        'incremental_factor' : 30, 
+                        'symmetry' : True
+                    }
+                }),
+                ('LU', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{'symmetry':True}
+                }),
+                ('BS', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{
+                        'binary_cut' : 2,
+                        'symmetry' : True
+                    }
+                }),
+            ],
+            '1-hot-cube':[
+                ('BS', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{
+                        'binary_cut' : 2,
+                        'symmetry' : True
+                    }
+                }),
+            ]
+            # 'binary-cube':[],
         }
         
         print('Solving with SAT:')
-        for n, instance_file in enumerate(INSTANCES[first-1:last], 1):#TODO QUI NON PARTE SEMPRE DA 1 FIXARE
+        for n, instance_file in enumerate(INSTANCES[first-1:last], first):
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in SAT_models :
-                for search_name, s in SAT_searches.items() :
-                    result=SAT.solve_instance(instance_file,SAT_params,search_name, model, symmetry=(n > 10))
-                    if (n > 10) : sym="SYM"
-                    else : sym="NO_SYM"
-                    instance_results[f'{model}_{s}_{sym}'] = result
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
-                    
-                    
-        # print('Solving with SAT:')
-        # for instance_file in INSTANCES[first-1:last]:
-        #     print(f'Solving {instance_file}...')
-        #     instance_results={}
-        #     for param_name,params in SAT_params.items():
-        #         print(f'\tUsing {param_name} params...')
-        #         result=SAT.solve_instance(instance_file,params)
-        #         # print(result)
-        #         instance_results[f'{param_name}'] = result
-        #     saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
+                for search_name, params in SAT_models[model] :
+                    result=SAT.solve_instance(instance_file,
+                                              model,
+                                              search_name,
+                                              params['params'],
+                                              params['model_params'],
+                                              symmetry=(n > 10))
+                    instance_results[f'{model}_{search_name}{"_SB" if (n > 10) else ""}'] = result
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
 
     # ============
     # |    SMT   |
@@ -176,45 +188,43 @@ def main(argv):
         import SMT.SMT_launcher as SMT
 
         SMT_models = {
-                'solvers': {
                     'z3': [
-                        ('SB', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'simmetry_method':'>',
-                                'use_successors':True,
-                                'use_arrays':False,
-                                }
-                            }),
                         ('arrays_SB', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':{
                                 'simmetry_method':'>',
-                                'use_successors':True,
                                 'use_arrays':True,
+                                }
+                            }),
+                        ('SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'use_arrays':False,
                                 }
                             }),
                         ('arrays', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':{
                                 'simmetry_method':'None',
-                                'use_successors':True,
+                                'use_arrays':True,
+                                }
+                            }),
+                        ('default', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'None',
                                 'use_arrays':False,
                                 }
                             }),
-                        # ('default', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
                     ],
-                }
-            }
+        }
         print('Solving with SMT:')
         for instance_file in INSTANCES[first-1:last]:
             print(f'  Solving {instance_file}...')
             instance_results={}
-            for solver in SMT_models['solvers']:
-                for param_name,params in SMT_models['solvers'][solver].copy():
+            for solver in SMT_models:
+                for param_name,params in SMT_models[solver].copy():
                     print(f'\tUsing {solver}-{param_name}...')
                     result,model=SMT.solve_instance(instance_file,
                                         solver,
@@ -223,8 +233,9 @@ def main(argv):
                                         verbose=False)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
-                    if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
+                    if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/{param_name}/')
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/test/',format=INDENT_RESULTS)
+            # saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT/',format=INDENT_RESULTS)
     
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
