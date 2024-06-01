@@ -137,7 +137,8 @@ def main(argv):
             'circuit':[
                 ('ILU', {
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{'incremental_factor' : 30}
+                    'model_params':{'incremental_factor' : 30,
+                                    'symmetry':True}
                 }),
                 ('LU', {
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
@@ -214,6 +215,13 @@ def main(argv):
                                 'use_arrays':False,
                                 }
                             }),
+                        ('best', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':{
+                                'simmetry_method':'>',
+                                'best':True
+                                }
+                            }),
                     ],
         }
         print('Solving with SMT:')
@@ -227,7 +235,7 @@ def main(argv):
                                         solver,
                                         params['params'],
                                         params['model_params'],
-                                        verbose=False)
+                                        verbose=True)
                     # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/{param_name}/')

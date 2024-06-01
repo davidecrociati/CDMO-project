@@ -381,7 +381,8 @@ def check_model_params(input_dict):
         'use_successors':True,
         'use_arrays':True,
         'impose_lower_bound':False,
-        'redundancy':True
+        'redundancy':True,
+        'best':False
     }
 
     if not input_dict:
@@ -392,7 +393,8 @@ def check_model_params(input_dict):
         'use_successors': bool,
         'use_arrays': bool,
         'impose_lower_bound': bool,
-        'redundancy': bool
+        'redundancy': bool,
+        'best':bool
     }
 
     for key in input_dict.keys():
@@ -400,9 +402,7 @@ def check_model_params(input_dict):
             raise KeyError(f"Unexpected key: {key}")
         if not isinstance(input_dict[key], expected_types[key]):
             raise TypeError(f"Incorrect type for key: {key}. Expected {expected_types[key].__name__}, got {type(input_dict[key]).__name__}.")
-
     validated_dict = model_params.copy()
-    
     validated_dict.update(input_dict)
     
     return validated_dict
@@ -438,7 +438,7 @@ if __name__=='__main__':
     converted=convertArrayRef(array,5)
     print(converted)
 
-def generate_array_smt2_model(instance_data):
+def generate_best_model(instance_data):
     # instance_data=parse_dzn(dzn_instance)
 
     num_couriers = instance_data['num_couriers']

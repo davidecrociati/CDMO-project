@@ -452,7 +452,7 @@ if __name__=='__main__':
     converted=convertArrayRef(array,5)
     print(converted)
 
-def generate_array_smt2_model(instance_data):
+def generate_best_model(instance_data):
     # instance_data=parse_dzn(dzn_instance)
 
     num_couriers = instance_data['num_couriers']

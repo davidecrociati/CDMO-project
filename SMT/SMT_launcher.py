@@ -38,7 +38,10 @@ def solve_instance(
     max_path=instance_data['upper_bound']
     opt=False
     num_couriers=instance_data['num_couriers']
-    use_arrays=model_params['use_arrays']
+    if model_params['best']:
+        use_arrays=False
+    else:
+        use_arrays=model_params['use_arrays']
     use_successors=model_params['use_successors']
     impose_lower_bound=model_params['impose_lower_bound']
     while max_path>=instance_data['lower_bound']:
@@ -103,9 +106,10 @@ def generate_model(
         use_successors=True,
         use_arrays=True,
         impose_lower_bound=False,
-        redundancy=False
+        redundancy=False,
+        best=False
 ):
-    # return generate_array_smt2_model(data)
+    if best: return generate_best_model(data)
     num_couriers = data['num_couriers']
     num_items = data['num_items']
     lower_bound = data['lower_bound']
