@@ -8,9 +8,10 @@ import math
 
 def solve_instance(
         instance_file,
-        params,
-        search_strategy,                                           
         model,                                            
+        search_strategy,                                           
+        params,
+        model_params,
         verbose_search=False, 
         verbose_solver=False,
         symmetry=False

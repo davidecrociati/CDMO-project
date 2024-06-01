@@ -125,21 +125,58 @@ def main(argv):
         import SAT.SAT_launcher as SAT
 
         SAT_params = {
-                'default': {'timeout': timedelta(seconds=TIMEOUT)},
+                'timeout': timedelta(seconds=TIMEOUT),
+                'search' : {
+                    'binary_cut' : 2, 
+                    'incremental_factor' : 30
+                }
                 # 'no_time_out': {},
             }
-
-
+        
+        SAT_models = {
+            'circuit':[
+                ('ILU', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{'incremental_factor' : 30}
+                }),
+                ('LU', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                }),
+                ('BS', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{'binary_cut' : 2}
+                }),
+            ],
+            '1-hot-cube':[
+                ('BS', {
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{'binary_cut' : 2}
+                }),
+            ]
+            # 'binary-cube':[],
+        }
+        
+        SAT_searches = {
+            "lower_upper" : "LU",
+            'upper_lower' : "UL", 
+            'incremental_lower_upper' : "ILU",
+            'binary_search' : "BS"
+        }
+        
         print('Solving with SAT:')
-        for instance_file in INSTANCES[first-1:last]:
+        for n, instance_file in enumerate(INSTANCES[first-1:last], first):
             print(f'  Solving {instance_file}...')
             instance_results={}
-            for param_name,params in SAT_params.items():
-                print(f'\tUsing {param_name} params...')
-                result=SAT.solve_instance(instance_file,params)
-                # print(result)
-                instance_results[f'{param_name}'] = result
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
+            for model in SAT_models :
+                for search_name, params in SAT_searches[model] :
+                    result=SAT.solve_instance(instance_file,
+                                              model,
+                                              search_name,
+                                              params['params'],
+                                              params['model_params'],
+                                              symmetry=(n > 10))
+                    instance_results[f'{model}_{search_name}{"_SB" if (n > 10) else ""}'] = result
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
 
     # ============
     # |    SMT   |
@@ -148,7 +185,6 @@ def main(argv):
         import SMT.SMT_launcher as SMT
 
         SMT_models = {
-                'solvers': {
                     'z3': [
                         ('arrays_SB', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
@@ -179,14 +215,13 @@ def main(argv):
                                 }
                             }),
                     ],
-                }
-            }
+        }
         print('Solving with SMT:')
         for instance_file in INSTANCES[first-1:last]:
             print(f'  Solving {instance_file}...')
             instance_results={}
-            for solver in SMT_models['solvers']:
-                for param_name,params in SMT_models['solvers'][solver].copy():
+            for solver in SMT_models:
+                for param_name,params in SMT_models[solver].copy():
                     print(f'\tUsing {solver}-{param_name}...')
                     result,model=SMT.solve_instance(instance_file,
                                         solver,
