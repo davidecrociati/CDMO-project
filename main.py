@@ -13,8 +13,8 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=1 # inclusive
-lastInstance=10 # inclusive
+firstInstance=7 # inclusive
+lastInstance=7 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -73,7 +73,7 @@ def main(argv):
             'model_gecode.mzn': {
                 'solvers': {
                     'gecode': [
-                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                     ]
                 }
@@ -81,7 +81,7 @@ def main(argv):
             'model_gecode_SB.mzn': {
                 'solvers': {
                     'gecode': [
-                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         # ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                     ]
                 }
@@ -89,7 +89,7 @@ def main(argv):
             'model_chuffed.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                     ]
                 }
@@ -97,7 +97,7 @@ def main(argv):
             'model_chuffed_SB.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('no_fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
                         ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                     ]
                 }
@@ -146,8 +146,8 @@ def main(argv):
         }
         
         print('Solving with SAT:')
-        for n, instance_file in enumerate(INSTANCES[first-1:last], 1):
-            print(f'\n- Solving {instance_file}...')
+        for n, instance_file in enumerate(INSTANCES[first-1:last], 1):#TODO QUI NON PARTE SEMPRE DA 1 FIXARE
+            print(f'  Solving {instance_file}...')
             instance_results={}
             for model in SAT_models :
                 for search_name, s in SAT_searches.items() :
@@ -155,7 +155,7 @@ def main(argv):
                     if (n > 10) : sym="SYM"
                     else : sym="NO_SYM"
                     instance_results[f'{model}_{s}_{sym}'] = result
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT2/',format=INDENT_RESULTS)
+            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
                     
                     
         # print('Solving with SAT:')
