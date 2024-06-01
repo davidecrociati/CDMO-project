@@ -143,6 +143,14 @@ def main(argv):
                         'symmetry' : True
                     }
                 }),
+                ('ILU', {
+                    'params_name':'ILU_NO_SB',
+                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'model_params':{
+                        'incremental_factor' : 30, 
+                        'symmetry' : False
+                    }
+                }),
                 ('LU', {
                     'params_name':'LU_SB',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
@@ -180,7 +188,10 @@ def main(argv):
                                               model,
                                               search_name,
                                               params['params'],
-                                              params['model_params'])
+                                              params['model_params'],
+                                              verbose_search=False, 
+                                              verbose_solver=False
+                                            )
                     instance_results[f'{model}_{params['params_name']}'] = result
                     updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
 

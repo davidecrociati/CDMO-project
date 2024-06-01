@@ -138,7 +138,19 @@ def display_instance(instance):
 def binary_to_int(bits, order_bits):
     return sum(If(bits[b], 2**b, 0) for b in range(order_bits))
 
-def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=2, incremental_factor=2, symmetry=False, verbose_search=False, verbose_solver=False) :
+def solve_strategy(
+    instance_data, 
+    model,
+    strategy,
+    params,
+    execTime,
+    binary_cut=2,
+    incremental_factor=2,
+    symmetry=False, # if we want to use SB
+    distance_symmetry=False,
+    verbose_search=False,
+    verbose_solver=False
+) :
     """
     Searches for a solution to a given instance using different search strategies.
 
@@ -184,7 +196,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
         case "circuit" : solve = SAT_solver.solve_circuit
     
     match strategy:
-        case "lower_upper" :
+        case "LU" :
             # Mode 1: lower --> upper
             for max_path in range(instance_data['lower_bound'],instance_data['upper_bound']+1):
                 # Timer
@@ -195,7 +207,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 except:pass
                 
                 # Execution
-                result, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry)
+                result, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
@@ -203,7 +215,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     obj=max_path
                     break
                 
-        case "upper_lower" :
+        case "UL" :
             # Mode 2: upper --> lower 
             for max_path in range(instance_data['upper_bound'],instance_data['lower_bound']-1, -1):
                 # Timer
@@ -214,7 +226,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 except:pass
                 
                 # Execution
-                result, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry)
+                result, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                  
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
@@ -224,7 +236,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                 else :
                     break
             
-        case "binary_search" :
+        case "BS" :
             # Mode 3: binary search
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
@@ -239,7 +251,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     
                 # Execution    
                 mid = (upper_bound + lower_bound) // binary_cut
-                result, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry)
+                result, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup + update value
                 if result == 'sat':
@@ -251,7 +263,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     lower_bound = mid + 1  # Try for a larger feasible solution
                 if verbose_search : print(f"max_path={mid}\tsolution={solution}")
             
-        case "incremental_lower_upper":
+        case "ILU":
             # Mode 4: incremental lower --> upper
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
@@ -267,7 +279,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     pass
 
                 # Execution
-                result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry)
+                result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                 if verbose_search : print(f"{bound}) In the incremental part i found: ", sol)
 
                 if result == 'sat':
@@ -285,7 +297,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                             pass
 
                         # Execution
-                        result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry)
+                        result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                         
                         # Backup
                         if result == 'sat':

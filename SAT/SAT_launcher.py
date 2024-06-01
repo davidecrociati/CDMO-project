@@ -4,7 +4,7 @@ import SAT.SAT_solver as SAT_solver
 from SAT.SAT_utils import *
 import time
 import math
-
+import numpy as np
 
 def solve_instance(
         instance_file,
@@ -13,10 +13,13 @@ def solve_instance(
         params,
         model_params,
         verbose_search=False, 
-        verbose_solver=False,
-        symmetry=False
+        verbose_solver=False
 ):
     instance_data=parse_dzn(instance_file)
+    
+    # Check if the distances are symmetrycal
+    m = np.array(instance_data['distances'])
+    distance_symmetry = np.all(m==m.T)
     
     try:
         if type(params['timeout'])==timedelta:
@@ -30,8 +33,8 @@ def solve_instance(
                                    search_strategy, 
                                    params, 
                                    execTime, 
-                                   **(params['search']), 
-                                   symmetry=symmetry, 
+                                   **(model_params), 
+                                   distance_symmetry=distance_symmetry,
                                    verbose_search=verbose_search, 
                                    verbose_solver=verbose_solver
                                 )
