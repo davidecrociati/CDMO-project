@@ -228,8 +228,7 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
             # Mode 3: binary search
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
-            minimum = lower_bound
-            while lower_bound < upper_bound:
+            while lower_bound <= upper_bound:
                 # Timer
                 try:
                     aux['timeout'] = params['timeout']-(time.time()-execTime)
@@ -250,7 +249,6 @@ def solve_strategy(instance_data, model, strategy, params, execTime, binary_cut=
                     upper_bound = mid - 1  # Try for a smaller feasible solution
                 else:
                     lower_bound = mid + 1  # Try for a larger feasible solution
-                if lower_bound==upper_bound : obj=lower_bound
                 if verbose_search : print(f"max_path={mid}\tsolution={solution}")
             
         case "incremental_lower_upper":

@@ -10,11 +10,11 @@ Magari poi lo chiamiamo _README.md_
 
 ## SAT
 
-* [ ] Semplificare a -> b con -a  \\/ b
+* [X] Semplificare a -> b con -a  \\/ b
 * [X] Provare a cambiare il range delle distanze nelle istanze simmetriche `for i2 in range(i1+1, num_items)`
-* [ ] Collegare bene il launcher con il main (`solve_instance` richiede modello e strategia di ricerca ora), ultimo dei problemi prima trovare una soluzione presentabile
-* [ ] Provare simmetrie nel modello e approcci diversi
-* [ ] Rivedere meglio il modello per pulire/migliorare
+* [X] Collegare bene il launcher con il main (`solve_instance` richiede modello e strategia di ricerca ora), ultimo dei problemi prima trovare una soluzione presentabile
+* [X] Provare simmetrie nel modello e approcci diversi
+* [X] Rivedere meglio il modello per pulire/migliorare
 * [ ] @davidino prova a lanciare le istanze per vedere se cambia qualcosa
 * [X] Rendere selezionabile la simmetria dal launcher per i test
 
