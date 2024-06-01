@@ -343,7 +343,7 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False):
                 order = int(order_bin, 2)  # Convert binary string to decimal
                 if order > 0:  # If order is 0, it means the item is not delivered by this courier
                     courier_deliveries.append((i, order))
-                if verbose : print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f"b_{b}" for b in reversed(range(order_bits))]})")
+                if verbose : print(f"Courier {c} delivered item {i} as {order} encoded as {order_bin} ({[f'b_{b}' for b in reversed(range(order_bits))]})")
             
             # Sort items for this courier by order
             courier_deliveries.sort(key=lambda x: x[1])

@@ -14,7 +14,7 @@
         ]
     },
     "1-hot-cube_UL_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -28,7 +28,7 @@
         ]
     },
     "1-hot-cube_ILU_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -56,7 +56,7 @@
         ]
     },
     "binary-cube_LU_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -70,7 +70,7 @@
         ]
     },
     "binary-cube_UL_NO_SYM": {
-        "time": 4,
+        "time": 2,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -84,7 +84,7 @@
         ]
     },
     "binary-cube_ILU_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -112,7 +112,7 @@
         ]
     },
     "circuit_LU_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -126,7 +126,7 @@
         ]
     },
     "circuit_UL_NO_SYM": {
-        "time": 3,
+        "time": 2,
         "optimal": true,
         "obj": 206,
         "sol": [
@@ -140,7 +140,7 @@
         ]
     },
     "circuit_ILU_NO_SYM": {
-        "time": 2,
+        "time": 1,
         "optimal": true,
         "obj": 206,
         "sol": [

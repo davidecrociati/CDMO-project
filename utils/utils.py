@@ -14,7 +14,23 @@ def add_solutions(solutions,name,solver,outputList):
     return outputList
 
 
-def saveJSON(content,dzn_path,folder,format=False):
+def saveJSON(content:dict,dzn_path,folder,format=False):
+    os.makedirs(folder, exist_ok=True)
+    filename = folder+'/'+os.path.splitext(os.path.basename(dzn_path))[0]+'.json'
+    with open(filename, 'w') as file:
+        indent= None if not format else 4
+        json.dump(content, file, indent=indent)
+
+def updateJSON(content:dict,dzn_path,folder,format=False):
+    # logic to preserve the order of the dict and remove ending '_'
+    new_content = {}
+    for key, value in content.items():
+        if key.endswith('_'):
+            new_content[key[:-1]] = value
+        else:
+            new_content[key] = value
+    content.clear()
+    content.update(new_content)
     os.makedirs(folder, exist_ok=True)
     filename = folder+'/'+os.path.splitext(os.path.basename(dzn_path))[0]+'.json'
     with open(filename, 'w') as file:

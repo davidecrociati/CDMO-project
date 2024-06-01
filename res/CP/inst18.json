@@ -1,5 +1,5 @@
 {
-    "model_gecode_gecode_no_fs": {
+    "model_gecode": {
         "time": 300,
         "optimal": false,
         "obj": 1391,
@@ -237,13 +237,13 @@
             ]
         ]
     },
-    "model_gecode_SB_gecode_no_fs": {
+    "model_gecode_SB": {
         "time": 300,
         "optimal": false,
         "obj": "N/A",
         "sol": []
     },
-    "model_chuffed_chuffed_no_fs": {
+    "model_chuffed": {
         "time": 300,
         "optimal": false,
         "obj": 1374,
@@ -481,7 +481,7 @@
             ]
         ]
     },
-    "model_chuffed_chuffed_fs": {
+    "model_chuffed_fs": {
         "time": 300,
         "optimal": false,
         "obj": 1598,
@@ -719,13 +719,13 @@
             ]
         ]
     },
-    "model_chuffed_SB_chuffed_no_fs": {
+    "model_chuffed_SB": {
         "time": 300,
         "optimal": false,
         "obj": "N/A",
         "sol": []
     },
-    "model_chuffed_SB_chuffed_fs": {
+    "model_chuffed_SB_fs": {
         "time": 300,
         "optimal": false,
         "obj": "N/A",
