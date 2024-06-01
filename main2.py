@@ -168,7 +168,7 @@ def main(argv):
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in SAT_models :
-                for search_name, params in SAT_searches[model] :
+                for search_name, params in SAT_models[model] :
                     result=SAT.solve_instance(instance_file,
                                               model,
                                               search_name,
