@@ -136,6 +136,7 @@ def main(argv):
         SAT_models = {
             'circuit':[
                 ('ILU', {
+                    'params_name':'ILU_SB',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     'model_params':{
                         'incremental_factor' : 30, 
@@ -143,10 +144,12 @@ def main(argv):
                     }
                 }),
                 ('LU', {
+                    'params_name':'LU_SB',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     'model_params':{'symmetry':True}
                 }),
                 ('BS', {
+                    'params_name':'BS_SB',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     'model_params':{
                         'binary_cut' : 2,
@@ -156,6 +159,7 @@ def main(argv):
             ],
             '1-hot-cube':[
                 ('BS', {
+                    'params_name':'BS_SB',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     'model_params':{
                         'binary_cut' : 2,
@@ -176,9 +180,8 @@ def main(argv):
                                               model,
                                               search_name,
                                               params['params'],
-                                              params['model_params'],
-                                              symmetry=(n > 10))
-                    instance_results[f'{model}_{search_name}{"_SB" if (n > 10) else ""}'] = result
+                                              params['model_params'])
+                    instance_results[f'{model}_{params['params_name']}'] = result
                     updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
 
     # ============
