@@ -107,31 +107,6 @@ def define_couriers_duty(nc,ni,arrays):
             s+='))\n'
     return s
 
-def define_simmetry(nc,method,arrays):
-    s=''
-    for c1 in range(1,nc+1):
-        for c2 in range(1,nc+1):
-            if c1!=c2:
-                match method:
-                    case 'both':
-                        if arrays:
-                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
-                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
-                        else:
-                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
-                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
-                    case '>':
-                        if arrays:
-                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
-                        else:
-                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
-                    case '<':
-                        if arrays:
-                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
-                        else:
-                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
-                    case _: pass
-    return s
 
 def define_deliver_everything(nc,ni,arrays):
     s=''
@@ -141,14 +116,14 @@ def define_deliver_everything(nc,ni,arrays):
             for c in range(1,nc+1):
                 for j in range(1,ni+1):
                     s+=f'(ite (= (select stops_{c} {j}) {i}) 1 0) '
-            s+=f') 1))'
+            s+=f') 1))\n'
     else:
         for i in range(1,ni+1):
             s+=f'(assert (= (+'
             for c in range(1,nc+1):
                 for j in range(1,ni+1):
                     s+=f'(ite (= stop_{c}_{j} {i}) 1 0) '
-            s+=f') 1))'
+            s+=f') 1))\n'
     return s
 
 def define_padding(nc,ni,arrays):
@@ -161,8 +136,9 @@ def define_padding(nc,ni,arrays):
                     lhs+=f'(ite (= (select items_resp {j}) {c}) 1 0) '
                 lhs+=f'))'
                 rhs=f'(< (select stops_{c} {i}) {ni+1})'
-                s+=f'(assert (=> {lhs} {rhs}))\n'
-                s+=f'(assert (=> {rhs} {lhs}))\n'
+                s+=f'(assert (let ((lhs {lhs})\n'
+                s+=f'\t\t\t (rhs {rhs}))\n'
+                s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
     else:
         for c in range(1,nc+1):
             for i in range(1,ni+1):
@@ -171,8 +147,9 @@ def define_padding(nc,ni,arrays):
                     lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
                 lhs+=f'))'
                 rhs=f'(< stop_{c}_{i} {ni+1})'
-                s+=f'(assert (=> {lhs} {rhs}))\n'
-                s+=f'(assert (=> {rhs} {lhs}))\n'
+                s+=f'(assert (let ((lhs {lhs})\n'
+                s+=f'\t\t\t (rhs {rhs}))\n'
+                s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
     return s
 
 def define_courier_items(nc,ni,arrays):
@@ -197,9 +174,9 @@ def define_successors_distances(nc,ni,lowerbound,arrays):
     s,d='',''
     if arrays:
         s+=f'(declare-const successors (Array Int Int))\n'
-        for i in range(1,ni+1):
-            s+=f'(assert (> (select successors {i}) 0))\n' if lowerbound else ""
-            s+=f'(assert (<= (select successors {i}) {ni+1}))\n'
+        # for i in range(1,ni+1):
+        #     s+=f'(assert (> (select successors {i}) 0))\n' if lowerbound else ""
+        #     s+=f'(assert (<= (select successors {i}) {ni+1}))\n'
         for c in range(1,nc+1):
             for i in range(1,ni):
                 A=f'(not (= (select stops_{c} {i}) {ni+1}))'
@@ -260,6 +237,31 @@ def define_distances(nc,ni,arrays):
             s+=f')))\n'
     return s
 
+def define_simmetry(nc,method,arrays):
+    s=''
+    for c1 in range(1,nc+1):
+        for c2 in range(1,nc+1):
+            if c1!=c2:
+                match method:
+                    case 'both':
+                        if arrays:
+                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
+                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
+                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                    case '>':
+                        if arrays:
+                            s+=f'(assert (=> (> (select couriers_capa {c1}) (select couriers_capa {c2})) (> (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
+                    case '<':
+                        if arrays:
+                            s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
+                        else:
+                            s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                    case _: pass
+    return s
 
 def add_objective(num_couriers,obj,head,tail,arrays=True,impose_lower_bound=True):
     objective=''
@@ -551,8 +553,9 @@ def generate_best_model(instance_data):
                 lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
             lhs+=f'))'
             rhs=f'(< stop_{c}_{i} {num_items+1})'
-            model_h+=f'(assert (=> {lhs} {rhs}))\n'
-            model_h+=f'(assert (=> {rhs} {lhs}))\n'
+            model_h+=f'(assert (let ((lhs {lhs})\n'
+            model_h+=f'\t\t\t (rhs {rhs}))\n'
+            model_h+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
 
     # items delivered by c must appear in its row
     for c in range(1,num_couriers+1):
