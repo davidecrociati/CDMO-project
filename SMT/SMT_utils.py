@@ -384,7 +384,8 @@ def check_model_params(input_dict):
         'use_arrays':True,
         'impose_lower_bound':False,
         'redundancy':True,
-        'best':False
+        'best':False,
+        'z3':False,
     }
 
     if not input_dict:
@@ -396,7 +397,8 @@ def check_model_params(input_dict):
         'use_arrays': bool,
         'impose_lower_bound': bool,
         'redundancy': bool,
-        'best':bool
+        'best':bool,
+        'z3':bool,
     }
 
     for key in input_dict.keys():

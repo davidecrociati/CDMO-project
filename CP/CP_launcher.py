@@ -1,6 +1,6 @@
 from minizinc import Instance, Model, Solver
 from datetime import timedelta
-from CP.CP_utils import *
+from utils import *
 import math
 import time
 

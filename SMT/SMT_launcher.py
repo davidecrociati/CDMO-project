@@ -1,8 +1,9 @@
 import os
 import time
 import math
-# from SMT.SMT_utils import *
+from SMT.SMT_utils import *
 from SMT.SMT_solver import *
+from SMT.z3_solver import *
 from datetime import timedelta
 
 
@@ -24,81 +25,107 @@ def solve_instance(
     instance_data=parse_dzn(instance_file)
     model_params=check_model_params(model_params)
     # print(model_params)
-    model_head,model_tail=generate_model(instance_data,**model_params)
-    obj='N/A'
-    model=''
     try:
         if type(params['timeout'])==timedelta:
             params['timeout']=params['timeout'].total_seconds()
     except: pass
-    aux=params.copy()
     execTime = time.time()
     solution=[]
-    best_model=None
-    max_path=instance_data['upper_bound']
     opt=False
-    num_couriers=instance_data['num_couriers']
-    if model_params['best']:
-        use_arrays=False
-    else:
-        use_arrays=model_params['use_arrays']
-    use_successors=model_params['use_successors']
-    impose_lower_bound=model_params['impose_lower_bound']
-    while max_path>=instance_data['lower_bound']:
-        model=add_objective(
-            instance_data['num_couriers'],
-            max_path,
-            model_head,
-            model_tail,
-            arrays=use_arrays,
-            impose_lower_bound=impose_lower_bound)
+    if model_params['z3']:
+        solution,obj = solve_z3_model(params, instance_data)
+        execTime = math.floor(time.time()-execTime)
+        if not solution:
+            execTime=math.floor(params['timeout'])
+            opt = False
         try:
-            aux['timeout']=params['timeout']-(time.time()-execTime)
-            if aux['timeout']<=0:
-                if verbose:print('timeout! passati ',math.floor(time.time()-execTime))
-                break
-            if verbose:print('available time:',aux['timeout'])
+            if execTime >= params['timeout']:
+                execTime = math.floor(params['timeout'])
+                opt = False
+            else:
+                opt = True
+            return {
+                "time": execTime,
+                "optimal": opt,
+                "obj": obj,
+                "sol": solution
+            },None
         except:
-            print('error')
-            pass
-        result,sol,distances=solve(model,aux,use_arrays,use_successors,num_couriers)
-        if result=='unsat':
+            return {
+                "time": execTime,
+                "optimal": True,
+                "obj": obj,
+                "sol": solution
+            },None
+    else:
+        model_head,model_tail=generate_model(instance_data,**model_params)
+        obj='N/A'
+        model=''
+        aux=params.copy()
+        best_model=None
+        max_path=instance_data['upper_bound']
+        num_couriers=instance_data['num_couriers']
+        if model_params['best']:
+            use_arrays=False
+        else:
+            use_arrays=model_params['use_arrays']
+        use_successors=model_params['use_successors']
+        impose_lower_bound=model_params['impose_lower_bound']
+        while max_path>=instance_data['lower_bound']:
+            model=add_objective(
+                instance_data['num_couriers'],
+                max_path,
+                model_head,
+                model_tail,
+                arrays=use_arrays,
+                impose_lower_bound=impose_lower_bound)
             try:
-                if params['timeout']-(time.time()-execTime)>0:
-                    opt=True
-                    if verbose:print(f'unsat con {max_path}. passati {time.time()-execTime}')
-                else:    
+                aux['timeout']=params['timeout']-(time.time()-execTime)
+                if aux['timeout']<=0:
                     if verbose:print('timeout! passati ',math.floor(time.time()-execTime))
-            except: opt=True
-            break
-        obj=max(distances)
-        max_path=obj-1  
-        solution=parse_solution(sol,use_arrays)
-        if verbose:print(f'found {obj}, {solution}')
-        best_model=model
-        if max_path<instance_data['lower_bound']:
-            if verbose:print(f'arrivato al lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
-            opt=True
-    execTime = math.floor(time.time()-execTime)
-    if not solution:
-        execTime=math.floor(params['timeout'])
-    try:
-        if execTime > params['timeout']:
-            execTime = math.floor(params['timeout'])
-        return {
-            "time": execTime,
-            "optimal": opt,
-            "obj": obj,
-            "sol": solution
-        },best_model
-    except:
-        return {
-            "time": execTime,
-            "optimal": opt,
-            "obj": obj,
-            "sol": solution
-        },best_model
-    # TRY-EXCEPT are for when there is no timeout key in the dict
+                    break
+                if verbose:print('available time:',aux['timeout'])
+            except:
+                print('error')
+                pass
+            result,sol,distances=solve(model,aux,use_arrays,use_successors,num_couriers)
+            if result=='unsat':
+                try:
+                    if params['timeout']-(time.time()-execTime)>0:
+                        opt=True
+                        if verbose:print(f'unsat con {max_path}. passati {time.time()-execTime}')
+                    else:    
+                        if verbose:print('timeout! passati ',math.floor(time.time()-execTime))
+                except: opt=True
+                break
+            obj=max(distances)
+            max_path=obj-1  
+            solution=parse_solution(sol,use_arrays)
+            if verbose:print(f'found {obj}, {solution}')
+            best_model=model
+            if max_path<instance_data['lower_bound']:
+                if verbose:print(f'arrivato al lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
+                opt=True
+        execTime = math.floor(time.time()-execTime)
+        if not solution:
+            execTime=math.floor(params['timeout'])
+        try:
+            if execTime > params['timeout']:
+                execTime = math.floor(params['timeout'])
+            return {
+                "time": execTime,
+                "optimal": opt,
+                "obj": obj,
+                "sol": solution
+            },best_model
+        except:
+            return {
+                "time": execTime,
+                "optimal": opt,
+                "obj": obj,
+                "sol": solution
+            },best_model
+        # TRY-EXCEPT are for when there is no timeout key in the dict
 
 def generate_model(
         data,
@@ -107,7 +134,8 @@ def generate_model(
         use_arrays=True,
         impose_lower_bound=False,
         redundancy=False,
-        best=False
+        best=False,
+        z3=False
 ):
     if best: return generate_best_model(data)
     num_couriers = data['num_couriers']

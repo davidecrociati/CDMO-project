@@ -93,24 +93,24 @@ def set_constraints_2(prob, data):
                             for i in range (num_items))
 
         # constraints
-        # foluma (2)
+        # formula (2)
         for j in range(1, num_items):
             problem += pulp.lpSum(x[i][j][k] if i != j else 0 
                                 for i in range(num_items) 
                                 for k in range(num_couriers)) == 1 
 
-        # foluma (3)
+        # formula (3)
         for k in range(num_couriers):
             problem += pulp.lpSum(x[0][j][k] for j in range(1,num_items)) == 1
             problem += pulp.lpSum(x[i][0][k] for i in range(1,num_items)) == 1
 
-        # foluma (4)
+        # formula (4)
         for k in range(num_couriers):
             for j in range(num_items):
                 problem += pulp.lpSum(x[i][j][k] if i != j else 0 
                                     for i in range(num_items)) -  pulp.lpSum(x[j][i][k] for i in range(num_items)) == 0
 
-        #foluma (5)
+        #formula (5)
         for k in range(num_couriers):
             problem += pulp.lpSum(df.demand[j] * x[i][j][k] if i != j else 0 for i in range(num_items) for j in range (1,num_items)) <= courier_capacities[k] 
 
