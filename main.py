@@ -6,10 +6,12 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
 INSTANCES_FOLDER='instances_dzn' #da potenzialmente cambiare 
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
+# INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('prova.dzn')]
 
 SMT_MODELS_FOLDER='SMT/models'
 
-RESULTS_FOLDER='res'
+# RESULTS_FOLDER='res'
+RESULTS_FOLDER='res_SAT'
 INDENT_RESULTS=True # indented results on the json
 
 
@@ -26,13 +28,13 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=False
+CHECKER=True
 
 
 def main(argv):
     RUN_CP=False
-    RUN_SAT=False
-    RUN_SMT=True
+    RUN_SAT=True
+    RUN_SMT=False
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -123,57 +125,77 @@ def main(argv):
     # ============
     if RUN_SAT:
         import SAT.SAT_launcher as SAT
-
-        SAT_params = {
-                'timeout': timedelta(seconds=TIMEOUT),
-                'search' : {
-                    'binary_cut' : 2, 
-                    'incremental_factor' : 30
-                }
-                # 'no_time_out': {},
-            }
         
         SAT_models = {
-            'circuit':[
-                ('ILU', {
-                    'params_name':'ILU_SB',
+            # 'circuit':[
+            #     ('ILU', {
+            #         'params_name':'ILU',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{
+            #             'incremental_factor' : 30, 
+            #             'symmetry' : False
+            #         }
+            #     }),
+            #     ('LU', {
+            #         'params_name':'LU',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{'symmetry':False}
+            #     }),
+            #     ('BS', {
+            #         'params_name':'BS',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{
+            #             'binary_cut' : 2,
+            #             'symmetry' : False
+            #         }
+            #     }),
+            #     ('ILU', {
+            #         'params_name':'ILU_SB',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{
+            #             'incremental_factor' : 30, 
+            #             'symmetry' : True
+            #         }
+            #     }),
+            #     ('LU', {
+            #         'params_name':'LU_SB',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{'symmetry':True}
+            #     }),
+            #     ('BS', {
+            #         'params_name':'BS_SB',
+            #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+            #         'model_params':{
+            #             'binary_cut' : 2,
+            #             'symmetry' : True
+            #         }
+            #     }),
+            # ],
+            '1-hot-cube':[
+                ('BS', {
+                    'params_name':'BS',
                     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     'model_params':{
-                        'incremental_factor' : 30, 
-                        'symmetry' : True
-                    }
-                }),
-                ('ILU', {
-                    'params_name':'ILU_NO_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'incremental_factor' : 30, 
+                        'binary_cut' : 2,
                         'symmetry' : False
                     }
                 }),
-                ('LU', {
-                    'params_name':'LU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{'symmetry':True}
-                }),
-                ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : True
-                    }
-                }),
-            ],
-            '1-hot-cube':[
-                ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : True
-                    }
-                }),
+                # ('ILU', {
+                #     'params_name':'ILU',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : False
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : True
+                #     }
+                # }),
             ]
             # 'binary-cube':[],
         }
@@ -189,7 +211,7 @@ def main(argv):
                                               search_name,
                                               params['params'],
                                               params['model_params'],
-                                              verbose_search=False, 
+                                              verbose_search=True, 
                                               verbose_solver=False
                                             )
                     instance_results[f'{model}_{params['params_name']}'] = result

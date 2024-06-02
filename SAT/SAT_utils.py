@@ -107,7 +107,7 @@ def plot_solution_3d(solution, num_couriers, num_items, num_orders):
 def print_2D_matrix(matrix, model, ax1, ax2):
     r1 = len(matrix)
     r2 = len(matrix[0])
-
+    print(f"The matrix is {r1}x{r2}")
     # Stampa la barra superiore degli indici
     print("\t", end="")
     for j in range(r2):
@@ -207,7 +207,7 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, _, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
@@ -226,7 +226,7 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, _, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                  
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
@@ -251,24 +251,23 @@ def solve_strategy(
                     
                 # Execution    
                 mid = (upper_bound + lower_bound) // binary_cut
-                result, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, objective, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup + update value
                 if result == 'sat':
-                    obj = mid
+                    obj = objective
                     solution = sol
                     # print(solution)
-                    upper_bound = mid - 1  # Try for a smaller feasible solution
+                    upper_bound = objective - 1  # Try for a smaller feasible solution
                 else:
                     lower_bound = mid + 1  # Try for a larger feasible solution
-                if verbose_search : print(f"max_path={mid}\tsolution={solution}")
+                if verbose_search : print(f"max_path={objective}\tsolution={solution}")
             
         case "ILU":
             # Mode 4: incremental lower --> upper
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
             bound = lower_bound
-
             while bound <= upper_bound:
                 # Timer
                 try:
@@ -279,12 +278,13 @@ def solve_strategy(
                     pass
 
                 # Execution
-                result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
-                if verbose_search : print(f"{bound}) In the incremental part i found: ", sol)
+                result, objective, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                print(result)
+                if verbose_search : print(f"{bound}) In the incremental part i found: ", obj, sol)
 
                 if result == 'sat':
                     # We have found a sat solution but maybe it's not the smallest
-                    obj = bound
+                    obj = objective
                     solution = sol
                     bound -= 1 # we make a step back to check
                     while bound >= lower_bound:
@@ -297,18 +297,18 @@ def solve_strategy(
                             pass
 
                         # Execution
-                        result, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                        result, objective, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                         
                         # Backup
                         if result == 'sat':
                             # The previous solution wasn't the smalles, continue the search
-                            obj = bound
+                            obj = objective
                             solution = sol
                         else:
                             # The previous one was the smalles
                             break
                         # Update values
-                        if verbose_search : print(f"{bound}) In the backtracking part i found: ", sol)
+                        if verbose_search : print(f"{bound}) In the backtracking part i found: ", obj, sol)
                         bound -= 1
                     break  # We found the smallest or the timout ended
                 else:
