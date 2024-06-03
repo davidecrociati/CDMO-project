@@ -31,7 +31,10 @@ class CustomJSONEncoder(json.JSONEncoder):
             s+='\t\"'+f'{method}'+'":{\n'
             s+='\t\t"time":'+f'{dict[method]["time"]},\n'
             s+='\t\t"optimal":'+f'{"true" if dict[method]["optimal"] else "false"},\n'
-            s+='\t\t"obj":'+f'{dict[method]["obj"]},\n'
+            obj=dict[method]["obj"]
+            if obj == 'N/A':
+                obj='\"N/A\"'
+            s+='\t\t"obj":'+f'{obj},\n'
             s+='\t\t"sol":'+f'{dict[method]["sol"]}\n'
             s+='\t},\n'
         s=s[:-2]+'\n'
