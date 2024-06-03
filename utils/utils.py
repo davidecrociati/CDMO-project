@@ -83,8 +83,8 @@ def saveModel(content,solver,inst_name,folder):
 
 
 # CHECKER
-def run_checker(first,last):
-    check.main(['','./instances/', './res/', first, last])
+def run_checker():
+    check.main(['','./instances/', './res/'])
 
 # INSTANCES PARSING
 def parse_dzn(dzn_path):

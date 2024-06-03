@@ -527,7 +527,7 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
                 for i2 in range(i1+1, num_items):
                     distance_tot += If(And(
                                         stops[c][i1],
-                                        successor[i1][i2]
+                                        Or(successor[i1][i2],predecessor[i1][i2])
                                     ), distances[i1][i2], 0)
             else :
                 for i2 in range(num_items):

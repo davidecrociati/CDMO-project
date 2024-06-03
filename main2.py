@@ -9,12 +9,12 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 
 SMT_MODELS_FOLDER='SMT/models'
 
-RESULTS_FOLDER='res'
+RESULTS_FOLDER='test_res'
 INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=10 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -30,9 +30,9 @@ CHECKER=False
 
 
 def main(argv):
-    RUN_CP=False
+    RUN_CP=True
     RUN_SAT=False
-    RUN_SMT=True
+    RUN_SMT=False
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -84,18 +84,26 @@ def main(argv):
                     ]
                 }
             },
-            'model_chuffed_SB.mzn': {
+            # 'model_chuffed_SB.mzn': {
+            #     'solvers': {
+            #         'chuffed': [
+            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
+            #             ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+            #         ]
+            #     }
+            # },
+            # 'model_gecode_SB.mzn': {
+            #     'solvers': {
+            #         'gecode': [
+            #             ('', {'timeout': timedelta(seconds=TIMEOUT)}),
+            #         ]
+            #     }
+            # },
+            'model_chuffed_short.mzn': {
                 'solvers': {
                     'chuffed': [
                         ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
                         ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
-                    ]
-                }
-            },
-            'model_gecode_SB.mzn': {
-                'solvers': {
-                    'gecode': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT)}),
                     ]
                 }
             },
@@ -116,11 +124,7 @@ def main(argv):
                                                                 solver,
                                                                 params)
             # saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP/',format=INDENT_RESULTS)
-                        updateJSON(instance_results,
-                                   instance_file,
-                                   RESULTS_FOLDER+'/CP_test/',
-                                   format=INDENT_RESULTS,
-                                   custom=True)
+                        updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP_test/',format=INDENT_RESULTS)
 
     # ============
     # |    SAT   |
@@ -292,34 +296,34 @@ def main(argv):
 
         SMT_models = {
                     'z3': [
-                        ('arrays_SB', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'simmetry_method':'>',
-                                'use_arrays':True,
-                                }
-                            }),
-                        ('SB', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'simmetry_method':'>',
-                                'use_arrays':False,
-                                }
-                            }),
-                        ('arrays', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'simmetry_method':'None',
-                                'use_arrays':True,
-                                }
-                            }),
-                        ('default', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'simmetry_method':'None',
-                                'use_arrays':False,
-                                }
-                            }),
+                        # ('arrays_SB', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':{
+                        #         'simmetry_method':'>',
+                        #         'use_arrays':True,
+                        #         }
+                        #     }),
+                        # ('SB', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':{
+                        #         'simmetry_method':'>',
+                        #         'use_arrays':False,
+                        #         }
+                        #     }),
+                        # ('arrays', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':{
+                        #         'simmetry_method':'None',
+                        #         'use_arrays':True,
+                        #         }
+                        #     }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':{
+                        #         'simmetry_method':'None',
+                        #         'use_arrays':False,
+                        #         }
+                        #     }),
                         ('best', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':{
@@ -327,12 +331,12 @@ def main(argv):
                                 'best':True
                                 }
                             }),
-                        ('OPT', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':{
-                                'z3':True
-                                }
-                            }),
+                        # ('OPT', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':{
+                        #         'z3':True
+                        #         }
+                        #     }),
                     ],
         }
         
