@@ -1,10 +1,9 @@
-from .utils import add_solutions,saveJSON_list,getNumber,run_checker,parse_dzn,tolist
+from .utils import run_checker,parse_dzn,tolist,updateJSON,saveModel
 
 __all__=[
-    'add_solutions',
-    'saveJSON_list',
-    'getNumber',
     'run_checker',
     'parse_dzn',
-    'tolist'
+    'tolist',
+    'updateJSON',
+    'saveModel'
 ]

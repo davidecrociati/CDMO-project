@@ -2,6 +2,8 @@ import os
 import json
 import check_solution as check
 
+
+    # SOLUTION PARSING
 def tolist(solution):
     '''
 	solution is a string [[i1,i2],[i3,i4,i5],...[]]
@@ -17,17 +19,30 @@ def tolist(solution):
         res.append(r)
     return res
 
-def add_solutions(solutions,name,solver,outputList):
-    for i,solution in enumerate(solutions):
-        if len(outputList)==i:
-            new_entry={f'{name}_{solver}':solution}
-            outputList.append(new_entry)
-        else:
-            outputList[i][f'{name}_{solver}']=solution
+# JSONS
+class CustomJSONEncoder(json.JSONEncoder):
+    def write_JSON_from_dict(self, dict,_one_shot):
+        if self.indent is None:
+            return super().iterencode(dict,_one_shot)
+        # return super().iterencode(dict,_one_shot)
+        s='{\n'
 
-    return outputList
+        for method in dict:
+            s+='\t\"'+f'{method}'+'":{\n'
+            s+='\t\t"time":'+f'{dict[method]["time"]},\n'
+            s+='\t\t"optimal":'+f'{"true" if dict[method]["optimal"] else "false"},\n'
+            s+='\t\t"obj":'+f'{dict[method]["obj"]},\n'
+            s+='\t\t"sol":'+f'{dict[method]["sol"]}\n'
+            s+='\t},\n'
+        s=s[:-2]+'\n'
+        s+='}'
+        return s
 
+    def iterencode(self, o, _one_shot: bool = False) -> str:
+        encoded_string=self.write_JSON_from_dict(o,_one_shot)
 
+        return encoded_string
+    
 def saveJSON(content:dict,dzn_path,folder,format=False):
     os.makedirs(folder, exist_ok=True)
     filename = folder+'/'+os.path.splitext(os.path.basename(dzn_path))[0]+'.json'
@@ -35,7 +50,7 @@ def saveJSON(content:dict,dzn_path,folder,format=False):
         indent= None if not format else 4
         json.dump(content, file, indent=indent)
 
-def updateJSON(content:dict,dzn_path,folder,format=False):
+def updateJSON(content:dict,dzn_path,folder,format=False,custom=True):
     # logic to preserve the order of the dict and remove ending '_'
     new_content = {}
     for key, value in content.items():
@@ -49,7 +64,11 @@ def updateJSON(content:dict,dzn_path,folder,format=False):
     filename = folder+'/'+os.path.splitext(os.path.basename(dzn_path))[0]+'.json'
     with open(filename, 'w') as file:
         indent= None if not format else 4
-        json.dump(content, file, indent=indent)
+        if custom:
+            json.dump(content, file, indent=indent, cls=CustomJSONEncoder)
+        else:
+            json.dump(content, file, indent=indent)
+
 
 def saveModel(content,solver,inst_name,folder):
     if not os.path.exists(folder):
@@ -59,26 +78,12 @@ def saveModel(content,solver,inst_name,folder):
     with open(filename,'w') as file:
         file.write(content)
 
-def saveJSON_list(JSONList,folder,format=False,firstInstanceNumber=1):
-    # script_dir = os.path.dirname(os.path.abspath(__file__))
-    # os.chdir(script_dir)
-    os.makedirs(folder, exist_ok=True)
-    for instance, results in enumerate(JSONList, start=firstInstanceNumber):
-        filename = os.path.join(folder, f"{instance:02}.json")
-        with open(filename, 'w') as file:
-            indent= None if not format else 4
-            json.dump(results, file, indent=indent)
 
-
-def getNumber(instance_path):
-    # print(instance_path,instance_path[-6:-4])
-    return int(instance_path[-6:-4])
-
-
+# CHECKER
 def run_checker(first,last):
     check.main(['','./instances/', './res/', first, last])
 
-
+# INSTANCES PARSING
 def parse_dzn(dzn_path):
     data = {}
     with open(dzn_path, 'r') as file:
