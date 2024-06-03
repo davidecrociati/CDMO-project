@@ -279,7 +279,6 @@ def solve_strategy(
 
                 # Execution
                 result, objective, sol = solve(instance_data, bound, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
-                print(result)
                 if verbose_search : print(f"{bound}) In the incremental part i found: ", obj, sol)
 
                 if result == 'sat':
