@@ -68,13 +68,11 @@ constraint forall(c in COURIERS, i in ITEMS)(
 % compute total distances for each courier
 % compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
 array[ITEMS] of var NODES:successors; 
-constraint forall(c in COURIERS)(
-  forall(i in 1..num_items-1)(
-    if stops[c, i] != depot then
-      successors[stops[c,i]] = stops[c, i+1] endif
-  )
+% stops[c,i] is the index of stops[c, i+1] in the array successors
+constraint forall(c in COURIERS, i in 1..num_items-1)(
+  if stops[c, i] != depot then
+    element(stops[c,i], successors,  stops[c, i+1])endif
 );
-
 % the distance traveled by each courier is the sum of the distances between a node and its successor 
 % + the distance from the depot to the first item delivered
 % + the distance from the last item delivered to the depot

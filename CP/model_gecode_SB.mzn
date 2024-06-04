@@ -71,11 +71,10 @@ constraint forall(c in COURIERS, i in ITEMS)(
 % compute total distances for each courier
 % compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
 array[ITEMS] of var NODES:successors; 
-constraint forall(c in COURIERS)(
-  forall(i in 1..num_items-1)(
-    if stops[c, i] != depot then
-      successors[stops[c,i]] = stops[c, i+1] endif
-  )
+% stops[c,i] is the index of stops[c, i+1] in the array successors
+constraint forall(c in COURIERS, i in 1..num_items-1)(
+  if stops[c, i] != depot then
+    element(stops[c,i], successors,  stops[c, i+1])endif
 );
 
 % Auxiliary variable useful for the symmetry breaking constraint
