@@ -3,14 +3,17 @@ import json
 import check_solution as check
 
 
-    # SOLUTION PARSING
-def tolist(solution):
+# SOLUTION PARSING
+def tolist(solution,short_stops=False):
     '''
 	solution is a string [[i1,i2],[i3,i4,i5],...[]]
 
     output must be that string parsed to a list
     '''
     depot = len(solution[0]) +1
+    if short_stops:
+        depot= len(solution[0]) + len(solution)-1
+    print(depot)
     res = []
     for r in solution:
         r = list(dict.fromkeys(r))
@@ -83,8 +86,8 @@ def saveModel(content,solver,inst_name,folder):
 
 
 # CHECKER
-def run_checker():
-    check.main(['','./instances/', './res/'])
+def run_checker(res_folder):
+    check.main(['','./instances/', f'./{res_folder}/'])
 
 # INSTANCES PARSING
 def parse_dzn(dzn_path):
