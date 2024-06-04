@@ -1,18 +1,50 @@
 from pulp import *
+# install glpk and pulp
+############################################
+# LpSolutionNoSolutionFound = 0
+# LpSolutionOptimal = 1
+# LpSolutionIntegerFeasible = 2
+# LpSolutionInfeasible = -1
+# LpSolutionUnbounded = -2
+# LpSolution = {
+#     LpSolutionNoSolutionFound: "No Solution Found",
+#     LpSolutionOptimal: "Optimal Solution Found",
+#     LpSolutionIntegerFeasible: "Solution Found",
+#     LpSolutionInfeasible: "No Solution Exists",
+#     LpSolutionUnbounded: "Solution is Unbounded",
+# }
+############################################
 
 def solve(solver, params, data): 
-    prob = LpProblem("Multiple Courier Planning Problem",LpMinimize)
-    set_constraints(prob, data)
+    prob = LpProblem("Multiple_Courier_Planning_Problem",LpMinimize)
+    result = set_constraints(prob, data)
     match solver:
         case 'cbc':
-            solve=PULP_CBC_CMD(msg=False,timeLimit= params['timeout'])
+            solver=PULP_CBC_CMD(msg=False,timeLimit= params['timeout'])
         case 'glpk':
-            solve=GLPK_CMD(msg=False,timeLimit= params['timeout'])
+            solver=GLPK_CMD(msg=False,timeLimit= params['timeout'])
         case _:
             raise KeyError('Unsupported solver')
     solver.solve(prob)
-    
-    pass
+    for c in range(result[0]):
+        for i in range(result[1]):
+            print((result[2][c][i]).value())
+    print(prob.sol_status)
+    print(prob.status)
+    match prob.sol_status:
+        # NO SOLUTION FOUND
+        case 0:
+            return None,-1
+        # OPTIMAL SOLUTION FOUND
+        case 1:
+            return None,-1
+        # NOT OPTIMAL SOLUTION FOUND
+        case 2:
+            return None,-1
+        # INFEASIBLE SOLUTION
+        case -1:
+            return None,-1
+
 
 def set_constraints(prob, data):
     num_couriers = data['num_couriers']
@@ -30,9 +62,10 @@ def set_constraints(prob, data):
                          upBound=num_items)
               for j in range(num_items)] for i in range(num_couriers)]
     courier_loads = [LpVariable(name=f'courier_loads_{c}', lowBound=0, upBound=courier_capacities[c], cat=LpInteger) for c in range(num_couriers)]
-    item_resp = [LpVariable(name=f'item_resp_{c}', lowBound=0, upBound=num_items -1, cat=LpInteger) for c in range(num_couriers)]
+    item_resp = [LpVariable(name=f'item_resp_{i}', lowBound=0, upBound=num_couriers-1, cat=LpInteger) for i in range(num_items)]
     distances_travelled = [LpVariable(name=f'distances_travelled_{c}', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger) for c in range(num_couriers)]
     successors = [LpVariable(name=f'successors_{i}', lowBound=0, upBound=num_items, cat=LpInteger) for i in range(num_items)]
+    
     # Objective function
     longest_trip = LpVariable(name=f'longest_trip', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
     
@@ -40,25 +73,25 @@ def set_constraints(prob, data):
     for c in range(num_couriers):
         prob += courier_loads[c] == lpSum(item_sizes[i] for i in range(num_items) if item_resp[i]==c)
         
-    # capacity constraint: the sum of item sizes assigned to each courier must not exceed the courier's capacity
-    for c in range (num_couriers):
-        prob += courier_loads[c] <= courier_capacities[c]
+    # # capacity constraint: the sum of item sizes assigned to each courier must not exceed the courier's capacity
+    # for c in range (num_couriers):
+    #     prob += courier_loads[c] <= courier_capacities[c]
     
-    # each courier must be responsible for delivering at least one item
-    for c in range(num_couriers):
-        prob += lpSum(item_resp[i] == c for i in range(num_items)) >= 1
+    # # each courier must be responsible for delivering at least one item
+    # for c in range(num_couriers):
+    #     prob += lpSum(item_resp[i] == c for i in range(num_items)) >= 1
     
-    # each courier have to stop in at least one location different from the depot
-    for c in range(num_couriers):
-        prob += stops[c][0] < num_items
+    # # each courier have to stop in at least one location different from the depot
+    # for c in range(num_couriers):
+    #     prob += stops[c][0] <= num_items+1
         
-    # all items must be delivered
-    for i in range(num_items):
-        prob += lpSum(stops[c][i2]==i for c in range(num_couriers) for i2 in range(num_items)) == 1
+    # # all items must be delivered
+    # for i in range(num_items):
+    #     prob += lpSum(stops[c][i2]==i for c in range(num_couriers) for i2 in range(num_items)) == 1
     
-    # Channeling constraint
-    for c in range(num_couriers):
-        pass
+    # # Channeling constraint
+    # for c in range(num_couriers):
+    #     pass
     
     return (num_couriers,
             num_items,

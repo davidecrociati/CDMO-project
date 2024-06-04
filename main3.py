@@ -26,7 +26,7 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=True
+CHECKER=False
 
 
 def main(argv):
@@ -214,16 +214,16 @@ def main(argv):
                         #     'model_params':None
                         #     }),
                     ],
-                    'glpk': [
-                        ('SB', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':None
-                            }),
-                        # ('default', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
-                    ],
+                    # 'glpk': [
+                    #     ('SB', {
+                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #         'model_params':None
+                    #         }),
+                    #     # ('default', {
+                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #     #     'model_params':None
+                    #     #     }),
+                    # ],
                 }
             }
         print('Solving with MIP:')
@@ -246,4 +246,4 @@ def main(argv):
 
 if __name__=='__main__':
     main(sys.argv)
-    if CHECKER:run_checker(firstInstance,lastInstance)
+    if CHECKER:run_checker()

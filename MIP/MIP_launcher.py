@@ -2,6 +2,7 @@ from MIP.MIP_solver import *
 from utils  import *
 from datetime import timedelta
 import math
+import time
 
 def solve_instance(
         instance_file,
@@ -10,7 +11,6 @@ def solve_instance(
         model_params:dict=None,
         verbose=False,
 ):
-    solve=None
     instance_data=parse_dzn(instance_file)
     obj='N/A'
     model=''
