@@ -214,16 +214,16 @@ def main(argv):
                         #     'model_params':None
                         #     }),
                     ],
-                    'glpk': [
-                        ('SB', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                            'model_params':None
-                            }),
+                    # 'glpk': [
+                    #     ('SB', {
+                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #         'model_params':None
+                    #         }),
                         # ('default', {
                         #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                         #     'model_params':None
                         #     }),
-                    ],
+                    # ],
                 }
             }
         print('Solving with MIP:')

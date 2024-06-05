@@ -207,12 +207,12 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, _, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, objective, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat':
-                    obj=max_path
+                    obj=objective
                     break
                 
         case "UL" :
@@ -226,12 +226,12 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, _, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, objective, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                  
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat' : 
-                    obj=max_path
+                    obj=objective
                     solution = sol
                 else :
                     break

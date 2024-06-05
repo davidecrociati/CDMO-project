@@ -15,7 +15,7 @@ RESULTS_FOLDER='test_res'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=1 # inclusive
+firstInstance=18 # inclusive
 lastInstance=21 # inclusive
 
 if firstInstance<=0:
@@ -136,19 +136,29 @@ def main(argv):
                 #         'symmetry' : False
                 #     }
                 # }),
+                # ('UL', {
+                #     'params_name':'UL_SB',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{'symmetry':True}
+                # }),
+                # ('UL', {
+                #     'params_name':'UL',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{'symmetry':False}
+                # }),
                 # ('LU', {
                 #     'params_name':'LU',
                 #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                 #     'model_params':{'symmetry':False}
                 # }),
-                ('BS', {
-                    'params_name':'BS',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : False
-                    }
-                }),
+                # ('BS', {
+                #     'params_name':'BS',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 4,
+                #         'symmetry' : False
+                #     }
+                # }),
                 # ('ILU', {
                 #     'params_name':'ILU_SB',
                 #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
@@ -162,14 +172,59 @@ def main(argv):
                 #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                 #     'model_params':{'symmetry':True}
                 # }),
-                ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : True
-                    }
+                ('LU', {
+                    'params_name':'LU_SB',
+                    'params':{},
+                    'model_params':{'symmetry':True}
                 }),
+                # ('BS', {
+                #     'params_name':'BS_SB',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB2',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB4',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 4,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB6',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 6,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB8',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 8,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS_SB10',
+                #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                #     'model_params':{
+                #         'binary_cut' : 10,
+                #         'symmetry' : True
+                #     }
+                # }),
             ],
             # '1-hot-cube':[
             #     ('BS', {
@@ -207,7 +262,7 @@ def main(argv):
                                               verbose_solver=False
                                             )
                     instance_results[f'{model}_{params["params_name"]}'] = result
-                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT/',format=INDENT_RESULTS)
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT_bin/',format=INDENT_RESULTS)
 
     # ============
     # |    SMT   |
@@ -271,4 +326,4 @@ def main(argv):
 
 if __name__=='__main__':
     main(sys.argv)
-    if CHECKER:run_checker()
+    if CHECKER:run_checker(RESULTS_FOLDER)
