@@ -1,0 +1,8 @@
+{
+	"circuit_BS_SB_2":{
+		"time":1,
+		"optimal":true,
+		"obj":206,
+		"sol":[[2], [1, 3]]
+	}
+}

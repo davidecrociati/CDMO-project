@@ -182,11 +182,11 @@ def solve_strategy(
     
     aux=params.copy()
     
-    if verbose_search : 
-        l=len(instance_data['distances'])*4
-        print("#"*10, " INSTANCE ", "#"*(l-10))
-        display_instance(instance_data)
-        print("#"*(l+10))
+    # if verbose_search : 
+    #     l=len(instance_data['distances'])*4
+    #     print("#"*10, " INSTANCE ", "#"*(l-10))
+    #     display_instance(instance_data)
+    #     print("#"*(l+10))
     print(f"\tUsing {model} model with {strategy} search-strategy...")
     
     solve=None
@@ -207,12 +207,12 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, _, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, objective, solution = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat':
-                    obj=max_path
+                    obj=objective
                     break
                 
         case "UL" :
@@ -226,12 +226,12 @@ def solve_strategy(
                 except:pass
                 
                 # Execution
-                result, _, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
+                result, objective, sol = solve(instance_data, max_path, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
                  
                 # Backup
                 if verbose_search : print(f"max_path={max_path}\tsolution={solution}")
                 if result=='sat' : 
-                    obj=max_path
+                    obj=objective
                     solution = sol
                 else :
                     break
@@ -240,6 +240,7 @@ def solve_strategy(
             # Mode 3: binary search
             lower_bound = instance_data['lower_bound']
             upper_bound = instance_data['upper_bound']
+            min = lower_bound
             while lower_bound <= upper_bound:
                 # Timer
                 try:
@@ -251,6 +252,7 @@ def solve_strategy(
                     
                 # Execution    
                 mid = (upper_bound + lower_bound) // binary_cut
+                print(f"\t\tBinary tries mid={mid}")
                 result, objective, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup + update value
@@ -261,7 +263,7 @@ def solve_strategy(
                     upper_bound = objective - 1  # Try for a smaller feasible solution
                 else:
                     lower_bound = mid + 1  # Try for a larger feasible solution
-                if verbose_search : print(f"max_path={objective}\tsolution={solution}")
+                if verbose_search : print(f"\t\tmax_path={objective}\tsolution={solution}")
             
         case "ILU":
             # Mode 4: incremental lower --> upper

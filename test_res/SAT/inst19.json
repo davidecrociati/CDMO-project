@@ -1,0 +1,20 @@
+{
+	"circuit_BS_SB_2":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
+	"circuit_BS_SB_4":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
+	"circuit_BS_SB_6":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	}
+}

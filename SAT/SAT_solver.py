@@ -422,8 +422,12 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
                                                 for i in range(num_items)] 
     
     stops = [[Bool(f'Courier_{c}_carries_{i}')  for i in range(num_items)]
-                                        for c in range(num_couriers)]    
-
+                                                for c in range(num_couriers)]    
+    
+    # Create auxiliary variables for reachability
+    reach = [[Bool(f'reach_{i}_{j}')            for j in range(num_items)] 
+                                                for i in range(num_items)]
+    
     solver = Solver()
     
     ##################################################################################################################################################################
@@ -475,8 +479,10 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
     for i1 in range(num_items) :
         for i2 in range(num_items) :
             for c in range(num_couriers):
-                # solver.add(Implies(And(successor[i1][i2], stops[c][i1]), stops[c][i2])) 
-                solver.add(Or(Not(And(successor[i1][i2], stops[c][i1])), stops[c][i2])) 
+                solver.add(Implies(And(successor[i1][i2], stops[c][i1]), stops[c][i2])) 
+                # solver.add(Or(Not(And(successor[i1][i2], stops[c][i1])), stops[c][i2])) 
+                # solver.add(Implies(And(predecessor[i1][i2], stops[c][i1]), stops[c][i2])) 
+                # solver.add(Or(Not(And(predecessor[i1][i2], stops[c][i1])), stops[c][i2])) 
                 
     # 6) Bin packing : the sum of items sizes must not exceed the max size of the courier
     if verbose : print(f"constraint-6 {time.time()-t} seconds")
@@ -492,16 +498,40 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
             if (timeout-(time.time()-t)) <= 0 : return "unsat", "N/A", [] # exit
         for c1 in range(num_couriers):
             for c2 in range(c1+1, num_couriers):
+                c1_load = sum([If(stops[c1][i], item_sizes[i], 0) for i in range(num_items)])
+                c2_load = sum([If(stops[c2][i], item_sizes[i], 0) for i in range(num_items)])
                 if courier_capacities[c1] > courier_capacities[c2] :     
-                    c1_load = sum([If(stops[c1][i], item_sizes[i], 0) for i in range(num_items)])
-                    c2_load = sum([If(stops[c2][i], item_sizes[i], 0) for i in range(num_items)])
                     solver.add(c1_load > c2_load)
+                # else :
+                #     solver.add(c1_load <= c2_load)
     
     # 8) Break subcircuit
     if verbose : print(f"constraint-8 {time.time()-t} seconds")
     if timeout is not None:
         if (timeout-(time.time()-t)) <= 0 : return "unsat", "N/A", [] # exit
-    break_subcircuits(solver, successor,num_items)
+    # 8.1) An item i can reach itself (base of reachability)
+    for i in range(num_items):
+        solver.add(reach[i][i])
+        
+    # 8.2) If item i can reach item j and item j can reach item k, then item i can reach item k
+    for i in range(num_items):
+        for j in range(num_items):
+            for k in range(num_items):
+                if i != j and j != k and i != k:
+                    # solver.add(Implies(And(reach[i][j], reach[j][k]), reach[i][k]))
+                    solver.add(Or(Not(And(reach[i][j], reach[j][k])), reach[i][k]))
+
+    # 8.3) If item i has a successor j, then i can reach j
+    for i in range(num_items):
+        for j in range(num_items):
+            # solver.add(Implies(successor[i][j], reach[i][j]))
+            solver.add(Or(Not(successor[i][j]), reach[i][j]))
+    
+    # 8.4) Prevent cycles (an item should not be able to reach itself through any other item)
+    for i in range(num_items):
+        for j in range(num_items):
+            if i != j:
+                solver.add(Not(And(reach[i][j], reach[j][i])))
     
     # 9) Check distances
     if verbose : print(f"constraint-9 {time.time()-t} seconds")
