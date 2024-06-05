@@ -1,0 +1,14 @@
+{
+	"cbc_SB":{
+		"time":0,
+		"optimal":true,
+		"obj":206.0,
+		"sol":[[2], [1, 3]]
+	},
+	"glpk_SB":{
+		"time":0,
+		"optimal":true,
+		"obj":206,
+		"sol":[[2], [1, 3]]
+	}
+}

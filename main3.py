@@ -14,7 +14,7 @@ INDENT_RESULTS=True # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=21 # inclusive
+lastInstance=6 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -26,7 +26,7 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=False
+CHECKER=True
 
 
 def main(argv):
@@ -214,16 +214,16 @@ def main(argv):
                         #     'model_params':None
                         #     }),
                     ],
-                    # 'glpk': [
-                    #     ('SB', {
-                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #         'model_params':None
-                    #         }),
-                    #     # ('default', {
-                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #     #     'model_params':None
-                    #     #     }),
-                    # ],
+                    'glpk': [
+                        ('SB', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':None
+                            }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
+                    ],
                 }
             }
         print('Solving with MIP:')
@@ -238,12 +238,11 @@ def main(argv):
                                         params['params'],
                                         params['model_params'],
                                         verbose=False)
-                    # print(result)
                     instance_results[f'{solver}_{param_name}'] = result
-            saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP2/',format=INDENT_RESULTS)
+            updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
     
 
 
 if __name__=='__main__':
     main(sys.argv)
-    if CHECKER:run_checker()
+    if CHECKER:run_checker("res")
