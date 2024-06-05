@@ -9,12 +9,12 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 
 SMT_MODELS_FOLDER='SMT/models'
 
-RESULTS_FOLDER='test_res'
+RESULTS_FOLDER='res_definitive'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=1 # inclusive
-lastInstance=21 # inclusive
+firstInstance=8 # inclusive
+lastInstance=10 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -30,9 +30,9 @@ CHECKER=False
 
 
 def main(argv):
-    RUN_CP=True
+    RUN_CP=False
     RUN_SAT=False
-    RUN_SMT=False
+    RUN_SMT=True
     RUN_MIP=False
     first=firstInstance
     last=lastInstance
@@ -292,7 +292,6 @@ def main(argv):
     # ============
     if RUN_SMT:
         import SMT.SMT_launcher as SMT
-        import SMT_2.SMT_launcher as SMT2
 
         SMT_models = {
                     'z3': [
@@ -351,11 +350,10 @@ def main(argv):
                                         solver,
                                         params['params'],
                                         params['model_params'],
-                                        verbose=True)
-                    # print(result)
+                                        verbose=False)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/{param_name}/')
-                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT_test/',format=INDENT_RESULTS)
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMTb/',format=INDENT_RESULTS)
     
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
@@ -364,3 +362,11 @@ def main(argv):
 if __name__=='__main__':
     main(sys.argv)
     if CHECKER:run_checker(firstInstance,lastInstance)
+
+
+	# "z3_OPT":{
+	# 	"time":299,
+	# 	"optimal":true,
+	# 	"obj":167,
+	# 	"sol":[[8, 5, 9], [11, 3], [2, 12], [1, 7], [17, 10, 16, 6, 15], [13, 4, 14]]
+	# }

@@ -14,6 +14,7 @@ def define_decision_variables(data,use_arrays):
     item_sizes = data['item_sizes']
     distances = data['distances']
     upper_bound = data['upper_bound']
+    delivers=num_items-num_couriers+1+1
     s = ''
     if use_arrays:
         # capacities
@@ -32,7 +33,7 @@ def define_decision_variables(data,use_arrays):
         # stops
         for c in range(1,num_couriers+1):
             s += f'(declare-fun stops_{c} () (Array Int Int))\n'
-            for i in range(1,num_items+1):
+            for i in range(1,delivers+1):
                 s += f'(assert (>= (select stops_{c} {i}) 1))\n'
                 s += f'(assert (<= (select stops_{c} {i}) {num_items if i==1 else num_items+1}))\n'
         # resp
@@ -57,7 +58,7 @@ def define_decision_variables(data,use_arrays):
                 s += f'(declare-fun distance_{i}_{j} () Int)\n'
                 s += f'(assert (= distance_{i}_{j} {distances[i-1][j-1]}))\n'
         for c in range(1,num_couriers+1):
-            for i in range(1,num_items+1):
+            for i in range(1,delivers+1):
                 s += f'(declare-fun stop_{c}_{i} () Int)\n'
                 s += f'(assert (>= stop_{c}_{i} 1))\n'
                 s += f'(assert (<= stop_{c}_{i} {num_items if i==1 else num_items+1}))\n'
@@ -114,14 +115,14 @@ def define_deliver_everything(nc,ni,arrays):
         for i in range(1,ni+1):
             s+=f'(assert (= (+'
             for c in range(1,nc+1):
-                for j in range(1,ni+1):
+                for j in range(1,ni-nc+2):
                     s+=f'(ite (= (select stops_{c} {j}) {i}) 1 0) '
             s+=f') 1))\n'
     else:
         for i in range(1,ni+1):
             s+=f'(assert (= (+'
             for c in range(1,nc+1):
-                for j in range(1,ni+1):
+                for j in range(1,ni-nc+2):
                     s+=f'(ite (= stop_{c}_{j} {i}) 1 0) '
             s+=f') 1))\n'
     return s
@@ -130,26 +131,30 @@ def define_padding(nc,ni,arrays):
     s=''
     if arrays:
         for c in range(1,nc+1):
-            for i in range(1,ni+1):
+            for i in range(1,ni-nc+3):
                 lhs=f'(<= {i} (+ '
                 for j in range(1,ni+1):
                     lhs+=f'(ite (= (select items_resp {j}) {c}) 1 0) '
                 lhs+=f'))'
                 rhs=f'(< (select stops_{c} {i}) {ni+1})'
-                s+=f'(assert (let ((lhs {lhs})\n'
-                s+=f'\t\t\t (rhs {rhs}))\n'
-                s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
+                # s+=f'(assert (let ((lhs {lhs})\n'
+                # s+=f'\t\t\t (rhs {rhs}))\n'
+                # s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
+                s+=f'(assert (=> {lhs} {rhs}))\n'
+                s+=f'(assert (=> {rhs} {lhs}))\n'
     else:
         for c in range(1,nc+1):
-            for i in range(1,ni+1):
+            for i in range(1,ni-nc+3):
                 lhs=f'(<= {i} (+ '
                 for j in range(1,ni+1):
                     lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
                 lhs+=f'))'
                 rhs=f'(< stop_{c}_{i} {ni+1})'
-                s+=f'(assert (let ((lhs {lhs})\n'
-                s+=f'\t\t\t (rhs {rhs}))\n'
-                s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
+                # s+=f'(assert (let ((lhs {lhs})\n'
+                # s+=f'\t\t\t (rhs {rhs}))\n'
+                # s+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
+                s+=f'(assert (=> {lhs} {rhs}))\n'
+                s+=f'(assert (=> {rhs} {lhs}))\n'
     return s
 
 def define_courier_items(nc,ni,arrays):
@@ -158,14 +163,14 @@ def define_courier_items(nc,ni,arrays):
         for c in range(1,nc+1):
             for i in range(1,ni+1):
                 s+=f'(assert (=> (= (select items_resp {i}) {c}) (or '
-                for j in range(1,ni+1):
+                for j in range(1,ni-nc+3):
                     s+=f'(= (select stops_{c} {j}) {i})'
                 s+=f')))\n'
     else:
         for c in range(1,nc+1):
             for i in range(1,ni+1):
                 s+=f'(assert (=> (= item_{i}_resp {c}) (or '
-                for j in range(1,ni+1):
+                for j in range(1,ni-nc+3):
                     s+=f'(= stop_{c}_{j} {i})'
                 s+=f')))\n'
     return s
@@ -178,7 +183,7 @@ def define_successors_distances(nc,ni,lowerbound,arrays):
         #     s+=f'(assert (> (select successors {i}) 0))\n' if lowerbound else ""
         #     s+=f'(assert (<= (select successors {i}) {ni+1}))\n'
         for c in range(1,nc+1):
-            for i in range(1,ni):
+            for i in range(1,ni-nc+2):
                 A=f'(not (= (select stops_{c} {i}) {ni+1}))'
                 B=f'(= (select successors (select stops_{c} {i})) (select stops_{c} {i+1}))'
                 s+=f'(assert (=> {A} {B}))\n'
@@ -197,7 +202,7 @@ def define_successors_distances(nc,ni,lowerbound,arrays):
             # s+=f'(assert (<= successor_of_{i} {ni+1}))\n'
 
         for c in range(1,nc+1):
-            for i in range(1,ni):
+            for i in range(1,ni-nc+2):
                 for j in range(1,ni+1):
                     # logically a->(b->c) is not(a and b and not(c))
                     A=f'(not (= stop_{c}_{i} {ni+1}))'
@@ -216,6 +221,7 @@ def define_successors_distances(nc,ni,lowerbound,arrays):
     return s,d
 
 def define_distances(nc,ni,arrays):
+    raise TypeError('non implementato senza successors')
     s=''
     if arrays:
         for c in range(1,nc+1):
@@ -280,8 +286,8 @@ def parse_solution(model,arrays):
     # print(model)
     num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
     num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
-    return get_itineraries(model,arrays,num_c,num_i)
 
+    return get_itineraries(model,arrays,num_c,num_i)
 def get_itineraries(model,arrays,num_c,num_i):
     stops=get_stops(model,False,arrays,num_c,num_i,False)
     stops=[[int(str(e))for e in row]for row in stops]
@@ -289,14 +295,14 @@ def get_itineraries(model,arrays,num_c,num_i):
     stops=[[e for e in row if e!=default]for row in stops ]
     return stops
 
-def get_variables(model,print_names=False,arrays=True,successor=True):
+def get_variables(model,print_names=False,arrays=True,successor=True,best=False):
     num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
     num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
 
     get_responsabilities(model,print_names,arrays,num_i)
     get_loads(model,print_names,arrays,num_c)
     get_stops(model,print_names,arrays,num_c,num_i)
-    if successor:get_successor(model,print_names,arrays,num_i)
+    if successor:get_successor(model,print_names,arrays,num_i,best)
     get_distances(model,print_names,arrays,num_c)
 
 def get_responsabilities(model,print_names,arrays,num_i):
@@ -328,19 +334,19 @@ def get_stops(model,print_names,arrays,num_c,num_i,print_=True):
     matrix_names=[]
     if arrays:
         for i in range(1,num_c+1):
-            row=[var for var in model if f'stops_{i}' in var.name()][0]
+            row=[var for var in model if f'stops_{i}'==var.name()][0]
             # print(model[row])
-            matrix.append(convertArrayRef(model[row],num_i))
+            matrix.append(convertArrayRef(model[row],num_i-num_c+2))
         if print_:
             print('stops:')
             for i in range(len(matrix)):
-                print('  ',matrix[i],matrix_names[i] if print_names else '')
+                print('  ',matrix[i])
         return matrix
     else:
         for i in range(1,num_c+1):
             matrix.append([])
             matrix_names.append([])
-            for j in range(1,num_i+1):
+            for j in range(1,num_i-num_c+3):
                 node=[var for var in model if f'stop_{i}_{j}'==var.name()][0]
                 matrix[i-1].append(model[node])
                 matrix_names[i-1].append(node)
@@ -350,9 +356,9 @@ def get_stops(model,print_names,arrays,num_c,num_i,print_=True):
                 print('  ',matrix[i],matrix_names[i] if print_names else '')
         return matrix
 
-def get_successor(model,print_names,arrays,num_i):
+def get_successor(model,print_names,arrays,num_i,best_model=False):
     variables = []
-    if arrays:
+    if arrays or best_model:
         var=[model[var] for var in model if 'successors' in var.name()][0]
         print('succ:',convertArrayRef(var,num_i))
     else:
@@ -423,15 +429,20 @@ def convertArrayRef(array,length=None):
             vals=pair.split(',')
             pairs.append((int(vals[1]),int(vals[2])))
         res=[0]
+        size=0
         if length:
-            res=[default]*length
-        elif pairs:
-            i_max=max([i[0] for i in pairs])
-            res=[default]*(i_max+1)
+            size=length if length>size else size
+        if pairs:
+            aux=max([i[0] for i in pairs])
+            size=aux if aux>size else size
+        res=[default]*size
+        # print(size)
+        # print(pairs,size,res)
         for pair in pairs:
             res[pair[0]-1]=pair[1]
-    except:
-        print('!!exception!!',array)
+    except IndexError as e:
+        print('!!exception!!',array,e)
+        raise e
         return [0]
     return res
 
@@ -452,7 +463,7 @@ def generate_best_model(instance_data):
     distances = instance_data['distances']
     lower_bound = instance_data['lower_bound']
     upper_bound = instance_data['upper_bound']
-
+    delivers=num_items-num_couriers+1+1
     # ===== INSTANCE VARIABLES =====
     model_h = f'''
 (set-logic ALL)
@@ -478,7 +489,7 @@ def generate_best_model(instance_data):
 
     # ===== DECISION VARIABLES =====
     for c in range(1,num_couriers+1):
-        for i in range(1,num_items+1):
+        for i in range(1,delivers+1):
             model_h += f'(declare-fun stop_{c}_{i} () Int)\n'
             model_h += f'(assert (>= stop_{c}_{i} 1))\n'
             model_h += f'(assert (<= stop_{c}_{i} {num_items if i==1 else num_items+1}))\n'
@@ -547,7 +558,7 @@ def generate_best_model(instance_data):
 
     # channeling; stops after completing the delivers must be depot
     for c in range(1,num_couriers+1):
-        for i in range(1,num_items+1):
+        for i in range(1,delivers+1):
             # lhs=>rhs
             # rhs=>lhs
             lhs=f'(<= {i} (+ '
@@ -555,15 +566,17 @@ def generate_best_model(instance_data):
                 lhs+=f'(ite (= item_{j}_resp {c}) 1 0) '
             lhs+=f'))'
             rhs=f'(< stop_{c}_{i} {num_items+1})'
-            model_h+=f'(assert (let ((lhs {lhs})\n'
-            model_h+=f'\t\t\t (rhs {rhs}))\n'
-            model_h+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
+            model_h+=f'(assert (=> {lhs} {rhs}))'
+            model_h+=f'(assert (=> {rhs} {lhs}))'
+            # model_h+=f'(assert (let ((lhs {lhs})\n'
+            # model_h+=f'\t\t\t (rhs {rhs}))\n'
+            # model_h+=f'\t\t\t (and (=> lhs rhs) (=> rhs lhs))))\n'
 
     # items delivered by c must appear in its row
     for c in range(1,num_couriers+1):
         for i in range(1,num_items+1):
             model_h+=f'(assert (=> (= item_{i}_resp {c}) (or '
-            for j in range(1,num_items+1):
+            for j in range(1,delivers+1):
                 model_h+=f'(= stop_{c}_{j} {i})'
             model_h+=f')))\n'
 
@@ -572,7 +585,7 @@ def generate_best_model(instance_data):
     # model_h+=f'(assert (= (select successors 0) {num_couriers}))\n'
     # channeling of successors
     for c in range(1,num_couriers+1):
-        for i in range(1,num_items):
+        for i in range(1,delivers):
             A=f'(not (= stop_{c}_{i} {num_items+1}))'
             B=f'(= (select successors stop_{c}_{i}) stop_{c}_{i+1})'
             model_h+=f'(assert (=> {A} {B}))\n'

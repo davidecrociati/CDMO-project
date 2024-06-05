@@ -29,21 +29,27 @@ def solve_instance(
         if type(params['timeout'])==timedelta:
             params['timeout']=params['timeout'].total_seconds()
     except: pass
-    execTime = time.time()
     solution=[]
     opt=False
+    execTime = time.time()
     if model_params['z3']:
-        solution,obj = solve_z3_model(params, instance_data)
+        solution,obj, optimal = solve_z3_model(params, instance_data,execTime)
         execTime = math.floor(time.time()-execTime)
         if not solution:
             execTime=math.floor(params['timeout'])
-            opt = False
+            # opt = False
         try:
             if execTime >= params['timeout']:
                 execTime = math.floor(params['timeout'])
-                opt = False
+                # opt = False
             else:
                 opt = True
+            if optimal:
+                opt=True
+                execTime=execTime-1 if execTime>0 else execTime
+            else:
+                opt=False
+                execTime=math.floor(params['timeout'])
             return {
                 "time": execTime,
                 "optimal": opt,
@@ -88,7 +94,7 @@ def solve_instance(
             except:
                 print('error')
                 pass
-            result,sol,distances=solve(model,aux,use_arrays,use_successors,num_couriers)
+            result,sol,distances=solve(model,aux,use_arrays,use_successors,num_couriers,best=model_params['best'])
             if result=='unsat':
                 try:
                     if params['timeout']-(time.time()-execTime)>0:

@@ -20,13 +20,14 @@ def solve_instance(
     except: pass    
     
     aux=params.copy()
+    
     execTime = time.time()
     solution=[]
     best_model=None
     opt=False
 
     solution,obj = solve(solver, params, instance_data)
-
+    # print('total effective time:',time.time()-execTime)
     execTime = math.floor(time.time()-execTime)
     
     if not solution:

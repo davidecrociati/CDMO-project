@@ -4,7 +4,7 @@ import check_solution as check
 
 
 # SOLUTION PARSING
-def tolist(solution,short_stops=False):
+def tolist(solution,short_stops=False,OPT=True):
     '''
 	solution is a string [[i1,i2],[i3,i4,i5],...[]]
 
@@ -13,7 +13,7 @@ def tolist(solution,short_stops=False):
     depot = len(solution[0]) +1
     if short_stops:
         depot= len(solution[0]) + len(solution)-1
-    print(depot)
+    # print(depot)
     res = []
     for r in solution:
         r = list(dict.fromkeys(r))
