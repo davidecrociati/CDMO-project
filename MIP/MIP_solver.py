@@ -28,11 +28,11 @@ def solve(solver, params, data):
         # OPTIMAL SOLUTION FOUND
         case 1:
             sol = parse_results(*results)
-            return sol, prob.objective.value()
+            return sol, int(prob.objective.value())
         # NOT OPTIMAL SOLUTION FOUND
         case 2:
             sol = parse_results(*results)
-            return sol, prob.objective.value()
+            return sol, int(prob.objective.value())
         # INFEASIBLE SOLUTION
         case -1:
             return [],-1

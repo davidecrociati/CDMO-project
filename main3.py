@@ -239,7 +239,7 @@ def main(argv):
                                         params['model_params'],
                                         verbose=False)
                     instance_results[f'{solver}_{param_name}'] = result
-            updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
+                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
     
 
 
