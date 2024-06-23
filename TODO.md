@@ -32,4 +32,4 @@ FATTO (spero)
 ## GENERICHE:
 
 - fare docker
--
+- scrivere sul report che quando assumiamo che tutti portano qualcosa sarebbe da dover controlalre il peso, poerò bho al momento abbiamo assunto che tutti i corrieri possono portare almeno un pacco erd in particolare il pacco che se tolto al percorso più lungo crea la slz ottima

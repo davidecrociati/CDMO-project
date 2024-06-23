@@ -1,0 +1,14 @@
+{
+	"circuit_BS_SB":{
+		"time":0,
+		"optimal":true,
+		"obj":14,
+		"sol":[[4, 3, 1], [2, 5, 6]]
+	},
+	"circuit_BS":{
+		"time":0,
+		"optimal":true,
+		"obj":14,
+		"sol":[[4, 3, 1], [2, 5, 6]]
+	}
+}
