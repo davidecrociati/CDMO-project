@@ -5,10 +5,10 @@ import time
 def solve(solver, params, data): 
     constraint_loading_time = time.time()
     prob = LpProblem("Multiple_Courier_Planning_Problem", LpMinimize)
-    results = set_constraints_Miller_Tucker_Zemlin_2(prob, data)
-    print('constraint load:',(time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
+    results = set_constraints_Miller_Tucker_Zemlin(prob, data)
+    # print('constraint load:',(time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
     remaining_time = params['timeout']-(time.time()-constraint_loading_time)
-    print('timeout:',remaining_time)
+    # print('timeout:',remaining_time)
     # solver_list = listSolvers()
     # print(solver_list)
     # solver_list = listSolvers(onlyAvailable=True)
@@ -23,8 +23,8 @@ def solve(solver, params, data):
     
     constraint_loading_time = time.time()
     prob.solve(solver)
-    print('solving time:', (time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
-    print('solution time:', prob.solutionTime)
+    # print('solving time:', (time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
+    # print('solution time:', prob.solutionTime)
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
@@ -143,7 +143,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
         problem += lpSum(item_sizes[j] * x[i][j][k] if i != j else 0 for i in range(num_items+1) for j in range (num_items)) <= courier_capacities[k] 
 
 
-    u = LpVariable.dicts("u", [(i, k) for i in range(0, num_items) for k in range(num_couriers)], lowBound=0, cat='Continuous')
+    u = LpVariable.dicts("u", [(i, k) for i in range(0, num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
 
     # Set the constraints for the MTZ formulation for each courier
     for k in range(num_couriers):
@@ -151,9 +151,9 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
             for j in range(0, num_items):
                 if i != j:
                     problem += u[(i, k)] - u[(j, k)] + (num_items+1) * x[i][j][k] <= num_items
-    # Set the depot's u value for each courier
-    for k in range(num_couriers):
-        u[(num_items, k)] = 0  # Depot is assigned u value of 0 for each courier
+    # # Set the depot's u value for each courier
+    # for k in range(num_couriers):
+    #     u[(num_items, k)] = 0  # Depot is assigned u value of 0 for each courier
 
     return (x, num_couriers, num_items)
 
@@ -210,15 +210,13 @@ def set_constraints_Miller_Tucker_Zemlin_2(problem, data):
     for k in range(num_couriers):
         for i in range(0, num_items):
             for j in range(0, num_items):
+                print(i,j)
                 if i != j:
                     problem += u[(j, k)] - u[(i, k)] >= item_sizes[j] - courier_capacities[k]*(1-x[i][j][k]) 
     for k in range(num_couriers):
         for i in range(0, num_items):
             problem += item_sizes[i] <= u[(i, k)]
             problem += u[(i, k)] <= courier_capacities[k]
-    # Set the depot's u value for each courier
-    for k in range(num_couriers):
-        u[(num_items, k)] = 0  # Depot is assigned u value of 0 for each courier
 
     return (x, num_couriers, num_items)
 

@@ -10,11 +10,11 @@ INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTA
 SMT_MODELS_FOLDER='SMT/models'
 
 RESULTS_FOLDER='res'
-INDENT_RESULTS=True # indented results on the json
+INDENT_RESULTS=False # indented results on the json
 
 
-firstInstance=13 # inclusive
-lastInstance=13 # inclusive
+firstInstance=1 # inclusive
+lastInstance=10 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
