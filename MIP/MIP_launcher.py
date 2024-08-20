@@ -8,30 +8,30 @@ def solve_instance(
         instance_file,
         solver,
         params,
-        model_params:dict=None,
-        verbose=False,
+        model_params:dict =None,
+        verbose =False,
 ):
-    instance_data=parse_dzn(instance_file)
-    obj='N/A'
-    model=''
+    instance_data =parse_dzn(instance_file)
+    obj ='N/A'
+    model =''
     try:
-        if type(params['timeout'])==timedelta:
-            params['timeout']=params['timeout'].total_seconds()
+        if type(params['timeout']) == timedelta:
+            params['timeout'] = params['timeout'].total_seconds()
     except: pass    
     
-    aux=params.copy()
+    aux = params.copy()
     
     execTime = time.time()
-    solution=[]
-    best_model=None
-    opt=False
+    solution = []
+    best_model = None
+    opt = False
 
-    solution,obj = solve(solver, params, instance_data)
+    solution, obj = solve(solver, params, instance_data)
     # print('total effective time:',time.time()-execTime)
     execTime = math.floor(time.time()-execTime)
     
     if not solution:
-        execTime=math.floor(params['timeout'])
+        execTime = math.floor(params['timeout'])
         opt = False
     try:
         if execTime >= params['timeout']:
