@@ -150,73 +150,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
         for i in range(0, num_items):
             for j in range(0, num_items):
                 if i != j:
-                    problem += u[(i, k)] - u[(j, k)] + (num_items+1) * x[i][j][k] <= num_items
-    # # Set the depot's u value for each courier
-    # for k in range(num_couriers):
-    #     u[(num_items, k)] = 0  # Depot is assigned u value of 0 for each courier
-
-    return (x, num_couriers, num_items)
-
-
-
-
-def set_constraints_Miller_Tucker_Zemlin_2(problem, data):
-    num_couriers = data['num_couriers']
-    num_items = data['num_items']
-    courier_capacities = data['courier_capacities']
-    item_sizes = data['item_sizes']
-    distances = data['distances']
-    lower_bound = data['lower_bound']
-    upper_bound = data['upper_bound']
-    
-    # definition of variables which are 0/1
-    # courier k do the route from i to j
-    x = [[[LpVariable("x%s_%s,%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
-
-    # add objective function
-    longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
-    for k in range(num_couriers):
-        problem += lpSum(distances[i][j] * x[i][j][k] if i != j else 0
-                            for j in range(num_items+1) 
-                            for i in range (num_items+1))<= longest_trip
-    problem += longest_trip
-    
-    # constraints
-    # only one visit per vehicle per item location
-    for j in range(num_items):
-        problem += lpSum(x[i][j][k] if i != j else 0 
-                            for i in range(num_items+1) 
-                            for k in range(num_couriers)) == 1 
-
-    # depart from the depot and arrival at the depot
-    for k in range(num_couriers):
-        problem += lpSum(x[num_items][j][k] for j in range(num_items)) == 1
-        problem += lpSum(x[i][num_items][k] for i in range(num_items)) == 1
-
-    # the number of vehicles coming in and out of a item location is the same
-    for k in range(num_couriers):
-        for j in range(num_items+1):
-            problem += lpSum(x[i][j][k] if i != j else 0 
-                                for i in range(num_items+1)) -  lpSum(x[j][i][k] for i in range(num_items+1)) == 0
-
-    # the delivery capacity of each vehicle should not exceed the maximum capacity
-    for k in range(num_couriers):
-        problem += lpSum(item_sizes[j] * x[i][j][k] if i != j else 0 for i in range(num_items+1) for j in range (num_items)) <= courier_capacities[k] 
-
-
-    u = LpVariable.dicts("u", [(i, k) for i in range(0, num_items) for k in range(num_couriers)], lowBound=0, cat='Continuous')
-
-    #https://how-to.aimms.com/Articles/332/332-Miller-Tucker-Zemlin-formulation.html
-    for k in range(num_couriers):
-        for i in range(0, num_items):
-            for j in range(0, num_items):
-                print(i,j)
-                if i != j:
-                    problem += u[(j, k)] - u[(i, k)] >= item_sizes[j] - courier_capacities[k]*(1-x[i][j][k]) 
-    for k in range(num_couriers):
-        for i in range(0, num_items):
-            problem += item_sizes[i] <= u[(i, k)]
-            problem += u[(i, k)] <= courier_capacities[k]
+                    problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i][j][k])
 
     return (x, num_couriers, num_items)
 

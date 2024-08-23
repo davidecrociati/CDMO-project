@@ -14,7 +14,7 @@ INDENT_RESULTS=False # indented results on the json
 
 
 firstInstance=1 # inclusive
-lastInstance=10 # inclusive
+lastInstance=11 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
