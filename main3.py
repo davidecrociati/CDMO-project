@@ -13,8 +13,8 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=False # indented results on the json
 
 
-firstInstance=1 # inclusive
-lastInstance=11 # inclusive
+firstInstance=16 # inclusive
+lastInstance=21 # inclusive
 
 if firstInstance<=0:
     firstInstance=1

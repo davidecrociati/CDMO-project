@@ -147,10 +147,60 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
 
     # Set the constraints for the MTZ formulation for each courier
     for k in range(num_couriers):
-        for i in range(0, num_items):
-            for j in range(0, num_items):
-                if i != j:
+        for i in range(num_items):
+            for j in range(num_items):
+                if i != j:# and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
                     problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i][j][k])
+        # problem += item_sizes[i]<=u[(i, k)]
+        # problem += u[(i, k)]<=courier_capacities[k]
+
+    return (x, num_couriers, num_items)
+
+def set_constraints_Miller_Tucker_Zemlin_2_index(problem, data):
+    num_couriers = data['num_couriers']
+    num_items = data['num_items']
+    courier_capacities = data['courier_capacities']
+    item_sizes = data['item_sizes']
+    distances = data['distances']
+    lower_bound = data['lower_bound']
+    upper_bound = data['upper_bound']
+    
+    # definition of variables which are 0/1
+    # courier k do the route from i to j
+    x = [[LpVariable("x%s_%s"%(i,j), cat="Binary") if i != j else None for j in range(num_items+1)] for i in range(num_items+1)]
+
+    # add objective function
+    longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
+    problem += lpSum(distances[i][j] * x[i][j] if i != j else 0
+                            for i in range(num_items+1) 
+                            for j in range (num_items+1))<= longest_trip
+    problem += longest_trip
+    
+    # constraints
+    # only one visit per vehicle per item location
+    for j in range(num_items):
+        problem += lpSum(x[i][j] for i in range(num_items+1) if i != j) == 1 
+    for i in range(num_items):
+        problem += lpSum(x[i][j] for j in range(num_items+1) if i != j) == 1 
+
+    # depart from the depot and arrival at the depot
+    problem += lpSum(x[i][num_items] for i in range(num_items+1)) == num_couriers
+    problem += lpSum(x[num_items][j] for j in range(num_items+1)) == num_couriers
+
+
+    u = [[LpVariable(f"u_{k}_{i}", lowBound=0, upBound=courier_capacities[k], cat="Continuous") for i in range(num_items )] for k in range(num_couriers)]
+
+    for k in range(num_couriers):
+        for i in range(num_items ):
+            for j in range(num_items):
+                if i != j and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
+                    problem += u[k][i] - u[k][j] + courier_capacities[k] * x[i][j] <= courier_capacities[k] - item_sizes[j]
+
+    # Ensure the load variables `u` are consistent with the size of items
+    for k in range(num_couriers):
+        for i in range(num_items):
+            problem += item_sizes[i] <= u[k][i]
+            problem += u[k][i] <= courier_capacities[k]
 
     return (x, num_couriers, num_items)
 
@@ -170,6 +220,38 @@ def parse_results(result, num_couriers, num_items):
                 j = 0
             elif i!=j and result[i][j][k].value() == 1 and j == num_items:
                 # print(f'{k+1} goes from {i+1 if i!=num_items else "D"} to {j+1 if j!=num_items else "D"}')
+                end_of_route = True
+            else:
+                j += 1
+    return res
+
+def parse_results_2_index(result, num_couriers, num_items):
+    for i in range(num_items+1):
+        line = ""
+        for j in range(num_items+1):
+            if i!=j:
+                line+=f"{int(result[i][j].value())} "
+            else:
+                line+="0 "
+        print(line)
+    res = []
+    last_courier_item = 0
+    for k in range(num_couriers):
+        res.append([])
+        end_of_route = False
+        i = num_items
+        j = last_courier_item
+
+        while not end_of_route:# and j!=num_items:
+            if i!=j and result[i][j].value() == 1 and j != num_items:
+                if i == num_items:
+                    last_courier_item = j+1
+                print(f'{k+1} goes from {i+1 if i!=num_items else "D"} to {j+1 if j!=num_items else "D"}')
+                res[k].append(j+1)
+                i = j
+                j = 0
+            elif i!=j and result[i][j].value() == 1 and j == num_items:
+                print(f'{k+1} goes from {i+1 if i!=num_items else "D"} to {j+1 if j!=num_items else "D"}')
                 end_of_route = True
             else:
                 j += 1
