@@ -187,7 +187,7 @@ def solve_strategy(
     #     print("#"*10, " INSTANCE ", "#"*(l-10))
     #     display_instance(instance_data)
     #     print("#"*(l+10))
-    print(f"\tUsing {model} model with {strategy} search-strategy...")
+    # print(f"\tUsing {model} model with {strategy} search-strategy...")
     
     solve=None
     match model :
@@ -252,7 +252,6 @@ def solve_strategy(
                     
                 # Execution    
                 mid = (upper_bound + lower_bound) // binary_cut
-                print(f"\t\tBinary tries mid={mid}")
                 result, objective, sol = solve(instance_data, mid, aux, verbose=verbose_solver, symmetry=symmetry, distance_symmetry=distance_symmetry)
 
                 # Backup + update value

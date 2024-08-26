@@ -368,7 +368,7 @@ def solve_bin(instance_data, MAX_dist, params, symmetry=False, verbose=False, di
             # Sort items for this courier by order
             courier_deliveries.sort(key=lambda x: x[1])
             
-            # sol[c] = [item for item, order in courier_deliveries] # for DEBUG format
+            sol[c] = [item for item, order in courier_deliveries] # for DEBUG format
             solution[c] = [item+1 for item, order in courier_deliveries] # for launcher format
 
             # DEBUG
