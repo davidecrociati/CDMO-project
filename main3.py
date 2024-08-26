@@ -7,13 +7,11 @@ os.chdir(this_dir)
 INSTANCES_FOLDER='instances_dzn' #da potenzialmente cambiare 
 INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
-SMT_MODELS_FOLDER='SMT/models'
-
 RESULTS_FOLDER='res'
-INDENT_RESULTS=False # indented results on the json
+INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=8 # inclusive
+firstInstance=1 # inclusive
 lastInstance=10 # inclusive
 
 if firstInstance<=0:
@@ -205,24 +203,24 @@ def main(argv):
         MIP_models = {
                 'solvers': {
                     'cbc': [
-                        ('SB', {
+                        ('enum_all', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':None
                             }),
-                    #     # ('default', {
-                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #     #     'model_params':None
-                    #     #     }),
+                        ('MTZ', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':None
+                            }),
                     ],
                     # 'glpk': [
-                    #     ('SB', {
+                    #     ('enum_all', {
                     #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     #         'model_params':None
                     #         }),
-                    #     # ('default', {
-                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #     #     'model_params':None
-                    #     #     }),
+                    #     ('MTZ', {
+                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #         'model_params':None
+                    #         }),
                     # ]
                 }
             }
@@ -231,14 +229,15 @@ def main(argv):
             print(f'  Solving {instance_file}...')
             instance_results={}
             for solver in MIP_models['solvers']:
-                for param_name,params in MIP_models['solvers'][solver].copy():
-                    print(f'\tUsing {solver}-{param_name}...')
+                for model_name, params in MIP_models['solvers'][solver].copy():
+                    print(f'\tUsing {solver}-{model_name}...')
                     result,model=MIP.solve_instance(instance_file,
                                         solver,
+                                        model_name,
                                         params['params'],
                                         params['model_params'],
                                         verbose=False)
-                    instance_results[f'{solver}_{param_name}'] = result
+                    instance_results[f'{solver}_{model_name}'] = result
                     updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
     
 
