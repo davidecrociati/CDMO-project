@@ -13,8 +13,8 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=False # indented results on the json
 
 
-firstInstance=16 # inclusive
-lastInstance=21 # inclusive
+firstInstance=8 # inclusive
+lastInstance=10 # inclusive
 
 if firstInstance<=0:
     firstInstance=1
@@ -209,21 +209,21 @@ def main(argv):
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':None
                             }),
-                        # ('default', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
+                    #     # ('default', {
+                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #     #     'model_params':None
+                    #     #     }),
                     ],
                     # 'glpk': [
                     #     ('SB', {
                     #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
                     #         'model_params':None
                     #         }),
-                        # ('default', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
-                    # ],
+                    #     # ('default', {
+                    #     #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    #     #     'model_params':None
+                    #     #     }),
+                    # ]
                 }
             }
         print('Solving with MIP:')

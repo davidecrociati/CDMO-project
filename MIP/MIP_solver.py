@@ -1,42 +1,45 @@
 from pulp import *
-import time
+import time, math
 # install glpk and pulp
 
 def solve(solver, params, data): 
-    constraint_loading_time = time.time()
+    init_time = time.time()
     prob = LpProblem("Multiple_Courier_Planning_Problem", LpMinimize)
     results = set_constraints_Miller_Tucker_Zemlin(prob, data)
-    # print('constraint load:',(time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
-    remaining_time = params['timeout']-(time.time()-constraint_loading_time)
-    # print('timeout:',remaining_time)
-    # solver_list = listSolvers()
-    # print(solver_list)
-    # solver_list = listSolvers(onlyAvailable=True)
-    # print(solver_list)
+    remaining_time = params['timeout']-(time.time()-init_time)
     match solver:
         case 'cbc':
             solver=PULP_CBC_CMD(msg=False, timeLimit=remaining_time)
+            # solver = HiGHS_CMD(msg=True, timeLimit=math.ceil(remaining_time))
         case 'glpk':
-            solver=GLPK_CMD(msg=False, timeLimit=remaining_time)
+            solver=GLPK_CMD(msg=True, timeLimit=math.ceil(remaining_time))
         case _:
             raise KeyError('Unsupported solver')
-    
-    constraint_loading_time = time.time()
     prob.solve(solver)
-    # print('solving time:', (time.time()-constraint_loading_time),int(time.time()-constraint_loading_time))
-    # print('solution time:', prob.solutionTime)
+    
+    opt = False
+    solve_time = math.floor(time.time() - init_time)
+    sol = []
+    obj = -1
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
             sol = parse_results(*results)
-            return sol, int(prob.objective.value())
+            obj = int(prob.objective.value())
+            opt = True
         # NOT OPTIMAL SOLUTION FOUND
         case const.LpSolutionIntegerFeasible:
             sol = parse_results(*results)
-            return sol, int(prob.objective.value())
+            obj = int(prob.objective.value())
+            opt = False
+            solve_time = 300
         # INFEASIBLE SOLUTION OR NO SOLUTION FOUND OR UNBOUNDED
         case default:
-            return [],-1
+            sol = []
+            obj =-1
+            opt = False
+            solve_time = 300
+    return sol, obj, opt, solve_time
 
         
 def set_constraints(problem, data):
