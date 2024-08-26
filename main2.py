@@ -1,67 +1,67 @@
 import os,sys
-from datetime import timedelta
 from utils.utils import *
-
+from datetime import timedelta
+from argparse import ArgumentParser
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
-INSTANCES_FOLDER='instances_dzn' #da potenzialmente cambiare 
-INSTANCES=[INSTANCES_FOLDER+'/'+instance for instance in sorted(os.listdir(INSTANCES_FOLDER)) if instance.endswith('.dzn')]
 
-SMT_MODELS_FOLDER='SMT/models'
+class Configuration:
+    def __init__(self) -> None:
+        self.instances_folder='instances_dzn'
+        self.instances_names=self.read_instances()
+        self.smt_models_folder='SMT/models'
+        self.results_folder='test'
+        self.indent_results=True
+        self.first=1
+        self.last=1
+        self.timeout=300
+        self.run_checker=False
 
-RESULTS_FOLDER='res_definitive'
-INDENT_RESULTS=True # indented results on the json
+    def read_instances(self):
+        return [self.instances_folder+'/'+instance for instance in sorted(os.listdir(self.instances_folder)) if instance.endswith('.dzn')]
+
+def load_config(config_path, configuration:Configuration):
+    from check_solution import read_json_file
+    config = read_json_file(config_path)
+    try:
+        configuration.instances_folder=config['instances_folder']
+        configuration.instances_names=configuration.read_instances()
+        configuration.smt_models_folder=config['smt_models_folder']
+        configuration.results_folder=config['results_folder']
+        configuration.indent_results=config['indent_results']
+        configuration.first=config['first']
+        configuration.last=config['last']
+        configuration.timeout=config['timeout']
+        configuration.run_checker=config['run_checker']
+    except KeyError:
+        raise KeyError('Invalid configuration file. It must contain:\n- instances_folder\n- smt_models_folder\n- results_folder\n- indent_results\n- first\n- last\n- timeout\n- run_checker')
 
 
-firstInstance=8 # inclusive
-lastInstance=10 # inclusive
-
-if firstInstance<=0:
-    firstInstance=1
-if lastInstance>21:
-    lastInstance=21
-if firstInstance>lastInstance:
-    lastInstance=firstInstance
-
-TIMEOUT=300 # seconds
-
-
-CHECKER=False
-
-
-def main(argv):
-    RUN_CP=False
-    RUN_SAT=False
-    RUN_SMT=True
-    RUN_MIP=False
-    first=firstInstance
-    last=lastInstance
-    if len(argv)>1:
-        first=last=int(argv[1])
-        if len(argv)>2:
-            match argv[2]:
-                case 'cp':
-                    RUN_CP=True
-                    RUN_SAT=False
-                    RUN_SMT=False
-                    RUN_MIP=False
-                case 'sat':
-                    RUN_CP=False
-                    RUN_SAT=True
-                    RUN_SMT=False
-                    RUN_MIP=False
-                case 'smt':
-                    RUN_CP=False
-                    RUN_SAT=False
-                    RUN_SMT=True
-                    RUN_MIP=False
-                case 'mip':
-                    RUN_CP=False
-                    RUN_SAT=False
-                    RUN_SMT=False
-                    RUN_MIP=True
-                case _:
-                    pass
+def main(args):
+    configuration=Configuration()
+    RUN_CP=RUN_SAT=RUN_SMT=RUN_MIP=True
+    if args.config:
+        load_config(args.config,configuration)
+    if args.instance:
+        i=args.instance
+        if i<1 or 1>21:raise ValueError(f'Invalid instance number. It must be in [1,21], instead got {i}')
+        configuration.first=configuration.last=i
+    if args.approach:
+        match args.approach:
+            case 'cp':
+                RUN_CP=True
+                RUN_SAT=RUN_SMT=RUN_MIP=False
+            case 'sat':
+                RUN_SAT=True
+                RUN_CP=RUN_SMT=RUN_MIP=False
+            case 'smt':
+                RUN_SMT=True
+                RUN_CP=RUN_SAT=RUN_MIP=False
+            case 'mip':
+                RUN_MIP=True
+                RUN_CP=RUN_SAT=RUN_SMT=False
+            case _:
+                raise ValueError("Invalid approach. Solver must be one of: cp, sat, smt, mip")
 
     # ============
     # |    CP    |
@@ -72,44 +72,44 @@ def main(argv):
             'model_chuffed.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': True}),
+                        ('', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': False}),
                     ]
                 }
             },
             'model_gecode.mzn': {
                 'solvers': {
                     'gecode': [
-                        ('', {'timeout': timedelta(seconds=TIMEOUT)}),
+                        ('', {'timeout': timedelta(seconds=configuration.timeout)}),
                     ]
                 }
             },
             # 'model_chuffed_SB.mzn': {
             #     'solvers': {
             #         'chuffed': [
-            #             ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-            #             ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+            #             ('fs', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': True}),
+            #             ('', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': False}),
             #         ]
             #     }
             # },
             # 'model_gecode_SB.mzn': {
             #     'solvers': {
             #         'gecode': [
-            #             ('', {'timeout': timedelta(seconds=TIMEOUT)}),
+            #             ('', {'timeout': timedelta(seconds=configuration.timeout)}),
             #         ]
             #     }
             # },
             'model_chuffed_short.mzn': {
                 'solvers': {
                     'chuffed': [
-                        ('fs', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': True}),
-                        ('', {'timeout': timedelta(seconds=TIMEOUT), 'free_search': False}),
+                        ('fs', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': True}),
+                        ('', {'timeout': timedelta(seconds=configuration.timeout), 'free_search': False}),
                     ]
                 }
             },
         }
         print('Solving with CP:')
-        for instance_file in INSTANCES[first-1:last]:
+        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in CP_models:
@@ -123,8 +123,8 @@ def main(argv):
                                                                 model,
                                                                 solver,
                                                                 params)
-            # saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP/',format=INDENT_RESULTS)
-                        updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/CP_test/',format=INDENT_RESULTS)
+            # saveJSON(instance_results,instance_file,configuration.results_folder+'/CP/',format=configuration.indent_results)
+                        updateJSON(instance_results,instance_file,configuration.results_folder+'/CP_test/',format=configuration.indent_results)
 
     # ============
     # |    SAT   |
@@ -136,7 +136,7 @@ def main(argv):
             'circuit':[
                 ('ILU', {
                     'params_name':'ILU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'incremental_factor' : 30, 
                         'symmetry' : True
@@ -144,7 +144,7 @@ def main(argv):
                 }),
                 ('ILU', {
                     'params_name':'ILU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'incremental_factor' : 30, 
                         'symmetry' : False
@@ -152,35 +152,51 @@ def main(argv):
                 }),
                 ('LU', {
                     'params_name':'LU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{'symmetry':True}
                 }),
                 ('LU', {
                     'params_name':'LU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{'symmetry':False}
                 }),
                 ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params_name':'BS2_SB',
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'binary_cut' : 2,
                         'symmetry' : True
                     }
                 }),
                 ('BS', {
-                    'params_name':'BS',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params_name':'BS2',
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'binary_cut' : 2,
                         'symmetry' : False
                     }
                 }),
+                # ('BS', {
+                #     'params_name':'BS10_SB',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 10,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS10',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 10,
+                #         'symmetry' : False
+                #     }
+                # }),
             ],
             '1-hot-cube':[
                 ('ILU', {
                     'params_name':'ILU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'incremental_factor' : 30, 
                         'symmetry' : True
@@ -188,7 +204,7 @@ def main(argv):
                 }),
                 ('ILU', {
                     'params_name':'ILU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{
                         'incremental_factor' : 30, 
                         'symmetry' : False
@@ -196,81 +212,81 @@ def main(argv):
                 }),
                 ('LU', {
                     'params_name':'LU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{'symmetry':True}
                 }),
                 ('LU', {
                     'params_name':'LU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                    'params':{'timeout': timedelta(seconds=configuration.timeout)},
                     'model_params':{'symmetry':False}
                 }),
                 # comment below
-                ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : True
-                    }
-                }),
-                ('BS', {
-                    'params_name':'BS',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : False
-                    }
-                }),
+                # ('BS', {
+                #     'params_name':'BS2_SB',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS2',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : False
+                #     }
+                # }),
             ],
-            'binary-cube':[
-                ('ILU', {
-                    'params_name':'ILU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'incremental_factor' : 30, 
-                        'symmetry' : True
-                    }
-                }),
-                ('ILU', {
-                    'params_name':'ILU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'incremental_factor' : 30, 
-                        'symmetry' : False
-                    }
-                }),
+            # 'binary-cube':[
+            #     ('ILU', {
+            #         'params_name':'ILU_SB',
+            #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+            #         'model_params':{
+            #             'incremental_factor' : 30, 
+            #             'symmetry' : True
+            #         }
+            #     }),
+            #     ('ILU', {
+            #         'params_name':'ILU',
+            #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+            #         'model_params':{
+            #             'incremental_factor' : 30, 
+            #             'symmetry' : False
+            #         }
+            #     }),
                 # comment below
-                ('LU', {
-                    'params_name':'LU_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{'symmetry':True}
-                }),
-                ('LU', {
-                    'params_name':'LU',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{'symmetry':False}
-                }),
-                ('BS', {
-                    'params_name':'BS_SB',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : True
-                    }
-                }),
-                ('BS', {
-                    'params_name':'BS',
-                    'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    'model_params':{
-                        'binary_cut' : 2,
-                        'symmetry' : False
-                    }
-                }),
-            ],
+                # ('LU', {
+                #     'params_name':'LU_SB',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{'symmetry':True}
+                # }),
+                # ('LU', {
+                #     'params_name':'LU',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{'symmetry':False}
+                # }),
+                # ('BS', {
+                #     'params_name':'BS2_SB',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : True
+                #     }
+                # }),
+                # ('BS', {
+                #     'params_name':'BS2',
+                #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                #     'model_params':{
+                #         'binary_cut' : 2,
+                #         'symmetry' : False
+                #     }
+                # }),
+            # ],s
         }
         
         print('Solving with SAT:')
-        for instance_file in INSTANCES[first-1:last]:
+        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in SAT_models :
@@ -285,7 +301,7 @@ def main(argv):
                                               verbose_solver=False
                                             )
                     instance_results[f'{model}_{params["params_name"]}'] = result
-                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SAT_test/',format=INDENT_RESULTS)
+                    updateJSON(instance_results,instance_file,configuration.results_folder+'/SAT/',format=configuration.indent_results)
 
     # ============
     # |    SMT   |
@@ -296,42 +312,42 @@ def main(argv):
         SMT_models = {
                     'z3': [
                         # ('arrays_SB', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
                         #     'model_params':{
                         #         'simmetry_method':'>',
                         #         'use_arrays':True,
                         #         }
                         #     }),
                         # ('SB', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
                         #     'model_params':{
                         #         'simmetry_method':'>',
                         #         'use_arrays':False,
                         #         }
                         #     }),
                         # ('arrays', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
                         #     'model_params':{
                         #         'simmetry_method':'None',
                         #         'use_arrays':True,
                         #         }
                         #     }),
                         # ('default', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
                         #     'model_params':{
                         #         'simmetry_method':'None',
                         #         'use_arrays':False,
                         #         }
                         #     }),
                         ('best', {
-                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'params':{'timeout': timedelta(seconds=configuration.timeout)},
                             'model_params':{
                                 'simmetry_method':'>',
                                 'best':True
                                 }
                             }),
                         # ('OPT', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
                         #     'model_params':{
                         #         'z3':True
                         #         }
@@ -340,7 +356,7 @@ def main(argv):
         }
         
         print('Solving with SMT:')
-        for instance_file in INSTANCES[first-1:last]:
+        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for solver in SMT_models:
@@ -353,20 +369,57 @@ def main(argv):
                                         verbose=False)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/{param_name}/')
-                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMTb/',format=INDENT_RESULTS)
+                    updateJSON(instance_results,instance_file,configuration.results_folder+'/SMT/',format=configuration.indent_results)
     
+    # ============
+    # |    MIP   |
+    # ============
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
+        MIP_models = {
+                'solvers': {
+                    'cbc': [
+                        ('SB', {
+                            'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                            'model_params':None
+                            }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                        #     'model_params':None
+                        #     }),
+                    ],
+                    # 'glpk': [
+                    #     ('SB', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':None
+                    #         }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                        #     'model_params':None
+                        #     }),
+                    # ],
+                }
+            }
+        print('Solving with MIP:')
+        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
+            print(f'  Solving {instance_file}...')
+            instance_results={}
+            for solver in MIP_models['solvers']:
+                for param_name,params in MIP_models['solvers'][solver].copy():
+                    print(f'\tUsing {solver}-{param_name}...')
+                    result,model=MIP.solve_instance(instance_file,
+                                        solver,
+                                        params['params'],
+                                        params['model_params'],
+                                        verbose=False)
+                    instance_results[f'{solver}_{param_name}'] = result
+                    updateJSON(instance_results,instance_file,configuration.results_folder+'/MIP/',format=configuration.indent_results)
 
+    if configuration.run_checker:run_checker("res")
 
 if __name__=='__main__':
-    main(sys.argv)
-    if CHECKER:run_checker(firstInstance,lastInstance)
-
-
-	# "z3_OPT":{
-	# 	"time":299,
-	# 	"optimal":true,
-	# 	"obj":167,
-	# 	"sol":[[8, 5, 9], [11, 3], [2, 12], [1, 7], [17, 10, 16, 6, 15], [13, 4, 14]]
-	# }
+    parser=ArgumentParser()
+    parser.add_argument('-i',dest='instance',type=int,required=False,help='Instance number to execute. Must be in [1,21]')
+    parser.add_argument('-a',dest='approach',type=str,required=False,help='What approach to use. Must be one of: cp, sat, smt, mip')
+    parser.add_argument('-c',dest='config',type=str,required=False,help='JSON configuration file')
+    main(parser.parse_args())
