@@ -2,28 +2,18 @@ FROM minizinc/minizinc:latest
 
 WORKDIR /project
 
+# Copy all the project
 COPY . .
 
-# TODO: aggiungere dipendenze
-# RUN apt-get update 
-# RUN apt-get install -y python3 
-# RUN apt-get install -y python3-pip 
-# RUN apt-get install -y minizinc 
+# Install necessary packages
+RUN apt-get update \
+    && apt-get install -y python3 \
+    && apt-get install -y python3-pip\
+    && python3 -m pip install -r requirements.txt --break-system-packages
 
-# FIXME : Dà errore
-# RUN python3-pip install -r requirements.txt 
-# CMD pip install -r requirements.txt --break-system-packages  <------ alternativa (bruttina)
+# In order to build and run the docker image, in the local machine exec:
+# docker build . -t <image_name> -f Dockerfile
+# docker run -it <image_name> /bin/bash
 
-# docker build . -t <nome_immagine> -f Dockerfile
-# docker run -i <nome_immagine>
-# Copy the launcher.sh script into the /app directory in the image
-COPY launcher.sh .
-
-# Ensure the script has the correct line endings (optional, if developing on Windows)
-RUN apt-get update && apt-get install -y dos2unix && dos2unix launcher.sh
-
-# Make the script executable
-RUN chmod +x launcher.sh
-
-# Run the script
-CMD ["./launcher.sh"]
+# In order to exec teh project
+# python3 main.py ...
