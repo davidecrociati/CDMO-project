@@ -1,7 +1,7 @@
 import os,sys
 from utils.utils import *
 from datetime import timedelta
-from argparse import ArgumentParser
+from argparse import ArgumentParser,RawTextHelpFormatter
 this_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(this_dir)
 
@@ -13,9 +13,9 @@ class Configuration:
         self.results_folder='test'
         self.indent_results=True
         self.first=1
-        self.last=1
+        self.last=21
         self.timeout=300
-        self.run_checker=False
+        self.run_checker=True
 
     def read_instances(self):
         return [self.instances_folder+'/'+instance for instance in sorted(os.listdir(self.instances_folder)) if instance.endswith('.dzn')]
@@ -40,28 +40,30 @@ def load_config(config_path, configuration:Configuration):
 def main(args):
     configuration=Configuration()
     RUN_CP=RUN_SAT=RUN_SMT=RUN_MIP=True
+    approach=args.cp or args.sat or args.smt or args.mip
+    if (args.instances or approach) and not args.config:
+        configuration.results_folder+='_temp'
+        if os.path.exists(configuration.results_folder) and not args.keep_folder:
+            import shutil
+            shutil.rmtree(configuration.results_folder)
     if args.config:
         load_config(args.config,configuration)
-    if args.instance:
-        i=args.instance
-        if i<1 or 1>21:raise ValueError(f'Invalid instance number. It must be in [1,21], instead got {i}')
-        configuration.first=configuration.last=i
-    if args.approach:
-        match args.approach:
-            case 'cp':
-                RUN_CP=True
-                RUN_SAT=RUN_SMT=RUN_MIP=False
-            case 'sat':
-                RUN_SAT=True
-                RUN_CP=RUN_SMT=RUN_MIP=False
-            case 'smt':
-                RUN_SMT=True
-                RUN_CP=RUN_SAT=RUN_MIP=False
-            case 'mip':
-                RUN_MIP=True
-                RUN_CP=RUN_SAT=RUN_SMT=False
-            case _:
-                raise ValueError("Invalid approach. Solver must be one of: cp, sat, smt, mip")
+    instances_numbers=[]
+    if args.instances:
+        for i in args.instances:
+            if i<1 or i>21:raise ValueError(f'Invalid instance number. It must be in [1,21], instead got {i}')
+        instances_numbers=args.instances
+    else: 
+        instances_numbers=[*range(configuration.first,configuration.last+1)]
+    if approach:
+        RUN_CP=RUN_SAT=RUN_SMT=RUN_MIP=False
+    if args.cp:  RUN_CP =True
+    if args.sat: RUN_SAT=True
+    if args.smt: RUN_SMT=True
+    if args.mip: RUN_MIP=True
+    
+
+    executable_instances=[configuration.instances_names[i-1] for i in instances_numbers]
 
     # ============
     # |    CP    |
@@ -109,13 +111,11 @@ def main(args):
             },
         }
         print('Solving with CP:')
-        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
+        for instance_file in executable_instances:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in CP_models:
-                # print(model)
                 for solver in CP_models[model]['solvers']:
-                    # print(solver)
                     for param_name,params in CP_models[model]['solvers'][solver]:
                         print(f'\tUsing {model} with {solver}-{param_name}...')
                         key=f'{os.path.splitext(model)[0]}_{solver}_{param_name}'
@@ -123,7 +123,6 @@ def main(args):
                                                                 model,
                                                                 solver,
                                                                 params)
-            # saveJSON(instance_results,instance_file,configuration.results_folder+'/CP/',format=configuration.indent_results)
                         updateJSON(instance_results,instance_file,configuration.results_folder+'/CP_test/',format=configuration.indent_results)
 
     # ============
@@ -286,7 +285,7 @@ def main(args):
         }
         
         print('Solving with SAT:')
-        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
+        for instance_file in executable_instances:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for model in SAT_models :
@@ -356,7 +355,7 @@ def main(args):
         }
         
         print('Solving with SMT:')
-        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
+        for instance_file in executable_instances:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for solver in SMT_models:
@@ -401,7 +400,7 @@ def main(args):
                 }
             }
         print('Solving with MIP:')
-        for instance_file in configuration.instances_names[configuration.first-1:configuration.last]:
+        for instance_file in executable_instances:
             print(f'  Solving {instance_file}...')
             instance_results={}
             for solver in MIP_models['solvers']:
@@ -415,11 +414,32 @@ def main(args):
                     instance_results[f'{solver}_{param_name}'] = result
                     updateJSON(instance_results,instance_file,configuration.results_folder+'/MIP/',format=configuration.indent_results)
 
-    if configuration.run_checker:run_checker("res")
+    if configuration.run_checker:run_checker(configuration.results_folder)
 
 if __name__=='__main__':
-    parser=ArgumentParser()
-    parser.add_argument('-i',dest='instance',type=int,required=False,help='Instance number to execute. Must be in [1,21]')
-    parser.add_argument('-a',dest='approach',type=str,required=False,help='What approach to use. Must be one of: cp, sat, smt, mip')
-    parser.add_argument('-c',dest='config',type=str,required=False,help='JSON configuration file')
+    desc='''When run with no arguments all the instances_numbers will be solved with all the approaches. The user can choose if solving one specific instance and/or approach.
+The user can also specify a config file to change settings such as folder names or instances_numbers to execute (in the form [first,last], both included).
+
+The JSON must be like this:
+{
+    "instances_folder": "instances_dzn",
+    "smt_models_folder": "SMT/models",
+    "results_folder": "res",
+    "indent_results": true,
+    "first": 1,
+    "last": 21,
+    "timeout": 300,
+    "run_checker": true
+}
+
+If an instance or an approach is parsed, the results will be stored in a '<results_folder>_temp' folder. It will be cleared with the next execution if the -keep-folder flag is not set to True
+If a directory is specified in the configuration JSON, the folder won't be cleared, but the instances results will be overwritten.'''
+    parser=ArgumentParser(description=desc,formatter_class=RawTextHelpFormatter,allow_abbrev=True)
+    parser.add_argument('-instances',type=int, nargs='+',required=False,help='Instance number to execute.')
+    parser.add_argument('-config',type=str,required=False,help='JSON configuration file.')
+    parser.add_argument('-cp',action='store_true',help='Run cp.')
+    parser.add_argument('-sat',action='store_true',help='Run sat.')
+    parser.add_argument('-smt',action='store_true',help='Run smt.')
+    parser.add_argument('-mip',action='store_true',help='Run mip.')
+    parser.add_argument('-keep_folder',action='store_true',help='Do not empty the folder when executing again.')
     main(parser.parse_args())
