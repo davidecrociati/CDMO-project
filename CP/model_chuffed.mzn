@@ -15,11 +15,12 @@ array[COURIERS] of int: courier_capacities;
 % items size 
 array[ITEMS] of int: item_sizes;
 % matrix of distances between nodes
+set of int:DELIVERS = 1..num_items-num_couriers+1;
 array[NODES, NODES] of int: distances;
 
 %%%%%%%%%%%%%%% DECISION VARIABLES %%%%%%%%%%%%%%%
 % route taken by each courier, represented as a sequence of nodes
-array[COURIERS, ITEMS] of var NODES: stops;
+array[COURIERS, DELIVERS] of var NODES: stops;
 
 % who is responsible for the delivery of a specific item
 array[ITEMS] of var COURIERS: item_responsability;
@@ -54,7 +55,7 @@ constraint forall(i in ITEMS)(
 
 % channeling constraint: the number of items delivered by a courier in 'item_responsibility' matches the stops in 'stops'
 constraint forall(c in COURIERS)(
-  forall(i in ITEMS)(
+  forall(i in DELIVERS)(
     i <= count(item_responsability, c) <-> stops[c, i] != depot
 ));
 
@@ -69,7 +70,7 @@ constraint forall(c in COURIERS, i in ITEMS)(
 % compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
 array[ITEMS] of var NODES:successors; 
 constraint forall(c in COURIERS)(
-  forall(i in 1..num_items-1)(
+  forall(i in 1..num_items-num_couriers)(
     if stops[c, i] != depot then
       successors[stops[c,i]] = stops[c, i+1] endif
   )
@@ -82,15 +83,15 @@ constraint forall(c in COURIERS)(
 constraint forall(c in COURIERS)(
     distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) 
     + distances[depot, stops[c, 1]]
-    + distances[stops[c, num_items], depot]
+    + distances[stops[c, num_items-num_couriers+1], depot]
 );
 
 % minimize the longest trip distance among all couriers
 constraint longest_trip = max(distances_traveled);
 solve :: seq_search([
   int_search(stops, first_fail, indomain_min),
-  int_search(item_responsability, first_fail, indomain_min),
-  int_search([longest_trip], first_fail, indomain_min)
+  % int_search(item_responsability, first_fail, indomain_min),
+  % int_search([longest_trip], first_fail, indomain_min)
 ])minimize(longest_trip);
 
 
@@ -113,9 +114,3 @@ solve :: seq_search([
 %        ];
        
 % output["Obj: "++show(longest_trip)++"\n"];
-
-% output for the json, to be parsed in python:
-% output [ show(stops[i,j])++ "," ++ 
-%          if j == num_items /\i!=num_couriers then "\n" endif |
-%          i in COURIERS, j in ITEMS
-%          ];

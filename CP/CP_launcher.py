@@ -15,55 +15,6 @@ def solve_mzn(mzn_file, dzn_file, solver, params):
 
     return result
 
-
-def launch(instances: list, model: str = 'model.mzn', solver: str = 'chuffed', params: dict = None, verbose=False):
-    '''
-    Parameters:
-    instances (list): A list of file paths to the instance files to be solved.
-    model (str): The file path to the MiniZinc model file.
-    solver (str): The solver to use for solving the instances.
-    params (dict): Additional parameters to pass to the solver.
-
-    Returns:
-    dict: A dictionary where keys are instance file paths and values are the solutions.
-    '''
-    if params == None:
-        params = {
-            'timeout': timedelta(seconds=300),
-            'free_search': False
-        }
-
-    results = []
-    for instance in instances:
-        execTime = time.time()
-        print(f"Solving {instance} ...")
-        solution = solve_mzn('CP/'+model, instance, solver, params)
-        execTime = math.floor(time.time()-execTime)
-        if verbose:
-            print(solution, getattr(solution, 'statistics'))
-        if execTime > params['timeout'].total_seconds():
-            execTime = math.floor(params['timeout'].total_seconds())
-        try:
-            obj = solution['objective']
-        except:
-            obj = -1
-            # print(solution,type(solution),str(solution))
-        if obj == -1:
-            obj = 'N/A'
-        if str(solution) != 'None':
-            solution = tolist(solution['stops'])
-        else:
-            solution=[]
-        results.append({
-            "time": execTime,
-            "optimal": (execTime < params['timeout'].total_seconds()),
-            "obj": obj,
-            "sol": solution
-        })
-        # print(solution)
-
-    return results
-
 def solve_instance(
         instance_file,
         model,
@@ -74,8 +25,7 @@ def solve_instance(
     execTime = time.time()
     solution = solve_mzn('CP/'+model, instance_file, solver, params)
     execTime = math.floor(time.time()-execTime)
-    if verbose:
-        print(solution, getattr(solution, 'statistics'))
+    if verbose:print(solution, getattr(solution, 'statistics'))
     if execTime > params['timeout'].total_seconds():
         execTime = math.floor(params['timeout'].total_seconds())
     try:
@@ -85,7 +35,7 @@ def solve_instance(
     if obj == -1:
         obj = 'N/A'
     if str(solution) != 'None':
-        solution = tolist(solution['stops'])
+        solution = tolist(solution['stops'],parse_dzn(instance_file)['num_items']+1)
     else:
         solution=[]
     return {

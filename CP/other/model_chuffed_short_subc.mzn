@@ -68,12 +68,18 @@ constraint forall(c in COURIERS, i in ITEMS)(
 
 % compute total distances for each courier
 % compute the successor nodes for each item to optimize distance calculation (accessing directly to distances[stops[c, i],  stops[c, i+1]] it's extremely slower)
-array[ITEMS] of var NODES:successors; 
+array[COURIERS,NODES] of var NODES:successors; 
+constraint forall(c in COURIERS)(
+  subcircuit([successors[c,i] |i in NODES])
+);
+
 constraint forall(c in COURIERS)(
   forall(i in 1..num_items-num_couriers)(
-    if stops[c, i] != depot then
-      successors[stops[c,i]] = stops[c, i+1] endif
+    stops[c,i]!=stops[c,i+1]->successors[c,stops[c,i]]=stops[c,i+1]
   )
+);
+constraint forall(c in COURIERS)(
+  successors[c,depot]=stops[c,1]
 );
 
 % the distance traveled by each courier is the sum of the distances between a node and its successor 
@@ -81,15 +87,17 @@ constraint forall(c in COURIERS)(
 % + the distance from the last item delivered to the depot
 % (in this way we guarantee that the courier's route starts and ends at the depot)
 constraint forall(c in COURIERS)(
-    distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) 
-    + distances[depot, stops[c, 1]]
-    + distances[stops[c, num_items-num_couriers+1], depot]
+%     distances_traveled[c] = sum([distances[i, successors[i]]| i in ITEMS where item_responsability[i] = c]) 
+%     + distances[depot, stops[c, 1]]
+%     + distances[stops[c, num_items-num_couriers+1], depot]
+      distances_traveled[c] = sum([distances[i,successors[c, i]]| i in NODES where successors[c, i] != i])
 );
 
 % minimize the longest trip distance among all couriers
-constraint longest_trip = max(distances_traveled);
+constraint longest_trip= max(distances_traveled);
 solve :: seq_search([
   int_search(stops, first_fail, indomain_min),
+%   int_search(successors, first_fail, indomain_min),
   int_search(item_responsability, first_fail, indomain_min),
   int_search([longest_trip], first_fail, indomain_min)
 ])minimize(longest_trip);
