@@ -88,13 +88,11 @@ constraint forall(c in COURIERS)(
 
 % minimize the longest trip distance among all couriers
 constraint longest_trip = max(distances_traveled);
-solve :: seq_search([
-  int_search(stops, first_fail, indomain_split),
-  int_search(item_responsability, first_fail, indomain_split),
-  int_search([longest_trip], first_fail, indomain_min)
+solve :: restart_luby(100) :: relax_and_reconstruct(array1d(stops), 90) :: seq_search([
+  int_search(stops, first_fail, indomain_random),
+  int_search(item_responsability, first_fail, indomain_random),
+%   int_search([longest_trip], first_fail, indomain_min)
 ])
-%       :: relax_and_reconstruct()
-%       :: restart_luby(5)
 minimize(longest_trip);
 
 
@@ -116,4 +114,4 @@ minimize(longest_trip);
 %         |i in COURIERS, j in ITEMS
 %        ];
        
-% output["Obj: "++show(longest_trip)++"\n"];
+output["Obj: "++show(longest_trip)++"\n"];

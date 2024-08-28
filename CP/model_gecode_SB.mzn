@@ -76,21 +76,6 @@ constraint forall(c in COURIERS)(
   )
 );
 
-
-% total load carried by each courier
-array[COURIERS] of var int: load_size; 
-% Auxiliary variable useful for the symmetry breaking constraint
-constraint forall(c in COURIERS)(
-    load_size[c] = sum([item_sizes[i] | i in ITEMS where item_responsability[i] = c]) 
-);
-% Symmetry breaking constraint
-constraint forall (c1 in COURIERS)(
-  forall(c2 in COURIERS where c1 != c2)(
-    if courier_capacities[c1]  > courier_capacities[c2] then
-    load_size[c1] > load_size[c2] endif
-  )
-);
-
 % the distance traveled by each courier is the sum of the distances between a node and its successor 
 % + the distance from the depot to the first item delivered
 % + the distance from the last item delivered to the depot
@@ -100,15 +85,20 @@ constraint forall(c in COURIERS)(
     + distances[depot, stops[c, 1]]
     + distances[stops[c, num_items-num_couriers+1], depot]
 );
-
+% constraint forall(c1 in 1..num_couriers-1)(
+%     forall(c2 in c1+1..num_couriers)(
+%       if courier_capacities[c1]=courier_capacities[c2] then
+%           stops[c1,1] <= stops[c2,1]
+%         endif
+%     )
+% );
 % minimize the longest trip distance among all couriers
 constraint longest_trip = max(distances_traveled);
-solve :: seq_search([
-  int_search(stops, first_fail, indomain_split),
-  int_search(item_responsability, first_fail, indomain_split),
-  int_search([longest_trip], first_fail, indomain_min)
+solve :: restart_luby(100) :: relax_and_reconstruct(array1d(stops), 90) :: seq_search([
+  int_search(stops, first_fail, indomain_random),
+  int_search(item_responsability, first_fail, indomain_random),
+%   int_search([longest_trip], first_fail, indomain_min)
 ])
-%       :: restart_luby(1)
 minimize(longest_trip);
 
 
@@ -130,4 +120,4 @@ minimize(longest_trip);
 %         |i in COURIERS, j in ITEMS
 %        ];
        
-% output["Obj: "++show(longest_trip)++"\n"];
+output["Obj: "++show(longest_trip)++"\n"];
