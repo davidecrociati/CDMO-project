@@ -7,7 +7,7 @@ def solve(solver, model_name, params, data, verbose):
     try:
         match model_name:
             case 'MTZ':
-                results = set_constraints_Miller_Tucker_Zemlin(prob, data)
+                results = set_constraints_Miller_Tucker_Zemlin_symmetric(prob, data)
             case 'enum_all':
                 results = set_constraints_enumerate_all(prob, data)
             case _:
@@ -32,12 +32,12 @@ def solve(solver, model_name, params, data, verbose):
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
-            sol = parse_results(*results)
+            sol = parse_results_symmetric(*results)
             obj = int(prob.objective.value())
             opt = True
         # NOT OPTIMAL SOLUTION FOUND
         case const.LpSolutionIntegerFeasible:
-            sol = parse_results(*results)
+            sol = parse_results_symmetric(*results)
             obj = int(prob.objective.value())
             opt = False
             solve_time = int(params['timeout'])
@@ -157,6 +157,86 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
                     problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i][j][k])
 
     return (x, num_couriers, num_items)
+
+
+def set_constraints_Miller_Tucker_Zemlin_symmetric(problem, data):
+    num_couriers = data['num_couriers']
+    num_items = data['num_items']
+    courier_capacities = data['courier_capacities']
+    item_sizes = data['item_sizes']
+    distances = data['distances']
+    lower_bound = data['lower_bound']
+    upper_bound = data['upper_bound']
+    
+    # definition of variables which are 0/1
+    # courier k do the route from i to j or from j to i
+    x = [[LpVariable("x%s_%s_%s"%(i,j, k), lowBound=0, upBound=2, cat="Integer") for k in range(num_couriers)]for i in range(num_items+1) for j in range(i)]
+    y = [[LpVariable("y_%s_%s"%(i,k), cat="Binary")for k in range(num_couriers)]for i in range(num_items+1)]
+    print(x)
+    print(y)
+    # add objective function
+    # longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
+    # for k in range(num_couriers):
+    #     problem += lpSum(distances[i][j] * x[i*num_items + j - (i+1)*(i+2)//2][k]  
+    #                         for j in range(num_items+1) 
+    #                         for i in range (j))<= longest_trip
+    # problem += longest_trip
+    
+    # # constraints
+    # # only one visit per vehicle per item location
+    # for i in range(num_items):
+    #     problem += lpSum(y[i][k] for k in range(num_couriers))==1
+
+    # #depot
+    # problem += lpSum(y[num_items][k] for k in range(num_couriers))==num_couriers
+
+    # # all items delivered
+    # for k in range(num_couriers):
+    #     for i in range(num_items+1):
+    #         problem += lpSum(x[i*num_items + j - (i+1)*(i+2)//2] if i < j else 0 for j in range(num_items)) == 2*y[i][k]
+
+
+    # # the delivery capacity of each vehicle should not exceed the maximum capacity
+    # for k in range(num_couriers):
+    #     problem += lpSum(item_sizes[j] * x[i*num_items + j - (i+1)*(i+2)//2]   for j in range (num_items) for i in range(j)) <= courier_capacities[k] 
+
+    # u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
+    # # Set the constraints for the MTZ formulation for each courier
+    # for k in range(num_couriers):
+    #     for i in range(num_items):
+    #         for j in range(num_items):
+    #             if item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
+    #                 problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i*num_items + j - (i+1)*(i+2)//2][k])
+
+    return (x, y, num_couriers, num_items)
+
+def parse_results_symmetric(result, y, num_couriers, num_items):
+    for k in range(num_couriers):
+        print(f'courier {k}:')
+        for i in range(num_items+1):
+            l=''
+            for j in range(num_items+1):
+                if i<j:
+                    l+=f'{result[i*num_items + j - (i+1)*(i+2)//2][k].value()}'
+                else:
+                    l+='    '
+            print(l)
+    res = []
+    for k in range(num_couriers):
+        res.append([])
+        end_of_route = False
+        i = num_items
+        j = 0
+        while not end_of_route:
+            if i!=j and result[i*num_items + j - (i+1)*(i+2)//2][k].value() == 1 and j != num_items:
+                res[k].append(j+1)
+                i = j
+                j = 0
+            elif i!=j and result[i*num_items + j - (i+1)*(i+2)//2][k].value() == 1 and j == num_items:
+                end_of_route = True
+            else:
+                j += 1
+    return res
 
 def parse_results(result, num_couriers, num_items):
     res = []
