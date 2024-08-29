@@ -1,25 +1,102 @@
 # CDMO-project
 
-It has become very common recently, especially after the outbreak of the COVID-
-19 pandemic, to send or receive items online (food, goods, clothes, documents,
-. . . ). 
-Hence, it is more and more important for companies to efficiently schedule
-the dispatching of items through different couriers, in order to minimize the
-transportation costs.
+Project exam for the course in _"Combinatorial Decision Making and Optimization"_ of the Master's degree in Artificial Intelligence, University of Bologna (2023/2024).
 
-As the combinatorial decision and optimization expert, students are asked
-to solve the Multiple Couriers Planning (MCP) problem which is defined as
-follows. 
+## Docker Instructions
 
-We have m couriers that must distribute n ≥ m items at different
-customer locations. Each courier i has a maximum load size li . Each item
-j has a distribution point j and a size sj (which can represent for instance a
-weight or a volume). The goal of MCP is to decide for each courier the items
-to be distributed and plan a tour (i.e. a sequence of location points to visit)
-to perform the necessary distribution tasks. Each courier tour must start and
-end at a given origin point o. Moreover, the maximum load li of the courier i
-should be respected when items are assigned to it. 
+1. Open the terminal.
+2. Navigate to the directory containing this README.
+3. To build the Docker image, choose a name and run:
 
-To achieve a fair division
-among drivers, the objective is to minimize the maximum distance travelled by
-any courier
+   `docker build . -t <image_name> -f Dockerfile`
+   
+4. Launch the Docker image in a bash shell to use it:
+
+   `docker run -it <image_name> /bin/bash`
+   
+5. The CLI usage instructions will be displayed in the terminal. You can also refer to them [in the following section](#execution-of-the-main).
+
+6. After all executions, to extract the results, first obtain the container ID with:
+
+   `docker ps -qf "ancestor=<image_name>"`
+
+   Then, extract the folder with:
+
+   `docker cp <container_id>:<folder_path_in_container> <folder_path_in_local>`
+
+   **Note**: When specifying the path in the container, remember that the entire project is located in `/project`.
+
+
+## Execution of the main
+
+The `main2.py` script is the primary entry point for running different combinatorial optimization approaches on specified instances. The script can be executed with various command-line options, allowing for flexible configuration and execution.
+
+### Basic Usage
+
+Running `main2.py` without any arguments will solve all instance numbers using all available approaches (`cp`, `sat`, `smt`, `mip`). However, you can customize the execution by specifying particular instances, approaches, or a configuration file.
+
+### Command-line Options
+
+- `-h, --help`
+    
+    Displays the help message and exits.
+
+- `-instances INSTANCES [INSTANCES ...]`
+    
+    Specify one or more instance numbers to execute.
+    
+    - Example: `-instances 1 2 3`
+
+- `-config CONFIG`
+
+    Provide a JSON configuration file to customize execution settings such as folder names or instance numbers.
+
+    - Example: `-config settings.json`
+
+- `-cp`
+    
+    Run the CP (Constraint Programming) approach.
+
+- `-sat`
+    
+    Run the SAT (Satisfiability) approach.
+
+- `-smt`
+    
+    Run the SMT (Satisfiability Modulo Theories) approach.
+
+- `-mip`
+    
+    Run the MIP (Mixed-Integer Programming) approach.
+
+- `-keep_folder`
+    
+    Prevent the results folder from being emptied during subsequent executions.
+
+### Configuration File
+
+The configuration file is a JSON that can be used to define settings such as folder names and instance numbers. Below is an example of a JSON configuration:
+
+```json
+{
+    "instances_folder": "instances_dzn",
+    "smt_models_folder": "SMT/models",
+    "results_folder": "res",
+    "indent_results": true,
+    "first": 1,
+    "last": 21,
+    "timeout": 300,
+    "run_checker": true
+}
+```
+### Result folder
+If an instance or an approach is parsed, the results will be stored in a `<results_folder>_temp` folder.
+
+
+###### Authors
+
+• [Davide Crociati](https://github.com/davidecrociati)
+
+• [Davide Sonno](https://github.com/davidesonno)
+
+• [Lorenzo Pellegrino](https://github.com/lollopelle01)
