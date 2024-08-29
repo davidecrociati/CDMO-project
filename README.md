@@ -36,7 +36,7 @@ Running `main.py` without any arguments will solve all instance numbers using al
 - `-h, --help`
 
   Displays the help message and exits.
-- `-instances INSTANCES [INSTANCES ...]`
+- `-i, -instances INSTANCES [INSTANCES ...]`
 
   Specify one or more instance numbers to execute.
 - `-config CONFIG`
@@ -54,7 +54,7 @@ Running `main.py` without any arguments will solve all instance numbers using al
 - `-mip`
 
   Run the MIP (Mixed-Integer Programming) approach.
-- `-keep_folder`
+- `-k, -keep_folder`
 
   Prevent the results folder from being emptied during subsequent executions from the CLI.
 
@@ -82,9 +82,7 @@ If an instance or an approach is parsed from the CLI, the results will be stored
 ### Example Usage
 
 - `python.exe main.py -cp -i 1`
-
 - `python.exe main.py -k -cp -sat -mip -i 1 2 3`
-
 - `python.exe main.py -k -cp -sat -i 1 2 3 -config config.json`
 
 ### SMT Models
