@@ -16,17 +16,17 @@ def solve(solver, model_name, params, data, verbose):
 
         match solver:
             case 'cbc':
-                solver=PULP_CBC_CMD(msg=verbose, timeLimit=remaining_time)
+                solver=PULP_CBC_CMD(msg=verbose, timeLimit=remaining_time, presolve=False)
             case 'glpk':
                 solver=GLPK_CMD(msg=verbose, timeLimit=math.ceil(remaining_time))
             case _:
                 raise KeyError('Unsupported solver')
         prob.solve(solver)
     except MemoryError: # It can happen with big instances using full enumeration of the subtours
-        return [], -1, False, 300
+        return [], "N/A", False, params['timeout']
     
     sol = []
-    obj = -1
+    obj = "N/A"
     opt = False
     solve_time = math.floor(time.time() - init_time)
     match prob.sol_status:
@@ -40,13 +40,13 @@ def solve(solver, model_name, params, data, verbose):
             sol = parse_results(*results)
             obj = int(prob.objective.value())
             opt = False
-            solve_time = 300
+            solve_time = int(params['timeout'])
         # INFEASIBLE SOLUTION OR NO SOLUTION FOUND OR UNBOUNDED
         case _:
             sol = []
-            obj =-1
+            obj ="N/A"
             opt = False
-            solve_time = 300
+            solve_time = int(params['timeout'])
     return sol, obj, opt, solve_time
 
         
@@ -61,7 +61,7 @@ def set_constraints_enumerate_all(problem, data):
     
     # definition of variables which are 0/1
     # courier k do the route from i to j
-    x = [[[LpVariable("x%s_%s,%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
+    x = [[[LpVariable("x%s_%s_%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
 
     # add objective function
     longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
@@ -86,8 +86,8 @@ def set_constraints_enumerate_all(problem, data):
     # the number of vehicles coming in and out of a item location is the same
     for k in range(num_couriers):
         for j in range(num_items+1):
-            problem += lpSum(x[i][j][k] if i != j else 0 
-                                for i in range(num_items+1)) -  lpSum(x[j][i][k] for i in range(num_items+1)) == 0
+            problem += lpSum(x[i][j][k] if i != j else 0    
+                                for i in range(num_items+1)) -  lpSum(x[j][i][k]if i != j else 0  for i in range(num_items+1)) == 0
 
     # the delivery capacity of each vehicle should not exceed the maximum capacity
     for k in range(num_couriers):
@@ -116,7 +116,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     
     # definition of variables which are 0/1
     # courier k do the route from i to j
-    x = [[[LpVariable("x%s_%s,%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
+    x = [[[LpVariable("x%s_%s_%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
 
     # add objective function
     longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
@@ -142,7 +142,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     for k in range(num_couriers):
         for j in range(num_items+1):
             problem += lpSum(x[i][j][k] if i != j else 0 
-                                for i in range(num_items+1)) -  lpSum(x[j][i][k] for i in range(num_items+1)) == 0
+                                for i in range(num_items+1)) -  lpSum(x[j][i][k] if i != j else 0  for i in range(num_items+1)) == 0
 
     # the delivery capacity of each vehicle should not exceed the maximum capacity
     for k in range(num_couriers):
@@ -153,11 +153,8 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     for k in range(num_couriers):
         for i in range(num_items):
             for j in range(num_items):
-                if i != j:# and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
+                if i != j and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
                     problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i][j][k])
-                    # problem += u[i][k] - u[j][k] + 1 <= (num_items-1) * (1-x[i][j][k])
-        # problem += item_sizes[i]<=u[(i, k)]
-        # problem += u[(i, k)]<=courier_capacities[k]
 
     return (x, num_couriers, num_items)
 
