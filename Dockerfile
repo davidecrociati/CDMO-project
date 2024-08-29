@@ -13,12 +13,3 @@ RUN apt-get update \
 
 # As default prints the help 
 RUN echo 'python3 /project/main2.py -h' >> /root/.bashrc
-
-## BUILD
-# docker build . -t <image_name> -f Dockerfile
-
-## RUN
-# docker run -it <image_name> /bin/bash
-
-## EXTRACT RESULTS
-# docker cp <container_id>:<path_in_container> <path_in_local>
