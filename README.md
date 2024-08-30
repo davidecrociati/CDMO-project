@@ -25,27 +25,23 @@ Project exam for the course in _"Combinatorial Decision Making and Optimization"
 
 ## Execution of the main
 
-The `main2.py` script is the primary entry point for running different combinatorial optimization approaches on specified instances. The script can be executed with various command-line options, allowing for flexible configuration and execution.
+The `main.py` script is the primary entry point for running different combinatorial optimization approaches on specified instances. The script can be executed with various command-line options, allowing for flexible configuration and execution.
 
 ### Basic Usage
 
-Running `main2.py` without any arguments will solve all instance numbers using all available approaches (`cp`, `sat`, `smt`, `mip`). However, you can customize the execution by specifying particular instances, approaches, or a configuration file.
+Running `main.py` without any arguments will solve all instance numbers using all available approaches (`cp`, `sat`, `smt`, `mip`). However, you can customize the execution by specifying particular instances, approaches, or a configuration file. More than one approach can be used to solve one or more instances.
 
 ### Command-line Options
 
 - `-h, --help`
 
   Displays the help message and exits.
-- `-instances INSTANCES [INSTANCES ...]`
+- `-i, -instances INSTANCES [INSTANCES ...]`
 
   Specify one or more instance numbers to execute.
-
-  - Example: `-instances 1 2 3`
 - `-config CONFIG`
 
   Provide a JSON configuration file to customize execution settings such as folder names or instance numbers.
-
-  - Example: `-config settings.json`
 - `-cp`
 
   Run the CP (Constraint Programming) approach.
@@ -58,13 +54,13 @@ Running `main2.py` without any arguments will solve all instance numbers using a
 - `-mip`
 
   Run the MIP (Mixed-Integer Programming) approach.
-- `-keep_folder`
+- `-k, -keep_folder`
 
-  Prevent the results folder from being emptied during subsequent executions.
+  Prevent the results folder from being emptied during subsequent executions from the CLI.
 
 ### Configuration File
 
-The configuration file is a JSON that can be used to define settings such as folder names and instance numbers. Below is an example of a JSON configuration:
+The configuration file is a JSON that can be used to define settings such as folder names and instance numbers. Below is an example of a JSON configuration. All the keys must be present:
 
 ```json
 {
@@ -79,11 +75,21 @@ The configuration file is a JSON that can be used to define settings such as fol
 }
 ```
 
-### Result folder
+### Result Folder
 
-If an instance or an approach is parsed, the results will be stored in a `<results_folder>_temp` folder.
+If an instance or an approach is parsed from the CLI, the results will be stored in a `<results_folder>_temp` folder.
 
-###### Authors
+### Example Usage
+
+- `python.exe main.py -cp -i 1`
+- `python.exe main.py -k -cp -sat -mip -i 1 2 3`
+- `python.exe main.py -k -cp -sat -i 1 2 3 -config config.json`
+
+### SMT Models
+
+When solving using SMT, a model is compiled as a `.smt2` file and stored in the designated folder. Other solvers could then used by directly loading the model.
+
+### Authors
 
 • [Davide Crociati](https://github.com/davidecrociati)
 
