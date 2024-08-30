@@ -1,10 +1,4 @@
 {
-	"cbc_enum_all":{
-		"time":300,
-		"optimal":false,
-		"obj":-1,
-		"sol":[]
-	},
 	"cbc_MTZ":{
 		"time":300,
 		"optimal":false,

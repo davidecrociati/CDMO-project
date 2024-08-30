@@ -24,7 +24,7 @@ if firstInstance>lastInstance:
 TIMEOUT=300 # seconds
 
 
-CHECKER=False
+CHECKER=True
 
 
 def main(argv):

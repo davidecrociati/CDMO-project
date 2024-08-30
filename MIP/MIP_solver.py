@@ -7,7 +7,7 @@ def solve(solver, model_name, params, data, verbose):
     try:
         match model_name:
             case 'MTZ':
-                results = set_constraints_Miller_Tucker_Zemlin_symmetric(prob, data)
+                results = set_constraints_Miller_Tucker_Zemlin(prob, data)
             case 'enum_all':
                 results = set_constraints_enumerate_all(prob, data)
             case _:
@@ -29,16 +29,16 @@ def solve(solver, model_name, params, data, verbose):
     obj = "N/A"
     opt = False
     solve_time = math.floor(time.time() - init_time)
-    print(prob.objective.value())
+    # print(prob.objective.value())
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
-            sol = parse_results_symmetric(*results)
+            sol = parse_results(*results)
             obj = int(prob.objective.value())
             opt = True
         # NOT OPTIMAL SOLUTION FOUND
         case const.LpSolutionIntegerFeasible:
-            sol = parse_results_symmetric(*results)
+            sol = parse_results(*results)
             obj = int(prob.objective.value())
             opt = False
             solve_time = int(params['timeout'])
@@ -99,7 +99,7 @@ def set_constraints_enumerate_all(problem, data):
     for i in range(2,num_items+1):  # generates all combinations of i locations from the total number of locations
         subtours += itertools.combinations(range(num_items), i)
     for s in subtours:
-        problem += lpSum(x[i][j][k] if i !=j else 0 # calculates the total number of edges in the subset s across all couriers
+        problem += lpSum(x[i][j][k] if i !=j else 0 # calculates the total number of edges in the subset s 
                          for i, j in itertools.permutations(s,2)  # generates all possible directed edges between pairs of locations in subset s
                          for k in range(num_couriers)) <= len(s) - 1    # the total number of edges in any subset s is less than or equal to |s| - 1                                                                     
 
@@ -117,7 +117,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     
     # definition of variables which are 0/1
     # courier k do the route from i to j
-    x = [[[LpVariable("x%s_%s_%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
+    x = [[[LpVariable("x%s_%s,%s"%(i,j,k), cat="Binary") if i != j else None for k in range(num_couriers)]for j in range(num_items+1)] for i in range(num_items+1)]
 
     # add objective function
     longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
@@ -143,7 +143,7 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     for k in range(num_couriers):
         for j in range(num_items+1):
             problem += lpSum(x[i][j][k] if i != j else 0 
-                                for i in range(num_items+1)) -  lpSum(x[j][i][k] if i != j else 0  for i in range(num_items+1)) == 0
+                                for i in range(num_items+1)) -  lpSum(x[j][i][k] for i in range(num_items+1)) == 0
 
     # the delivery capacity of each vehicle should not exceed the maximum capacity
     for k in range(num_couriers):
@@ -154,120 +154,10 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     for k in range(num_couriers):
         for i in range(num_items):
             for j in range(num_items):
-                if i != j and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
+                if i != j:
                     problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i][j][k])
 
     return (x, num_couriers, num_items)
-
-
-def set_constraints_Miller_Tucker_Zemlin_symmetric(problem, data):
-    num_couriers = data['num_couriers']
-    num_items = data['num_items']
-    courier_capacities = data['courier_capacities']
-    item_sizes = data['item_sizes']
-    distances = data['distances']
-    lower_bound = data['lower_bound']
-    upper_bound = data['upper_bound']
-    
-    # definition of variables which are 0/1
-    # courier k do the route from i to j or from j to i
-    x = [[LpVariable("x%s_%s_%s"%(i,j, k), lowBound=0, upBound=2, cat="Integer") for k in range(num_couriers)]for i in range(num_items+1) for j in range(i)]
-    y = [[LpVariable("y_%s_%s"%(i,k), cat="Binary")for k in range(num_couriers)]for i in range(num_items+1)]
-
-    # add objective function
-    longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
-    for k in range(num_couriers):
-        problem += lpSum(distances[i][j] * x[(i * (i - 1)) // 2 + j][k]  
-                            for j in range(num_items+1) 
-                            for i in range (j+1, num_items+1))<= longest_trip
-    problem += longest_trip
-    
-    # constraints
-    # only one visit per vehicle per item location
-    for i in range(num_items):
-        problem += lpSum(y[i][k] for k in range(num_couriers))==1
-
-    #depot
-    problem += lpSum(y[num_items][k] for k in range(num_couriers))==num_couriers
-
-    # all items delivered
-    for k in range(num_couriers):
-        for i in range(num_items+1):
-            problem += lpSum(x[(i1 * (i1 - 1)) // 2 + j1][k] for i1 in range(num_items+1)  for j1 in range(num_items+1) if i1>j1 and (i1 == i or j1 ==i)) == 2*y[i][k]
-
-
-    # the delivery capacity of each vehicle should not exceed the maximum capacity
-    for k in range(num_couriers):
-        problem += lpSum(item_sizes[i] * y[i][k]   for i in range(num_items)) <= courier_capacities[k] 
-
-    u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
-    # Set the constraints for the MTZ formulation for each courier
-    # for k in range(num_couriers):
-    #     for i in range(num_items):  
-    #         for j in range(num_items):
-    #             if i > j:# and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
-    #                 problem += u[(i, k)] - u[(j, k)] + j <= (num_items-1) * (1-x[(i * (i - 1)) // 2 + j][k])
-
-    # for k in range(num_couriers):
-    #     for s in subset(num_items):
-    #         for h in s:
-    #             problem += lpSum(x[e][k] for e in all edges of s)>=2*y[h][k]
-
-    return (x, y, num_couriers, num_items)
-
-def parse_results_symmetric(result, y, num_couriers, num_items):
-    print(result)
-    for k in range(num_couriers):
-        print(f'courier {k}:')
-        for i in range(num_items+1):
-            print(f'{int(y[i][k].value())} ')
-    
-    mat = [[[0 for _ in range(num_items + 1)] for _ in range(num_items + 1)]for c in range(num_couriers)]
-    
-    
-    for k in range(num_couriers):
-        print(f'courier {k}:')
-        for i in range(num_items+1):
-            l=''
-            for j in range(num_items+1):
-                if i>j:
-                    l+=f'{int(result[(i * (i - 1)) // 2 + j][k].value())}({i},{j}) '
-                    mat[k][i][j] = int(result[(i * (i - 1)) // 2 + j][k].value())
-                    mat[k][j][i] = mat[k][i][j]
-                else:
-                    l+=''
-        for r in mat[k]:
-            print(r)
-    
-    # for k in range(num_couriers):
-    #     print(f'courier {k}:')
-    #     for i in range(num_items+1):
-    #         print(f'{u[(i,k)].value()} ')
-    res = []
-    for k in range(num_couriers):
-        res.append([])
-        end_of_route = False
-        i = num_items
-        j = 0
-        i_ = i
-        j_ = j
-        while not end_of_route:
-            if mat[k][i][j] == 2:
-                res[k].append(j+1)
-                end_of_route = True
-            elif mat[k][i][j] !=0 and not (i_==j and j_==i):
-                if j != num_items:
-                    res[k].append(j+1)
-                    i_ = i
-                    j_ = j
-                    i = j
-                    j = 0
-                else:
-                    end_of_route = True
-            else:
-                j+=1
-        print(res[k])
-    return res
 
 def parse_results(result, num_couriers, num_items):
     res = []
