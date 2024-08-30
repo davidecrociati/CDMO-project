@@ -12,4 +12,4 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # As default prints the help 
-RUN echo 'python3 /project/main2.py -h' >> /root/.bashrc
+RUN echo 'python3 /project/main.py -h' >> /root/.bashrc
