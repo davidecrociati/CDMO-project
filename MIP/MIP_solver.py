@@ -29,6 +29,7 @@ def solve(solver, model_name, params, data, verbose):
     obj = "N/A"
     opt = False
     solve_time = math.floor(time.time() - init_time)
+    print(prob.objective.value())
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
@@ -172,70 +173,100 @@ def set_constraints_Miller_Tucker_Zemlin_symmetric(problem, data):
     # courier k do the route from i to j or from j to i
     x = [[LpVariable("x%s_%s_%s"%(i,j, k), lowBound=0, upBound=2, cat="Integer") for k in range(num_couriers)]for i in range(num_items+1) for j in range(i)]
     y = [[LpVariable("y_%s_%s"%(i,k), cat="Binary")for k in range(num_couriers)]for i in range(num_items+1)]
-    print(x)
-    print(y)
+
     # add objective function
-    # longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
-    # for k in range(num_couriers):
-    #     problem += lpSum(distances[i][j] * x[i*num_items + j - (i+1)*(i+2)//2][k]  
-    #                         for j in range(num_items+1) 
-    #                         for i in range (j))<= longest_trip
-    # problem += longest_trip
+    longest_trip = LpVariable(name=f'longest', lowBound=lower_bound, upBound=upper_bound, cat=LpInteger)
+    for k in range(num_couriers):
+        problem += lpSum(distances[i][j] * x[(i * (i - 1)) // 2 + j][k]  
+                            for j in range(num_items+1) 
+                            for i in range (j+1, num_items+1))<= longest_trip
+    problem += longest_trip
     
-    # # constraints
-    # # only one visit per vehicle per item location
-    # for i in range(num_items):
-    #     problem += lpSum(y[i][k] for k in range(num_couriers))==1
+    # constraints
+    # only one visit per vehicle per item location
+    for i in range(num_items):
+        problem += lpSum(y[i][k] for k in range(num_couriers))==1
 
-    # #depot
-    # problem += lpSum(y[num_items][k] for k in range(num_couriers))==num_couriers
+    #depot
+    problem += lpSum(y[num_items][k] for k in range(num_couriers))==num_couriers
 
-    # # all items delivered
+    # all items delivered
+    for k in range(num_couriers):
+        for i in range(num_items+1):
+            problem += lpSum(x[(i1 * (i1 - 1)) // 2 + j1][k] for i1 in range(num_items+1)  for j1 in range(num_items+1) if i1>j1 and (i1 == i or j1 ==i)) == 2*y[i][k]
+
+
+    # the delivery capacity of each vehicle should not exceed the maximum capacity
+    for k in range(num_couriers):
+        problem += lpSum(item_sizes[i] * y[i][k]   for i in range(num_items)) <= courier_capacities[k] 
+
+    u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
+    # Set the constraints for the MTZ formulation for each courier
     # for k in range(num_couriers):
-    #     for i in range(num_items+1):
-    #         problem += lpSum(x[i*num_items + j - (i+1)*(i+2)//2] if i < j else 0 for j in range(num_items)) == 2*y[i][k]
-
-
-    # # the delivery capacity of each vehicle should not exceed the maximum capacity
-    # for k in range(num_couriers):
-    #     problem += lpSum(item_sizes[j] * x[i*num_items + j - (i+1)*(i+2)//2]   for j in range (num_items) for i in range(j)) <= courier_capacities[k] 
-
-    # u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
-    # # Set the constraints for the MTZ formulation for each courier
-    # for k in range(num_couriers):
-    #     for i in range(num_items):
+    #     for i in range(num_items):  
     #         for j in range(num_items):
-    #             if item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
-    #                 problem += u[(i, k)] - u[(j, k)] + 1 <= (num_items-1) * (1-x[i*num_items + j - (i+1)*(i+2)//2][k])
+    #             if i > j:# and item_sizes[i]+item_sizes[j]<=courier_capacities[k]:
+    #                 problem += u[(i, k)] - u[(j, k)] + j <= (num_items-1) * (1-x[(i * (i - 1)) // 2 + j][k])
+
+    # for k in range(num_couriers):
+    #     for s in subset(num_items):
+    #         for h in s:
+    #             problem += lpSum(x[e][k] for e in all edges of s)>=2*y[h][k]
 
     return (x, y, num_couriers, num_items)
 
 def parse_results_symmetric(result, y, num_couriers, num_items):
+    print(result)
+    for k in range(num_couriers):
+        print(f'courier {k}:')
+        for i in range(num_items+1):
+            print(f'{int(y[i][k].value())} ')
+    
+    mat = [[[0 for _ in range(num_items + 1)] for _ in range(num_items + 1)]for c in range(num_couriers)]
+    
+    
     for k in range(num_couriers):
         print(f'courier {k}:')
         for i in range(num_items+1):
             l=''
             for j in range(num_items+1):
-                if i<j:
-                    l+=f'{result[i*num_items + j - (i+1)*(i+2)//2][k].value()}'
+                if i>j:
+                    l+=f'{int(result[(i * (i - 1)) // 2 + j][k].value())}({i},{j}) '
+                    mat[k][i][j] = int(result[(i * (i - 1)) // 2 + j][k].value())
+                    mat[k][j][i] = mat[k][i][j]
                 else:
-                    l+='    '
-            print(l)
+                    l+=''
+        for r in mat[k]:
+            print(r)
+    
+    # for k in range(num_couriers):
+    #     print(f'courier {k}:')
+    #     for i in range(num_items+1):
+    #         print(f'{u[(i,k)].value()} ')
     res = []
     for k in range(num_couriers):
         res.append([])
         end_of_route = False
         i = num_items
         j = 0
+        i_ = i
+        j_ = j
         while not end_of_route:
-            if i!=j and result[i*num_items + j - (i+1)*(i+2)//2][k].value() == 1 and j != num_items:
+            if mat[k][i][j] == 2:
                 res[k].append(j+1)
-                i = j
-                j = 0
-            elif i!=j and result[i*num_items + j - (i+1)*(i+2)//2][k].value() == 1 and j == num_items:
                 end_of_route = True
+            elif mat[k][i][j] !=0 and not (i_==j and j_==i):
+                if j != num_items:
+                    res[k].append(j+1)
+                    i_ = i
+                    j_ = j
+                    i = j
+                    j = 0
+                else:
+                    end_of_route = True
             else:
-                j += 1
+                j+=1
+        print(res[k])
     return res
 
 def parse_results(result, num_couriers, num_items):

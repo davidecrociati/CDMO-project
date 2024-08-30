@@ -197,18 +197,22 @@ def main(argv):
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/')
             saveJSON(instance_results,instance_file,RESULTS_FOLDER+'/SMT2/',format=INDENT_RESULTS)
-    a = []
-    n=4
-    for i in range(n):
-        l= ''
-        for j in range(n):
-            if i <j: 
-                l+=f'{i}_{j} '
-                a.append(f'{i}_{j} ')
-            else: 
-                l+='    '
-        print(l)
-
+    # a = []
+    # n=4
+    # for i in range(n):
+    #     l= ''
+    #     for j in range(n):
+    #         if i > j: 
+    #             l+=f'{i}_{j} '
+    #             a.append(f'{i}_{j} ')
+    #             # print((i * (i - 1)) // 2 + j)   
+                
+    #         else: 
+    #             l+='    '
+    #     print(l)
+    # i = 1
+    # j= 0
+    # print(a[i*n+j -(n-i)])
     # print(a[10*8+9 -10*8//2])
     if RUN_MIP:
         import MIP.MIP_launcher as MIP
