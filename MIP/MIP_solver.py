@@ -12,8 +12,7 @@ def solve(solver, model_name, params, data, verbose):
                 results = set_constraints_enumerate_all(prob, data)
             case _:
                 raise KeyError('Unsupported model')
-        remaining_time = params['timeout']-(time.time()-init_time)
-
+        remaining_time = params['timeout']-(time.time()-init_time)  # remove from timeout time for loading constraints
         match solver:
             case 'cbc':
                 solver=PULP_CBC_CMD(msg=verbose, timeLimit=remaining_time, presolve=False)
@@ -31,17 +30,17 @@ def solve(solver, model_name, params, data, verbose):
     obj = "N/A"
     opt = False
     solve_time = math.floor(time.time() - init_time)
-    # print(prob.objective.value())
     match prob.sol_status:
         # OPTIMAL SOLUTION FOUND
         case const.LpSolutionOptimal:
             sol = parse_results(*results)
-            obj = int(prob.objective.value())
-            opt = True
+            obj = round(prob.objective.value())
+            if solve_time<300:
+                opt = True
         # NOT OPTIMAL SOLUTION FOUND
         case const.LpSolutionIntegerFeasible:
             sol = parse_results(*results)
-            obj = int(prob.objective.value())
+            obj = round(prob.objective.value())
             opt = False
             solve_time = int(params['timeout'])
         # INFEASIBLE SOLUTION OR NO SOLUTION FOUND OR UNBOUNDED
@@ -151,8 +150,8 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     for k in range(num_couriers):
         problem += lpSum(item_sizes[j] * x[i][j][k] if i != j else 0 for i in range(num_items+1) for j in range (num_items)) <= courier_capacities[k] 
 
-    u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
     # Set the constraints for the MTZ formulation for each courier
+    u = LpVariable.dicts("u", [(i, k) for i in range(num_items+1) for k in range(num_couriers)], lowBound=0, cat='Continuous')
     for k in range(num_couriers):
         for i in range(num_items):
             for j in range(num_items):
@@ -162,19 +161,6 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     return (x, num_couriers, num_items)
 
 def parse_results(result, num_couriers, num_items):
-    for k in range(num_couriers):
-        res = ''
-        print(f'Courier {k+1}')
-        for i in range(num_items+1):
-            l=''
-            for j in range(num_items+1):
-                if i!=j:
-                    l+=f'{round(result[i][j][k].value())} '
-                else:
-                    l+='0 '
-            print(l)
-        print('\n')
-    
     res = []
     for k in range(num_couriers):
         res.append([])

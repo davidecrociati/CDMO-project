@@ -10,5 +10,17 @@
 		"optimal":true,
 		"obj":322,
 		"sol":[[1], [7, 8], [5], [4], [3], [2, 6]]
+	},
+	"HiGHS_enum_all":{
+		"time":0,
+		"optimal":true,
+		"obj":322,
+		"sol":[[8], [3], [7], [5, 2], [6], [1, 4]]
+	},
+	"HiGHS_MTZ":{
+		"time":0,
+		"optimal":true,
+		"obj":322,
+		"sol":[[8], [3], [2], [6], [5, 7], [1, 4]]
 	}
 }

@@ -11,7 +11,7 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=8 # inclusive
+firstInstance=1 # inclusive
 lastInstance=10 # inclusive
 
 if firstInstance<=0:
@@ -219,14 +219,14 @@ def main(argv):
         MIP_models = {
                 'solvers': {
                     'cbc': [
-                        # ('enum_all', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
-                        # ('MTZ', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
+                        ('enum_all', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':None
+                            }),
+                        ('MTZ', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':None
+                            }),
                     ],
                     'glpk': [
                         # ('enum_all', {
@@ -239,10 +239,10 @@ def main(argv):
                         #     }),
                     ],
                     'HiGHS': [
-                        # ('enum_all', {
-                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                        #     'model_params':None
-                        #     }),
+                        ('enum_all', {
+                            'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                            'model_params':None
+                            }),
                         ('MTZ', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':None
@@ -257,15 +257,16 @@ def main(argv):
             instance_results={}
             for solver in MIP_models['solvers']:
                 for model_name, params in MIP_models['solvers'][solver].copy():
-                    print(f'\tUsing {solver}-{model_name}...')
-                    result,model=MIP.solve_instance(instance_file,
-                                        solver,
-                                        model_name,
-                                        params['params'],
-                                        params['model_params'],
-                                        verbose=False)
-                    instance_results[f'{solver}_{model_name}'] = result
-                    updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
+                    if not (int(instance_file[-6:-4])>10 and 'enum_all' in model_name):      
+                        print(f'\tUsing {solver}-{model_name}...')              
+                        result,model=MIP.solve_instance(instance_file,
+                                            solver,
+                                            model_name,
+                                            params['params'],
+                                            params['model_params'],
+                                            verbose=False)
+                        instance_results[f'{solver}_{model_name}'] = result
+                        updateJSON(instance_results,instance_file,RESULTS_FOLDER+'/MIP/',format=INDENT_RESULTS)
     
 
 
