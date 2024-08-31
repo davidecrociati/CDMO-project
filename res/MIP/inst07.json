@@ -11,6 +11,12 @@
 		"obj":167,
 		"sol":[[9, 10, 16, 6], [2], [12, 5, 11], [13, 4, 15], [8, 17, 1], [14, 3, 7]]
 	},
+	"glpk_enum_all":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
 	"glpk_MTZ":{
 		"time":300,
 		"optimal":true,
