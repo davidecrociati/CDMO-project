@@ -19,6 +19,8 @@ def solve(solver, model_name, params, data, verbose):
                 solver=PULP_CBC_CMD(msg=verbose, timeLimit=remaining_time, presolve=False)
             case 'glpk':
                 solver=GLPK_CMD(msg=verbose, timeLimit=math.ceil(remaining_time))
+            case 'HiGHS':
+                solver=HiGHS(msg=verbose, timeLimit=math.ceil(remaining_time))
             case _:
                 raise KeyError('Unsupported solver')
         prob.solve(solver)
@@ -160,6 +162,19 @@ def set_constraints_Miller_Tucker_Zemlin(problem, data):
     return (x, num_couriers, num_items)
 
 def parse_results(result, num_couriers, num_items):
+    for k in range(num_couriers):
+        res = ''
+        print(f'Courier {k+1}')
+        for i in range(num_items+1):
+            l=''
+            for j in range(num_items+1):
+                if i!=j:
+                    l+=f'{round(result[i][j][k].value())} '
+                else:
+                    l+='0 '
+            print(l)
+        print('\n')
+    
     res = []
     for k in range(num_couriers):
         res.append([])
@@ -167,11 +182,11 @@ def parse_results(result, num_couriers, num_items):
         i = num_items
         j = 0
         while not end_of_route:
-            if i!=j and result[i][j][k].value() == 1 and j != num_items:
+            if i!=j and round(result[i][j][k].value()) == 1 and j != num_items:
                 res[k].append(j+1)
                 i = j
                 j = 0
-            elif i!=j and result[i][j][k].value() == 1 and j == num_items:
+            elif i!=j and round(result[i][j][k].value()) == 1 and j == num_items:
                 end_of_route = True
             else:
                 j += 1

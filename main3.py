@@ -11,7 +11,7 @@ RESULTS_FOLDER='res'
 INDENT_RESULTS=True # indented results on the json
 
 
-firstInstance=1 # inclusive
+firstInstance=8 # inclusive
 lastInstance=10 # inclusive
 
 if firstInstance<=0:
@@ -223,21 +223,32 @@ def main(argv):
                         #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
                         #     'model_params':None
                         #     }),
+                        # ('MTZ', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
+                    ],
+                    'glpk': [
+                        # ('enum_all', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
+                        # ('MTZ', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
+                    ],
+                    'HiGHS': [
+                        # ('enum_all', {
+                        #     'params':{'timeout': timedelta(seconds=TIMEOUT)},
+                        #     'model_params':None
+                        #     }),
                         ('MTZ', {
                             'params':{'timeout': timedelta(seconds=TIMEOUT)},
                             'model_params':None
                             }),
-                    ],
-                    # 'glpk': [
-                    #     ('enum_all', {
-                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #         'model_params':None
-                    #         }),
-                    #     ('MTZ', {
-                    #         'params':{'timeout': timedelta(seconds=TIMEOUT)},
-                    #         'model_params':None
-                    #         }),
-                    # ]
+                    ]
+                    
                 }
             }
         print('Solving with MIP:')
