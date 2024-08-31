@@ -11,6 +11,18 @@
 		"obj":322,
 		"sol":[[1], [7, 8], [5], [4], [3], [2, 6]]
 	},
+	"glpk_enum_all":{
+		"time":0,
+		"optimal":true,
+		"obj":322,
+		"sol":[[1, 8, 4], [2], [6], [5], [7], [3]]
+	},
+	"glpk_MTZ":{
+		"time":0,
+		"optimal":true,
+		"obj":322,
+		"sol":[[8], [3, 6], [1, 2], [7], [4], [5]]
+	},
 	"HiGHS_enum_all":{
 		"time":0,
 		"optimal":true,

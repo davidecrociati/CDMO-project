@@ -5,6 +5,12 @@
 		"obj":"N/A",
 		"sol":[]
 	},
+	"glpk_MTZ":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
 	"HiGHS_MTZ":{
 		"time":300,
 		"optimal":false,
