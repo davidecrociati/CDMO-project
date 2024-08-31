@@ -10,11 +10,11 @@ class Configuration:
         self.instances_folder='instances_dzn'
         self.instances_names=self.read_instances()
         self.smt_models_folder='SMT/models'
-        self.results_folder='res_MIP'
+        self.results_folder='res_SMT'
         self.indent_results=True
-        self.first=12
-        self.last=21
-        self.timeout=300
+        self.first=7
+        self.last=10
+        self.timeout=15
         self.run_checker=False
 
     def read_instances(self):
@@ -61,7 +61,6 @@ def main(args):
     if args.sat: RUN_SAT=True
     if args.smt: RUN_SMT=True
     if args.mip: RUN_MIP=True
-    
 
     executable_instances=sorted([configuration.instances_names[i-1] for i in instances_numbers])
 
@@ -215,10 +214,10 @@ def main(args):
     # |    SMT   |
     # ============
     if RUN_SMT:
-        import SMT.SMT_launcher as SMT
+        import SMT.SMT_launcher2 as SMT
 
         SMT_models = {
-                    'z3': [
+                    'cvc5': [
                         ('arrays_SB', {
                             'params':{'timeout': timedelta(seconds=configuration.timeout)},
                             'model_params':{
@@ -233,20 +232,20 @@ def main(args):
                                 'use_arrays':False,
                                 }
                             }),
-                        ('arrays', {
-                            'params':{'timeout': timedelta(seconds=configuration.timeout)},
-                            'model_params':{
-                                'simmetry_method':'None',
-                                'use_arrays':True,
-                                }
-                            }),
-                        ('default', {
-                            'params':{'timeout': timedelta(seconds=configuration.timeout)},
-                            'model_params':{
-                                'simmetry_method':'None',
-                                'use_arrays':False,
-                                }
-                            }),
+                        # ('arrays', {
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                        #     'model_params':{
+                        #         'simmetry_method':'None',
+                        #         'use_arrays':True,
+                        #         }
+                        #     }),
+                        # ('default', {
+                        #     'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                        #     'model_params':{
+                        #         'simmetry_method':'None',
+                        #         'use_arrays':False,
+                        #         }
+                        #     }),
                         ('best', {
                             'params':{'timeout': timedelta(seconds=configuration.timeout)},
                             'model_params':{
@@ -254,13 +253,50 @@ def main(args):
                                 'best':True
                                 }
                             }),
-                        ('OPT', {
-                            'params':{'timeout': timedelta(seconds=configuration.timeout)},
-                            'model_params':{
-                                'z3':True
-                                }
-                            }),
                     ],
+                    # 'z3': [
+                    #     ('arrays_SB', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'simmetry_method':'>',
+                    #             'use_arrays':True,
+                    #             }
+                    #         }),
+                    #     ('SB', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'simmetry_method':'>',
+                    #             'use_arrays':False,
+                    #             }
+                    #         }),
+                    #     ('arrays', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'simmetry_method':'None',
+                    #             'use_arrays':True,
+                    #             }
+                    #         }),
+                    #     ('default', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'simmetry_method':'None',
+                    #             'use_arrays':False,
+                    #             }
+                    #         }),
+                    #     ('best', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'simmetry_method':'>',
+                    #             'best':True
+                    #             }
+                    #         }),
+                    #     ('OPT', {
+                    #         'params':{'timeout': timedelta(seconds=configuration.timeout)},
+                    #         'model_params':{
+                    #             'z3':True
+                    #             }
+                    #         }),
+                    # ],
         }
         
         print('Solving with SMT:')
@@ -274,7 +310,7 @@ def main(args):
                                         solver,
                                         params['params'],
                                         params['model_params'],
-                                        verbose=False)
+                                        verbose=True)
                     instance_results[f'{solver}_{param_name}'] = result
                     if model:saveModel(model,solver,instance_file,f'SMT/models/{solver}/{param_name}/')
                     updateJSON(instance_results,instance_file,configuration.results_folder+'/SMT/',format=configuration.indent_results)
