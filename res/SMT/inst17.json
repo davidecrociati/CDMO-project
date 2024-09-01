@@ -1,11 +1,11 @@
 {
-	"z3_arrays_SB":{
+	"z3_OPT":{
 		"time":300,
 		"optimal":false,
 		"obj":"N/A",
 		"sol":[]
 	},
-	"z3_SB":{
+	"z3_arrays_SB":{
 		"time":300,
 		"optimal":false,
 		"obj":"N/A",
@@ -17,19 +17,25 @@
 		"obj":"N/A",
 		"sol":[]
 	},
-	"z3_default":{
-		"time":300,
-		"optimal":false,
-		"obj":"N/A",
-		"sol":[]
-	},
 	"z3_best":{
 		"time":300,
 		"optimal":false,
 		"obj":"N/A",
 		"sol":[]
 	},
-	"z3_OPT":{
+	"cvc5_arrays_SB":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
+	"cvc5_arrays":{
+		"time":300,
+		"optimal":false,
+		"obj":"N/A",
+		"sol":[]
+	},
+	"cvc5_best":{
 		"time":300,
 		"optimal":false,
 		"obj":"N/A",

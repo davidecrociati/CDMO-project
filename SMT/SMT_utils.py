@@ -266,6 +266,13 @@ def define_simmetry(nc,method,arrays):
                             s+=f'(assert (=> (< (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select loads {c1}) (select loads {c2}))))\n'
                         else:
                             s+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
+                    case 'courier-item_order':
+                        if c2<=c1 or c1==nc:
+                            continue
+                        if arrays:
+                            s+=f'(assert (=> (= (select couriers_capa {c1}) (select couriers_capa {c2})) (< (select stops_{c1} 1) (select stops_{c2} 1))))\n'
+                        else:
+                            s+=f'(assert (=> (= courier_{c1}_capa courier_{c2}_capa) (< stop_{c1}_1 stop_{c2}_1)))\n'
                     case _: pass
     return s
 
@@ -280,18 +287,27 @@ def add_objective(num_couriers,obj,head,tail,arrays=True,impose_lower_bound=True
             objective+=f'(assert (<= distance_{c}_traveled {obj}))\n'
     return head+objective+tail
 
-def parse_solution(model,arrays):
+def parse_solution(model,arrays,solver,best=False):
     if model==None:
         return []
-    # print(model)
-    num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
-    num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
+    num_c=num_i=None
+    match solver:
+        case 'z3':
+            num_c=int(str(model[[var for var in model if 'num_couriers' in var.name()][0]]))
+            num_i=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))
 
-    return get_itineraries(model,arrays,num_c,num_i)
-def get_itineraries(model,arrays,num_c,num_i):
-    stops=get_stops(model,False,arrays,num_c,num_i,False)
+        case 'cvc5':
+            solver_,vars=model            
+            num_c=solver_.getValue(vars[0]).toPythonObj()
+            num_i=solver_.getValue(vars[1]).toPythonObj()   
+    return get_itineraries(model,arrays,solver,num_c,num_i,best)
+
+
+def get_itineraries(model,arrays,solver,num_c,num_i,best):
+    stops=get_stops(model,False,arrays,num_c,num_i,solver,best,print_=False)
+    # print(stops)
     stops=[[int(str(e))for e in row]for row in stops]
-    default=int(str(model[[var for var in model if 'num_items' in var.name()][0]]))+1
+    default=num_i+1
     stops=[[e for e in row if e!=default]for row in stops ]
     return stops
 
@@ -329,32 +345,58 @@ def get_loads(model,print_names,arrays,num_c):
         sorted_variables = sorted(variables, key=lambda x: int(x[0]))
         print('loads:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
 
-def get_stops(model,print_names,arrays,num_c,num_i,print_=True):
-    matrix=[]
-    matrix_names=[]
-    if arrays:
-        for i in range(1,num_c+1):
-            row=[var for var in model if f'stops_{i}'==var.name()][0]
-            # print(model[row])
-            matrix.append(convertArrayRef(model[row],num_i-num_c+2))
-        if print_:
-            print('stops:')
-            for i in range(len(matrix)):
-                print('  ',matrix[i])
-        return matrix
-    else:
-        for i in range(1,num_c+1):
-            matrix.append([])
-            matrix_names.append([])
-            for j in range(1,num_i-num_c+3):
-                node=[var for var in model if f'stop_{i}_{j}'==var.name()][0]
-                matrix[i-1].append(model[node])
-                matrix_names[i-1].append(node)
-        if print_:
-            print('stops:')
-            for i in range(len(matrix)):
-                print('  ',matrix[i],matrix_names[i] if print_names else '')
-        return matrix
+def get_stops(model,print_names,arrays,num_c,num_i,solver,best,print_=True):
+    match solver:
+        case 'z3':
+            matrix=[]
+            matrix_names=[]
+            if arrays:
+                for i in range(1,num_c+1):
+                    row=[var for var in model if f'stops_{i}'==var.name()][0]
+                    # print(model[row])
+                    matrix.append(convertArrayRef(model[row],num_i-num_c+2))
+                if print_:
+                    print('stops:')
+                    for i in range(len(matrix)):
+                        print('  ',matrix[i])
+                # return matrix
+            else:
+                for i in range(1,num_c+1):
+                    matrix.append([])
+                    matrix_names.append([])
+                    for j in range(1,num_i-num_c+3):
+                        node=[var for var in model if f'stop_{i}_{j}'==var.name()][0]
+                        matrix[i-1].append(model[node])
+                        matrix_names[i-1].append(node)
+                if print_:
+                    print('stops:')
+                    for i in range(len(matrix)):
+                        print('  ',matrix[i],matrix_names[i] if print_names else '')
+            return matrix
+        case 'cvc5':
+            solver,vars=model
+            stops=[]
+            if arrays:
+                stops=list(solver.getValue(vars[-(4+num_c):-4]))
+                stops=[dict2array(s.toPythonObj()) for s in stops]
+        
+            elif best:
+                s=5+num_c+num_i*2
+                # print(vars[s:s+num_c*(num_i-num_c+2)])
+                stops_=list(solver.getValue(vars[s:s+num_c*(num_i-num_c+2)]))
+                for c in range(num_c):
+                    stops.append([])
+                    for i in range(num_i-num_c+2):
+                        stops[c].append(stops_[c*(num_i-num_c+2)+i])
+            else:
+                s=4+num_c+num_i+(num_i+1)**2
+                # print(vars[s:s+num_c*(num_i-num_c+2)])
+                stops_=list(solver.getValue(vars[s:s+num_c*(num_i-num_c+2)]))
+                for c in range(num_c):
+                    stops.append([])
+                    for i in range(num_i-num_c+2):
+                        stops[c].append(stops_[c*(num_i-num_c+2)+i])
+            return stops
 
 def get_successor(model,print_names,arrays,num_i,best_model=False):
     variables = []
@@ -368,20 +410,46 @@ def get_successor(model,print_names,arrays,num_i,best_model=False):
         sorted_variables = sorted(variables, key=lambda x: int(x[0]))
         print('succ:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')    
 
-def get_distances(model,print_names,arrays,num_c=None,print_=True,):
+def get_distances(model,lib,print_names,arrays,best=False,num_c=None,print_=True):
     variables = []
-    if arrays:
-        var=[model[var] for var in model if 'distances_traveled' in var.name()][0]
-        variables=convertArrayRef(var,num_c)
-        if print_:print('dist:',variables)
-        return variables
-    else:
-        for var in model:
-            if '_traveled' in var.name():
-                variables.append((str(var).split('_traveled')[0].split('distance_')[1], model[var]))
-        sorted_variables = sorted(variables, key=lambda x: int(x[0]))
-        if print_:print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
-        return [int(str(v[1])) for v in sorted_variables]
+    match lib:
+        case 'z3':
+            if arrays:
+                var=[model[var] for var in model if 'distances_traveled' in var.name()][0]
+                variables=convertArrayRef(var,num_c)
+                if print_:print('dist:',variables)
+                return variables
+            else:
+                for var in model:
+                    if '_traveled' in var.name():
+                        variables.append((str(var).split('_traveled')[0].split('distance_')[1], model[var]))
+                sorted_variables = sorted(variables, key=lambda x: int(x[0]))
+                if print_:print('dists:',[v[1] for v in sorted_variables],[v[0] for v in sorted_variables] if print_names else '')
+                return [int(str(v[1])) for v in sorted_variables]
+        case 'cvc5':
+            if arrays:
+                # print('arrays non best')
+                solver,vars=model
+                distances=solver.getValue(vars[-3]).toPythonObj()
+                return list(distances.values())
+            else:
+                if best:
+                    # print('best')
+                    solver,vars=model
+                    num_c=solver.getValue(vars[0]).toPythonObj()
+                    distances=list(solver.getValue(vars[-(num_c+1+num_c):-(num_c+1)]))
+                    # print([d.toPythonObj() for d in distances])
+                    return [d.toPythonObj() for d in distances]
+                else:
+                    # print('non arrays')
+                    solver,vars=model
+                    num_c=solver.getValue(vars[0]).toPythonObj()
+                    num_i=solver.getValue(vars[1]).toPythonObj()
+                    distances=list(solver.getValue(vars[-(num_c+num_c+num_i):-(num_c+num_i)]))
+                    # print([d.toPythonObj() for d in distances])
+                    return [d.toPythonObj() for d in distances]
+
+
     
 def check_model_params(input_dict):
     model_params={
@@ -416,6 +484,15 @@ def check_model_params(input_dict):
     validated_dict.update(input_dict)
     
     return validated_dict
+
+def dict2array(dic):
+    max_index = max(dic.keys())
+    default=dic['cdmo']
+    dic.pop('cdmo',None)
+    result_list = [default] * (max_index)
+    for index, value in dic.items():
+        result_list[index-1] = value
+    return result_list
 
 def convertArrayRef(array,length=None):
     try:
@@ -453,7 +530,7 @@ if __name__=='__main__':
     converted=convertArrayRef(array,5)
     print(converted)
 
-def generate_best_model(instance_data):
+def generate_best_model(instance_data,sym):
     # instance_data=parse_dzn(dzn_instance)
 
     num_couriers = instance_data['num_couriers']
@@ -544,10 +621,16 @@ def generate_best_model(instance_data):
     # simmetry
     for c1 in range(1,num_couriers+1):
         for c2 in range(1,num_couriers+1):
-            if c1!=c2: # only the first is better than second and both
-                model_h+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
+            if c1!=c2:
+                match sym:
+                    case '>':
+                        model_h+=f'(assert (=> (> courier_{c1}_capa courier_{c2}_capa) (> load_{c1} load_{c2})))\n'
                 # model_h+=f'(assert (=> (< courier_{c1}_capa courier_{c2}_capa) (< load_{c1} load_{c2})))\n'
-
+                    case 'courier-item_order':
+                        if c2<=c1 or c1==num_couriers:
+                            continue
+                        model_h+=f'(assert (=> (= courier_{c1}_capa courier_{c2}_capa) (< stop_{c1}_1 stop_{c2}_1)))\n'
+                    case _: raise ValueError('sym not valid for best model')
     # all items must be delivered. ===era LENTO forse mo funziona però===
     # for i in range(1,num_items+1):
     #     model_h+=f'(assert (= (+'

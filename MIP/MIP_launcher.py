@@ -18,7 +18,6 @@ def solve_instance(
             params['timeout'] = params['timeout'].total_seconds()
     except: pass    
     
-    
     solution = []
     best_model = None
     opt = False
@@ -38,5 +37,3 @@ def solve_instance(
             "obj": obj,
             "sol": solution
         },best_model
-    pass
-

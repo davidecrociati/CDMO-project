@@ -5,19 +5,19 @@ from z3 import  *
 def evaluate(model, model_variables, num_couriers, num_items):
     loads, distances_traveled, stops, item_resp, successors = model_variables
     loads = [model.evaluate(loads[c]) for c in range(num_couriers)]
-    distances_traveled = [int(str(model.evaluate(distances_traveled[c]))) for c in range(num_couriers)]
     item_resp = [int(str(model.evaluate(item_resp[i]))) +1 for i in range(num_items)]
+    distances_traveled = [int(str(model.evaluate(distances_traveled[c]))) for c in range(num_couriers)]
     successors = [int(str(model.evaluate(successors[i]))) +1 for i in range(num_items)]
     stops = [[int(str(model.evaluate(stops[c][i]))) +1 for i in range(num_items-num_couriers+2)] for c in range(num_couriers)]
-    print('loads:',loads,'\ndists:',distances_traveled,'\nresp:',item_resp,'\nsucc:',successors,'\nstops:')
-    for row in stops:
-        print('     ',row)
+    # print('loads:',loads,'\ndists:',distances_traveled,'\nresp:',item_resp,'\nsucc:',successors,'\nstops:')
+    # for row in stops:
+    #     print('     ',row)
     
     return stops, distances_traveled
 
 def solve_z3_model(params:dict, data, start_time):
     import time
-    import math
+    # import math
 
     num_couriers = data['num_couriers']
     num_items = data['num_items']
@@ -41,7 +41,7 @@ def solve_z3_model(params:dict, data, start_time):
 
         if status == sat: # Optimal
             results = evaluate(optimizer.model(), model_variables, num_couriers, num_items)
-            return tolist(results [0],short_stops=True), max(results[1]),True
+            return tolist(results [0],num_items+1), max(results[1]),True
         
         elif status == unsat: # Unsat
             return [],'unsat',False
@@ -50,11 +50,11 @@ def solve_z3_model(params:dict, data, start_time):
             results = evaluate(optimizer.model(), model_variables, num_couriers, num_items)
 
             if results:
-                return tolist(results [0],short_stops=True), max(results[1]),False
+                return tolist(results [0],num_items+1), max(results[1]),False
             else:
                 return [], 'N/A',False
     except Exception as e:
-        print(e)
+        # raise(e)
         return [], 'N/A',False
 
 

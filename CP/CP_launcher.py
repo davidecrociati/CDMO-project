@@ -44,20 +44,3 @@ def solve_instance(
         "obj": obj,
         "sol": solution
     }
-
-
-# if __name__ == '__main__':
-#     # used for testing purposes
-#     # this_dir = os.path.dirname(os.path.abspath(__file__))
-#     # os.chdir(this_dir)
-
-#     instances_folder = '../instances_dzn'
-#     # instances_folder='.'
-#     instances = [instances_folder+'/'+instance for instance in os.listdir(
-#         instances_folder) if instance.endswith('.dzn')]
-#     instances.sort()
-#     mzn_file = 'model.mzn'
-#     mzn_file = 'model_drunky.mzn'
-#     # mzn_file = 'working_solver.mzn'
-
-#     print(launch(instances[:1]))

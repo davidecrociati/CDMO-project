@@ -89,6 +89,10 @@ If an instance or an approach is parsed from the CLI, the results will be stored
 
 When solving using SMT, a model is compiled as a `.smt2` file and stored in the designated folder. Other solvers could then used by directly loading the model.
 
+### File Converter
+
+If presenting with new _.dat_ instances to parse into _.dzn_, `fileConverter.py` can be used by specifing the source and destination folder.
+
 ### Authors
 
 • [Davide Crociati](https://github.com/davidecrociati)

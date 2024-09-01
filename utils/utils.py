@@ -4,16 +4,12 @@ import check_solution as check
 
 
 # SOLUTION PARSING
-def tolist(solution,short_stops=False,OPT=True):
+def tolist(solution,depot):
     '''
 	solution is a string [[i1,i2],[i3,i4,i5],...[]]
 
     output must be that string parsed to a list
     '''
-    depot = len(solution[0]) +1
-    if short_stops:
-        depot= len(solution[0]) + len(solution)-1
-    # print(depot)
     res = []
     for r in solution:
         r = list(dict.fromkeys(r))
@@ -120,3 +116,9 @@ def parse_dzn(dzn_path):
                 else:
                     data[key] = int(value)
     return data
+
+
+def get_instance_number(instance_file):
+    import re
+    instance_number=re.search(r'inst(\d+)\.dzn', instance_file).group(1)
+    return int(instance_number)
