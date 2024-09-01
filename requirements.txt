@@ -3,5 +3,4 @@ z3-solver==4.13.0.0
 numpy==1.26.4
 highspy==1.7.2
 pulp==2.9.0
-
-# python
+cvc5==1.2.0
