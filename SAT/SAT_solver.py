@@ -136,8 +136,6 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False, di
             # Middle items
             if distance_symmetry : 
                 for i2 in range(i1+1, num_items):
-                    # If we use delivered_before
-                    # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
                     
                     # If we check in place
                     for o in range(num_orders-1) :
@@ -148,8 +146,6 @@ def solve_hot(instance_data, MAX_dist, params, symmetry=False, verbose=False, di
             else :
                 for i2 in range(num_items):
                     if i1 != i2:
-                        # If we use delivered_before
-                        # distance_tot += If(delivered_before[c][i1][i2], distances[i1][i2], 0)
                         
                         # If we check in place
                         for o in range(num_orders-1) :
@@ -480,9 +476,6 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
         for i2 in range(num_items) :
             for c in range(num_couriers):
                 solver.add(Implies(And(successor[i1][i2], stops[c][i1]), stops[c][i2])) 
-                # solver.add(Or(Not(And(successor[i1][i2], stops[c][i1])), stops[c][i2])) 
-                # solver.add(Implies(And(predecessor[i1][i2], stops[c][i1]), stops[c][i2])) 
-                # solver.add(Or(Not(And(predecessor[i1][i2], stops[c][i1])), stops[c][i2])) 
                 
     # 6) Bin packing : the sum of items sizes must not exceed the max size of the courier
     if verbose : print(f"constraint-6 {time.time()-t} seconds")
@@ -502,8 +495,6 @@ def solve_circuit(instance_data, MAX_dist, params, symmetry=False, verbose=False
                 c2_load = sum([If(stops[c2][i], item_sizes[i], 0) for i in range(num_items)])
                 if courier_capacities[c1] > courier_capacities[c2] :     
                     solver.add(c1_load > c2_load)
-                # else :
-                #     solver.add(c1_load <= c2_load)
     
     # 8) Break subcircuit
     if verbose : print(f"constraint-8 {time.time()-t} seconds")

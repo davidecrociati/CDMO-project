@@ -182,12 +182,11 @@ def solve_strategy(
     
     aux=params.copy()
     
-    # if verbose_search : 
-    #     l=len(instance_data['distances'])*4
-    #     print("#"*10, " INSTANCE ", "#"*(l-10))
-    #     display_instance(instance_data)
-    #     print("#"*(l+10))
-    # print(f"\tUsing {model} model with {strategy} search-strategy...")
+    if verbose_search : 
+        l=len(instance_data['distances'])*4
+        print("#"*10, " INSTANCE ", "#"*(l-10))
+        display_instance(instance_data)
+        print("#"*(l+10))
     
     solve=None
     match model :
