@@ -31,44 +31,34 @@ def solve_z3(model,params:dict,arrays,num_c):
         
         return 'unsat',None,-1
     
-def solve_cvc5(model, params: dict, arrays, num_c, time_queue, sat_queue, model_queue, return_queue, stop_event, best):
+def solve_cvc5(model, params: dict, arrays, num_c, best, return_queue):
     import cvc5
     from cvc5 import Solver
-    from queue import Queue, Empty, Full
+    from multiprocessing import Queue
 
-    while not stop_event.is_set():
-        tm = cvc5.TermManager()
-        solver = Solver(tm)
+    tm = cvc5.TermManager()
+    solver = Solver(tm)
 
-        solver.setOption("produce-models", "true")
-        
-        model = model_queue.get()
-        
-        parser = cvc5.InputParser(solver)
-        parser.setStringInput(cvc5.InputLanguage.SMT_LIB_2_6, model, "model")
-        sm = parser.getSymbolManager()
+    solver.setOption("produce-models", "true")
+    
+    parser = cvc5.InputParser(solver)
+    parser.setStringInput(cvc5.InputLanguage.SMT_LIB_2_6, model, "model")
+    sm = parser.getSymbolManager()
 
-        while True:
-            cmd = parser.nextCommand()
-            if cmd.isNull():
-                break
-            cmd.invoke(solver, sm)
+    while True:
+        cmd = parser.nextCommand()
+        if cmd.isNull():
+            break
+        cmd.invoke(solver, sm)
 
-        remaining_time = time_queue.get()
-
-        try:
-            sat_queue.put('sat' if solver.checkSat().isSat() else 'unsat', timeout=remaining_time)
-        except Full:
-            print('Timeout')
-            sat_queue.put('unsat')
-
+    if solver.checkSat().isSat():
         vars = sm.getDeclaredTerms()
 
         v = (solver, vars)
-        distances = get_distances(v, lib='cvc5', print_names=False, arrays=arrays, best=best, num_c=num_c, print_=False)
-        solution = parse_solution(v, arrays, 'cvc5', best=best)
-        return_queue.put(('sat', solution, distances))
-
-        if stop_event.is_set():
-            return_queue.put(('unsat', [], -1))
-            break
+        distances = [15,10]
+#        distances = get_distances(v, lib='cvc5', print_names=False, arrays=arrays, best=best, num_c=num_c, print_=False)
+        solution = []#parse_solution(v, arrays#, 'cvc5', best=best)
+        return_queue.put((solution, distances))
+        
+    else:
+        return_queue.put(([], "N/A"))

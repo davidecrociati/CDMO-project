@@ -209,8 +209,7 @@ def generate_model(
     return model_head,model_tail
 
 def launch_cvc5(instance_file, params, model_params, verbose):
-    import threading
-    from queue import Queue, Empty
+    from multiprocessing import Process, Queue
     import time
     import math
     from datetime import timedelta
@@ -228,7 +227,7 @@ def launch_cvc5(instance_file, params, model_params, verbose):
     total_timeout = params['timeout']
     solution = []
     opt = False
-    execTime = time.time()
+    generation_time = time.time()
     model_head, model_tail = generate_model(instance_data, **model_params)
     obj = 'N/A'
     model = ''
@@ -242,48 +241,31 @@ def launch_cvc5(instance_file, params, model_params, verbose):
     aux['best'] = model_params['best']
     impose_lower_bound = model_params['impose_lower_bound']
     
-    return_queue = Queue()
-    model_queue = Queue()
-    sat_queue = Queue()
-    time_queue = Queue()
-    stop_event = threading.Event()
+    model = add_objective(instance_data['num_couriers'],
+                        max_path,
+                        model_head,
+                        model_tail,
+                        arrays=use_arrays,
+                        impose_lower_bound=impose_lower_bound)
+    elapsed_time = time.time() - generation_time
+    remaining_time = total_timeout - elapsed_time
 
-    solver_thread = threading.Thread(target=solve_cvc5, args=(model, params, use_arrays, num_couriers, time_queue, sat_queue, model_queue, return_queue, stop_event, aux['best']))
-    solver_thread.start()
+    while max_path >= instance_data['lower_bound'] and remaining_time > 0:
+        sol_time = time.time()
+        solution, distances =  [], "N/A"
+        return_queue = Queue()
 
-    while max_path >= instance_data['lower_bound']:
-        elapsed_time = time.time() - execTime
-        remaining_time = total_timeout - elapsed_time
-
-        if remaining_time <= 0:
+        p = Process(target=solve_cvc5, args=(model, params, use_arrays, num_couriers, aux['best'], return_queue))
+        p.start()
+        p.join(remaining_time)
+        
+        if p.is_alive():
             if verbose:
-                print('Timeout! Time elapsed: ', math.floor(elapsed_time))
-            break
-
-        # Update params with the remaining time
-        aux['timeout'] = remaining_time
-
-        model = add_objective(instance_data['num_couriers'],
-                              max_path,
-                              model_head,
-                              model_tail,
-                              arrays=use_arrays,
-                              impose_lower_bound=impose_lower_bound)
-        model_queue.put(model)
-        time_queue.put(remaining_time)
-
-        try:
-            sat_check = sat_queue.get(timeout=remaining_time)
-            result, solution, distances = 'unsat', [], -1
-            if sat_check == 'sat':
-                result, solution, distances = return_queue.get(timeout=remaining_time)
-            
-            if result == 'unsat':
-                if verbose:
-                    print(f'No solution found with current max_path: {max_path}. Time elapsed: {elapsed_time:.2f} seconds')
-                opt = True
-                break
-
+                print('Solver is still running... Let\'s kill it...')
+            p.terminate()
+            p.join()
+        else:
+            solution, distances = return_queue.get()
             obj = max(distances)
             max_path = obj - 1
             if verbose:
@@ -292,18 +274,21 @@ def launch_cvc5(instance_file, params, model_params, verbose):
             if max_path < instance_data['lower_bound']:
                 if verbose:
                     print(f'Reached the lower bound {max_path}, [{instance_data["lower_bound"]},{instance_data["upper_bound"]}]')
+                elapsed_time = time.time() - sol_time
+                execTime = math.floor(params['timeout']-(remaining_time-elapsed_time))
                 opt = True
                 break
-        except Empty:
-            continue
-        except Exception as e:
-            print("Exception in processing:", e)
-            break
-
-    stop_event.set()
-    solver_thread.join()
-    
-    execTime = math.floor(time.time() - execTime)
+            model = add_objective(instance_data['num_couriers'],
+                              max_path,
+                              model_head,
+                              model_tail,
+                              arrays=use_arrays,
+                              impose_lower_bound=impose_lower_bound)
+            
+        elapsed_time = time.time() - sol_time
+        remaining_time = remaining_time - elapsed_time
+        print(remaining_time)
+        
     if not solution:
         execTime = math.floor(params['timeout'])
     
