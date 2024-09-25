@@ -1,6 +1,15 @@
 # CDMO-project
 
-Project exam for the course in _"Combinatorial Decision Making and Optimization"_ of the Master's degree in Artificial Intelligence, University of Bologna (2023/2024).
+Project exam for the course in _"Combinatorial Decision Making and Optimization"_ of the Master's degree in Artificial Intelligence, University of Bologna (2023/2024). 
+The aim of this project is to model and solve the **Multiple Courier Planning Problem**—a variation of the Capacitated Vehicle Routing Problem (CVRP), using four different methodologies:
+
+1. **Constraint Programming (CP)**
+2. **Propositional Satisfiability (SAT)**
+3. **Satisfiability Modulo Theories (SMT)**
+4. **Mixed-Integer Linear Programming (MIP)**
+
+Each approach will be evaluated to understand its strengths and limitations in solving this combinatorial optimization challenge.
+
 
 ## Docker Instructions
 
